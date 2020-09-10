@@ -15,10 +15,11 @@ module View
           },
         }
         player.shares_by_corporation.each do |corporation, shares|
-          next if shares.empty? || @game.sellable_bundles(player, corporation).empty?
+          next if shares.empty?
 
           corp = [h(Corporation, corporation: corporation)]
-          corp << h(SellShares, player: player, corporation: corporation)
+
+          corp << h(SellShares, player: player, corporation: corporation) if @selected_corporation == corporation
 
           children << h(:div, props, corp)
         end

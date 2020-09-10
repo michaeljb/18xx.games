@@ -69,9 +69,9 @@ module Engine
       end
 
       def process_sell_shares(action)
-        @last_share_sold_price = action.bundle.price_per_share
         super
 
+        @last_share_sold_price = action.bundle.price_per_share
         @round.recalculate_order
       end
 
@@ -86,14 +86,21 @@ module Engine
       def buyable_trains(entity)
         depot_trains = @depot.depot_trains
         other_trains = @depot.other_trains(entity)
+        # If the corporation cannot buy a train, then it can only buy the cheapest available (if there is any...)
+        min_depot_train = @depot.min_depot_train
+        if min_depot_train && min_depot_train.price > entity.cash
 
-        if entity.cash < (@depot.min_depot_price || 0)
-          depot_trains = [@depot.min_depot_train] if @game.class::EBUY_DEPOT_TRAIN_MUST_BE_CHEAPEST
+          depot_trains = [min_depot_train] if @game.class::EBUY_DEPOT_TRAIN_MUST_BE_CHEAPEST
 
           if @last_share_sold_price
-            other_trains = [] unless @game.class::EBUY_OTHER_VALUE
+            # 1889, a player cannot contribute to buy a train from another corporation
+            return depot_trains unless @game.class::EBUY_OTHER_VALUE
 
-            min_cash_to_spend = (entity.cash + entity.owner.cash) - @last_share_sold_price + 1
+            # 18Chesapeake and most others, it's legal to buy trains from other corps until
+            # if the player has just sold a share they can buy a train between cash-price_last_share_sold and cash
+            # e.g. If you had $40 cash, and if the train costs $100 and you've sold a share for $80,
+            # you now have $120 cash the $100 train should still be available to buy
+            min_cash_to_spend = (entity.cash + entity.owner.cash) - @last_share_sold_price
             return depot_trains + (other_trains.reject { |t| t.price < min_cash_to_spend })
           end
         end
@@ -101,17 +108,12 @@ module Engine
       end
 
       def buyable_train_variants(train, entity)
-        return [] unless buyable_trains(entity).include?(train)
-
-        variants = train.variants.values
-        variants.reject! { |v| entity.cash < v[:price] } if @game.corporation_must_issue_before_ebuy?(entity)
-        variants
+        buyable_trains(entity).include?(train) ? train.variants.values : []
       end
 
       def setup
         @depot = @game.depot
         @last_share_sold_price = nil
-        @last_share_issued_price = nil
       end
 
       def issuable_shares

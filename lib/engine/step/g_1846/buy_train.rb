@@ -36,12 +36,6 @@ module Engine
           @game.emergency_issuable_bundles(entity)
         end
 
-        def can_sell?(_entity, _bundle)
-          return false if @game.corporation_must_issue_before_ebuy?(current_entity)
-
-          super
-        end
-
         def process_sell_shares(action)
           return process_issue_shares(action) if action.entity.corporation?
 
@@ -64,13 +58,6 @@ module Engine
           corporation = action.entity
           bundle = action.bundle
 
-          index = issuable_shares(corporation).index(bundle)
-          @last_share_issued_price = if index.zero?
-                                       bundle.price
-                                     else
-                                       bundle.price - issuable_shares(corporation)[index - 1].price
-                                     end
-
           if !can_issue?(corporation) || !issuable_shares(corporation).include?(bundle)
             @game.game_error("#{corporation.name} cannot issue share bundle: #{bundle.shares}")
           end
@@ -84,12 +71,6 @@ module Engine
           @round.emergency_issued = true
         end
 
-        def buyable_trains(entity)
-          trains = super
-
-          @last_share_issued_price ? trains.select(&:from_depot?) : trains
-        end
-
         def buyable_train_variants(train, entity)
           variants = super
 
@@ -97,13 +78,7 @@ module Engine
 
           cash = entity.cash
           min, max = variants.sort_by { |v| v[:price] }
-          return [min] if ((min[:price] <= cash) && (cash < max[:price])) || entity.receivership?
-
-          if (last_cash_raised = @last_share_sold_price || @last_share_issued_price)
-            min_cash_to_spend = entity.cash - last_cash_raised + 1
-            min_cash_to_spend += entity.owner.cash if @last_share_sold_price
-            return variants.reject { |v| v[:price] < min_cash_to_spend }
-          end
+          return [min] if (min[:price] <= cash) && (cash < max[:price])
 
           variants
         end
