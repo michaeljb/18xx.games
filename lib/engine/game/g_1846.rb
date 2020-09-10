@@ -33,6 +33,7 @@ module Engine
       SELL_MOVEMENT = :left_block_pres
       EBUY_OTHER_VALUE = false
       EBUY_DEPOT_TRAIN_MUST_BE_CHEAPEST = false
+      EBUY_MUST_EMERGENCY_ISSUE_FIRST = true
       HOME_TOKEN_TIMING = :float
       MUST_BUY_TRAIN = :always
 

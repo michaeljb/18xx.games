@@ -127,9 +127,11 @@ module Engine
 
       TRACK_RESTRICTION = :semi_restrictive
 
+      # ebuy = presidential cash is contributed
       EBUY_PRES_SWAP = true # allow presidential swaps of other corps when ebuying
       EBUY_OTHER_VALUE = true # allow ebuying other corp trains for up to face
-      EBUY_DEPOT_TRAIN_MUST_BE_CHEAPEST = true
+      EBUY_DEPOT_TRAIN_MUST_BE_CHEAPEST = true # if ebuying from depot, must buy cheapest train
+      EBUY_MUST_EMERGENCY_ISSUE_FIRST = false # corporation must issue shares before ebuy (if possible)
 
       # when is the home token placed? on...
       # operate
@@ -757,6 +759,22 @@ module Engine
         @corporations.map! { |c| c.id == corporation.id ? corporation : c }
         @_corporations[corporation.id] = corporation
         corporation.shares.each { |share| @_shares[share.id] = share }
+      end
+
+      def emergency_issuable_bundles(_corporation)
+        []
+      end
+
+      def corporation_must_issue_before_ebuy?(corporation)
+        self.class::EBUY_MUST_EMERGENCY_ISSUE_FIRST &&
+          !active_step.last_share_issued_price &&
+          emergency_issuable_bundles(corporation).any?
+      end
+
+      def ebuy_president_can_contribute?(corporation)
+        return false unless corporation.cash < @depot.min_depot_price
+
+        !corporation_must_issue_before_ebuy?(corporation)
       end
 
       private

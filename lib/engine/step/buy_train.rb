@@ -8,6 +8,8 @@ module Engine
     class BuyTrain < Base
       include Train
 
+      attr_accessor :last_share_issued_price
+
       def actions(entity)
         # 1846 and a few others minors can't buy trains
         return [] if entity.minor?
@@ -37,6 +39,7 @@ module Engine
 
       def pass!
         @last_share_sold_price = nil
+        @last_share_issued_price = nil
         super
       end
 
