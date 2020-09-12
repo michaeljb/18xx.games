@@ -769,6 +769,16 @@ module Engine
         []
       end
 
+      def can_go_bankrupt?(player, corporation)
+        total_buying_power(player, corporation) < @depot.min_depot_price
+      end
+
+      def total_buying_power(player, corporation)
+        corporation.cash +
+          (emergency_issuable_bundles(corporation).max_by(&:num_shares)&.price || 0) +
+          liquidity(player, emergency: true)
+      end
+
       private
 
       def init_bank

@@ -249,6 +249,10 @@ module Engine
         super
       end
 
+      def can_go_bankrupt?(_player, _corporation)
+        false
+      end
+
       private
 
       def rust(train, salvage)

@@ -40,6 +40,8 @@ module View
                         " #{@game.format_currency(@depot.min_depot_price - @corporation.cash)}")
         end
 
+        children << render_bankruptcy if @game.can_go_bankrupt?(player, @corporation)
+
         children
       end
 
