@@ -32,142 +32,20 @@ def repair(game, original_actions, actions, broken_action)
   next_actions = actions[action_idx + 1..]
   next_action = next_actions.find { |a| !optionalish_actions.include?(a['type']) }
   puts broken_action
-  if broken_action['type'] == 'move_token'
-    # Move token is now place token.
-    broken_action['type'] = 'place_token'
-    return [broken_action]
-  elsif game.active_step.is_a?(Engine::Step::G1817::Acquire)
-    pass = Engine::Action::Pass.new(game.active_step.current_entity).to_h
-    actions.insert(action_idx, pass)
-    return
-  elsif game.active_step.is_a?(Engine::Step::G1889::SpecialTrack)
-    # laying track for Ehime Railway didn't always block, now it needs an
-    # explicit pass
-    if broken_action['entity'] != 'ER'
-      pass = Engine::Action::Pass.new(game.active_step.current_entity).to_h
-      actions.insert(action_idx, pass)
-      return
-    end
-  elsif broken_action['type'] == 'pass'
-    if game.active_step.is_a?(Engine::Step::Route) || game.active_step.is_a?(Engine::Step::BuyTrain)
-      # Lay token sometimes needed pass when it shouldn't have
-      actions.delete(broken_action)
-      return
-    end
-    if game.active_step.is_a?(Engine::Step::Track)
-      # some games of 1889 didn't skip buy train
-      actions.delete(broken_action)
-      return
-    end
-    if game.active_step.is_a?(Engine::Step::BuySellParShares)
-      # some games of 1889 didn't skip the buy companies step correctly
-      actions.delete(broken_action)
-      return
-    end
-    if game.active_step.is_a?(Engine::Step::IssueShares)
-      # some 1846 pass too much
-      actions.delete(broken_action)
-      return
-    end
-    if game.is_a?(Engine::Game::G1836Jr30)
-      # Shouldn't need to pass when buying trains
-      if prev_action['type'] == 'buy_train'
-        # Delete the pass
-        actions.delete(broken_action)
-        return
-      end
-    end
-  elsif broken_action['type'] == 'lay_tile'
-    if game.active_step.is_a?(Engine::Step::BuyCompany)
-      pass = Engine::Action::Pass.new(game.active_step.current_entity).to_h
-      actions.insert(action_idx, pass)
-      return
-    end
-    if game.active_step.is_a?(Engine::Step::BuyTrain) && game.active_step.actions(game.active_step.current_entity).include?('pass')
-      pass = Engine::Action::Pass.new(game.active_step.current_entity).to_h
-      actions.insert(action_idx, pass)
-      return
-    end
-    if game.active_step.is_a?(Engine::Step::IssueShares)
-      pass = Engine::Action::Pass.new(game.active_step.current_entity).to_h
-      actions.insert(action_idx, pass)
-      return
-    end
-    puts prev_action
-    if game.active_step.is_a?(Engine::Step::Route) and prev_action['type'] == 'pass'
-      actions.delete(prev_action)
-      return
-    end
-    if game.active_step.is_a?(Engine::Step::Token) and prev_action['type'] == 'pass'
-      actions.delete(prev_action)
-      return
-    end
 
-  elsif broken_action['type'] == 'buy_train'
-    if prev_action['type'] == 'pass' && game.active_step.is_a?(Engine::Step::Track)
-      # Remove the pass, as it was probably meant for a token
-      actions.delete(prev_action)
+  # issue #2032 only
+  if game.class.title == '18GA'
+    # new logic for token abilities doesn't present it as available if the hex
+    # it can use is already occupied by the owning corporation, thus eliminating
+    # the need for a manual pass on the token step when there isn't actually a
+    # token action available
+    if broken_action['type'] == 'pass' && game.active_step.is_a?(Engine::Step::Route)
+      actions.delete(broken_action)
       return
     end
-    if game.active_step.is_a?(Engine::Step::DiscardTrain) && next_action['type'] == 'discard_train'
-      return switch_actions(original_actions, broken_action, next_action)
-    end
-    if game.active_step.is_a?(Engine::Step::Track)
-      pass = Engine::Action::Pass.new(game.active_step.current_entity).to_h
-      actions.insert(action_idx, pass)
-      return
-    end
-    if game.active_step.is_a?(Engine::Step::Token)
-      pass = Engine::Action::Pass.new(game.active_step.current_entity).to_h
-      actions.insert(action_idx, pass)
-      return
-    end
-    if game.active_step.is_a?(Engine::Step::BuyCompany) && prev_action['type'] == 'pass'
-      actions.delete(prev_action)
-      return
-    end
-  elsif broken_action['type'] == 'run_routes'
-    if game.active_step.is_a?(Engine::Step::Dividend) && prev_action['type'] == 'run_routes'
-      actions.delete(prev_action)
-      return
-    end
-    if game.active_step.is_a?(Engine::Step::Track)
-      pass = Engine::Action::Pass.new(game.active_step.current_entity).to_h
-      actions.insert(action_idx, pass)
-      return
-    end
-    if game.active_step.is_a?(Engine::Step::Token)
-      pass = Engine::Action::Pass.new(game.active_step.current_entity).to_h
-      actions.insert(action_idx, pass)
-      return
-    end
-  elsif broken_action['type']=='place_token' &&
-    ['D6-0-3','298-0-2'].include?(broken_action['city']) &&
-    game.companies.find { |company| company.name == 'Chicago and Western Indiana' }&.owner == game.active_step.current_entity
-    # Move token lay from corp to private
-    broken_action['entity'] = 'C&WI'
-    broken_action['entity_type'] = 'company'
-    return [broken_action]
-  elsif game.active_step.is_a?(Engine::Step::Token)
+  elsif game.active_step.is_a?(Engine::Step::G1846::BuyCompany)
     pass = Engine::Action::Pass.new(game.active_step.current_entity).to_h
     actions.insert(action_idx, pass)
-    return
-
-  elsif game.active_step.is_a?(Engine::Step::TrackAndToken)
-    if ['buy_shares','sell_shares'].include?(broken_action['type']) and prev_action['type'] == 'pass'
-      # Stray pass from buy companies
-      actions.delete(prev_action)
-      return
-    end
-    pass = Engine::Action::Pass.new(game.active_step.current_entity).to_h
-    actions.insert(action_idx, pass)
-    return
-  elsif game.active_step.is_a?(Engine::Step::IssueShares) && broken_action['type']=='buy_company'
-    # Stray pass from buy trains
-    actions.delete(prev_action)
-    return
-  elsif broken_action['type'] == 'dividend' and broken_action['entity_type'] == 'minor'
-    actions.delete(broken_action)
     return
   end
 
