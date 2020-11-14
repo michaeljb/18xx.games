@@ -43,7 +43,7 @@ def repair(game, original_actions, actions, broken_action)
       actions.delete(broken_action)
       return
     end
-  elsif game.active_step.is_a?(Engine::Step::G1846::BuyCompany)
+  else
     pass = Engine::Action::Pass.new(game.active_step.current_entity).to_h
     actions.insert(action_idx, pass)
     return
