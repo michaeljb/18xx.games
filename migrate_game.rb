@@ -33,19 +33,19 @@ def repair(game, original_actions, actions, broken_action)
   next_action = next_actions.find { |a| !optionalish_actions.include?(a['type']) }
   puts broken_action
 
-  # issue #2032 only
-  if game.class.title == '18GA'
-    # new logic for token abilities doesn't present it as available if the hex
-    # it can use is already occupied by the owning corporation, thus eliminating
-    # the need for a manual pass on the token step when there isn't actually a
-    # token action available
-    if broken_action['type'] == 'pass' && game.active_step.is_a?(Engine::Step::Route)
-      actions.delete(broken_action)
-      return
-    end
+  if game.active_step.nil?
+    raise Exception, "No active game step found for http://18xx.games/game/#{game.id}?action=#{action}"
+  elsif broken_action['type'] == 'pass' && game.active_step.is_a?(Engine::Step::Route)
+    actions.delete(broken_action)
+    return
   else
-    pass = Engine::Action::Pass.new(game.active_step.current_entity).to_h
-    actions.insert(action_idx, pass)
+    key_action = prev_actions.reverse.find { |a| %w[dividend buy_train buy_company].include?(a['type']) }
+    corporation = game.corporation_by_id(key_action['entity'])
+
+    pass = Engine::Action::Pass.new(corporation).to_h
+    index = actions.index(key_action) + 1
+
+    actions.insert(index, pass)
     return
   end
 
