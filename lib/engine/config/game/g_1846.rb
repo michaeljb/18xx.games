@@ -189,6 +189,7 @@ module Engine
       "abilities": [
         {
           "type": "token",
+          "description": "Free, extra token in Chicago (D6), in city next to E7",
           "when": "owning_corp_or_turn",
           "owner_type":"corporation",
           "hexes": [
@@ -219,6 +220,10 @@ module Engine
           "type": "close",
           "when": "never",
           "owner_type": "corporation"
+        },
+        {
+           "type": "base",
+           "description": "Earns $10 extra per location visited by one train"
         }
       ]
     },
@@ -246,6 +251,7 @@ module Engine
       "abilities": [
         {
           "type": "assign_hexes",
+          "description": "Assign to St. Louis (I1) or Chicago (D6) to earn $30 extra on routes there",
           "when": "owning_corp_or_turn",
           "hexes": [
             "I1",
@@ -316,6 +322,7 @@ module Engine
       "abilities": [
         {
            "type":"tile_lay",
+           "description": "Free, extra tile upgrade in either Cleveland (E17) or Toledo (D14)",
            "when": "owning_corp_or_turn",
            "owner_type":"corporation",
            "free":true,
@@ -353,6 +360,7 @@ module Engine
         },
         {
            "type":"tile_lay",
+           "description": "Free, extra tile lays in B10, B12",
            "when": "owning_corp_or_turn",
            "owner_type":"corporation",
            "free":true,
@@ -388,6 +396,7 @@ module Engine
         },
         {
            "type":"tile_lay",
+           "description": "Free, extra tile lays in F14, F16",
            "when": "owning_corp_or_turn",
            "owner_type":"corporation",
            "free":true,
@@ -442,18 +451,20 @@ module Engine
       ],
       "abilities": [
         {
+          "type": "reservation",
+          "description": "Reservation in Fort Wayne (E11)",
+          "hex": "E11",
+          "remove": "IV"
+        },
+        {
           "type": "token",
-          "description": "Reserved $40/$60 Ft. Wayne (E11) token",
+          "description": "Discount token in Fort Wayne (E11): $40 if connected, $60 to teleport",
+          "passive": true,
           "hexes": [
             "E11"
           ],
           "price": 40,
           "teleport_price": 60
-        },
-        {
-          "type": "reservation",
-          "hex": "E11",
-          "remove": "IV"
         }
       ],
       "coordinates": "F20",
@@ -488,19 +499,21 @@ module Engine
       ],
       "abilities": [
         {
+          "type": "reservation",
+          "description": "Reservation in Cincinnati (H12)",
+          "hex": "H12",
+          "remove": "IV"
+        },
+        {
           "type": "token",
-          "description": "Reserved $40/$100 Cincinnati (H12) token",
+          "description": "Discount token in Cincinnati (H12): $40 if connected, $100 to teleport",
+          "passive": true,
           "hexes": [
             "H12"
           ],
           "price": 40,
           "count": 1,
           "teleport_price": 100
-        },
-        {
-          "type": "reservation",
-          "hex": "H12",
-          "remove": "IV"
         }
       ],
       "coordinates": "G19",
@@ -536,19 +549,21 @@ module Engine
       ],
       "abilities": [
         {
+          "type": "reservation",
+          "description": "Reservation in Erie (D20)",
+          "hex": "D20",
+          "slot": 1,
+          "remove": "IV"
+        },
+        {
           "type": "token",
-          "description": "Reserved $40 Erie (D20) token",
+          "description": "Discount token in Erie (D20): $40 if connected",
+          "passive": true,
           "hexes": [
             "D20"
           ],
           "count": 1,
           "price": 40
-        },
-        {
-          "type": "reservation",
-          "hex": "D20",
-          "slot": 1,
-          "remove": "IV"
         }
       ],
       "coordinates": "E21",
@@ -582,26 +597,15 @@ module Engine
         80
       ],
       "abilities": [
-         {
-            "type":"tile_lay",
-            "free":true,
-            "description": "Free tile lay: E5, F6, G5, H6, J4",
-            "hexes":[
-               "E5",
-               "F6",
-               "G5",
-               "H6",
-               "J4"
-            ],
-            "tiles": [
-              "7",
-              "8",
-              "9"
-            ]
+        {
+           "type": "base",
+           "description": "Receives subsidy equal to its par price",
+           "remove": "par"
         },
         {
           "type": "token",
-          "description": "Reserved $40 Centralia (I5) token",
+          "description": "Discount token in Centralia (I5): $40 if connected",
+          "passive": true,
           "hexes": [
             "I5"
           ],
@@ -610,14 +614,27 @@ module Engine
         },
         {
           "type": "reservation",
+          "description": "Reservation in Centralia (I5)",
           "hex": "I5",
-
           "remove": "IV"
         },
         {
-           "type": "base",
-           "description": "Receives subsidy equal to its par price",
-           "remove": "par"
+          "type":"tile_lay",
+          "free":true,
+          "description": "Free tile lay: E5, F6, G5, H6, J4",
+          "passive": true,
+          "hexes":[
+            "E5",
+            "F6",
+            "G5",
+            "H6",
+            "J4"
+          ],
+          "tiles": [
+            "7",
+            "8",
+            "9"
+          ]
         }
       ],
       "coordinates": "K3",

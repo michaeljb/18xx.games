@@ -54,9 +54,7 @@ module View
           children << h(Companies, owner: @corporation, game: @game) if @corporation.companies.any?
         end
 
-        abilities_to_display = @corporation.all_abilities.select do |ability|
-          ability.owner.corporation? && ability.description
-        end
+        abilities_to_display = @corporation.all_abilities.select(&:description)
         children << render_abilities(abilities_to_display) if abilities_to_display.any?
 
         extras = []
@@ -431,20 +429,50 @@ module View
       end
 
       def render_abilities(abilities)
-        attribute_lines = abilities.map do |ability|
-          h('div.nowrap.inline-block', ability.description)
+        ability_lines = abilities.map do |ability|
+          description =
+            if ability.owner.company?
+              company = ability.owner
+              "#{company.sym}: #{ability.description}"
+            else
+              company = nil
+              ability.description
+            end
+
+          children = [description]
+
+          if company&.player == @game.current_entity.player && !ability.passive
+            use = lambda do |event|
+              store(:selected_company, @selected_company == company ? nil : company) if company
+              event.JS.stopPropagation
+            end
+            text = @selected_company == company ? 'Cancel' : 'Use'
+            button_props = {
+              on: { click: use },
+              style: { padding: '2px 5px', 'margin-right': '5px' },
+            }
+            children.unshift(h('button', button_props, text))
+          end
+
+          h('li', children)
         end
 
         table_props = {
           style: {
             padding: '0.5rem',
-            justifyContent: 'center',
           },
         }
 
-        h('div#attribute_table', table_props, [
-          h('div.bold', 'Ability'),
-          *attribute_lines,
+        ul_props = {
+          style: {
+            margin: '0',
+            padding: '0 0 0 15px',
+          },
+        }
+
+        h('div#ability_table', table_props, [
+          h('div.bold', 'Abilities'),
+          h(:ul, ul_props, ability_lines),
         ])
       end
 

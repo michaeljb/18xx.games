@@ -18,6 +18,11 @@ module View
 
         current, others = companies.partition { |company| @game.current_entity.player == company.player }
 
+        if @game.current_entity.corporation?
+          current = current.reject { |company| company.owner == @game.current_entity }
+        end
+        return h(:div) if current.empty? && others.empty?
+
         children = [
           h('h3.inline', { style: { marginRight: '0.5rem' } }, 'Abilities:'),
           *render_companies(current),

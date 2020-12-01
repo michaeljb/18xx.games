@@ -7,8 +7,9 @@ module Engine
     class AssignHexes < Base
       attr_reader :hexes
 
-      def setup(hexes:)
+      def setup(hexes:, passive: nil)
         @hexes = hexes
+        @passive = passive || false
       end
     end
   end

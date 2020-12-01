@@ -8,7 +8,7 @@ module Engine
       attr_reader :hexes, :tiles, :free, :discount, :special, :connect, :blocks, :reachable, :must_lay_together, :cost
 
       def setup(tiles:, hexes: nil, free: false, discount: nil, special: nil,
-                connect: nil, blocks: nil, reachable: nil, must_lay_together: false, cost: 0)
+                connect: nil, blocks: nil, reachable: nil, must_lay_together: false, cost: 0, passive: nil)
         @hexes = hexes
         @tiles = tiles
         @free = free
@@ -19,6 +19,7 @@ module Engine
         @reachable = !!reachable
         @must_lay_together = must_lay_together
         @cost = cost
+        @passive = passive || false
       end
     end
   end

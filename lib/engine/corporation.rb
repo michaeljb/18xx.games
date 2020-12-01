@@ -174,7 +174,7 @@ module Engine
     end
 
     def all_abilities
-      @companies.flat_map(&:all_abilities) + @abilities
+      @abilities + @companies.flat_map(&:all_abilities)
     end
 
     def remove_ability(ability)

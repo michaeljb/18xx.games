@@ -10,7 +10,7 @@ module Engine
       include Ownable
 
       attr_accessor :count_this_or, :description
-      attr_reader :type, :owner_type, :remove, :when, :count, :count_per_or, :start_count
+      attr_reader :type, :owner_type, :remove, :when, :count, :count_per_or, :start_count, :passive
 
       def initialize(type:, description: nil, owner_type: nil, count: nil, remove: nil,
                      count_per_or: nil, **opts)
@@ -24,6 +24,7 @@ module Engine
         @used = false
         @remove = remove&.to_s
         @start_count = @count
+        @passive = true
 
         setup(**opts)
       end

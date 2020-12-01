@@ -10,7 +10,7 @@ module Engine
 
       def setup(hexes:, price: nil, teleport_price: nil, extra: nil,
                 from_owner: nil, discount: nil, city: nil, neutral: nil,
-                cheater: nil)
+                cheater: nil, passive: nil)
         @hexes = hexes
         @price = price
         @teleport_price = teleport_price
@@ -20,6 +20,7 @@ module Engine
         @city = city
         @neutral = neutral || false
         @cheater = cheater || false
+        @passive = passive || false
       end
 
       def price(token = nil)
