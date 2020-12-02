@@ -272,6 +272,7 @@ module Engine
         },
         {
           "type": "tile_lay",
+          "description": "Free, extra tile lays in H2, I3",
           "owner_type": "corporation",
           "must_lay_together": true,
           "hexes": [
