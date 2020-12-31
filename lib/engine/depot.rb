@@ -130,5 +130,9 @@ module Engine
     def empty?
       depot_trains.empty?
     end
+
+    def player
+      nil
+    end
   end
 end

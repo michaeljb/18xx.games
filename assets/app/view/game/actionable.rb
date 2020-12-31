@@ -31,6 +31,11 @@ module View
         @participant = (@game.players.map(&:id) + [@game_data['user']['id']]).include?(@user&.dig('id'))
       end
 
+      def valid_actor?(action)
+        @valid_actors = @game.valid_actors(action)
+        @valid_actors.map(&:id).include?(@user['id'])
+      end
+
       def process_action(action)
         hotseat = @game_data[:mode] == :hotseat
 
@@ -47,15 +52,30 @@ module View
         end
 
         if !hotseat &&
-          !action.free? &&
-          participant? &&
-          !@game.active_players_id.include?(@user['id'])
-
-          unless Lib::Storage[@game.id]&.dig('master_mode')
-            return store(:flash_opts, 'Not your turn. Turn on master mode under the Tools menu to act for others.')
+           !action.free? &&
+           participant? &&
+           !valid_actor?(action)
+          if Lib::Storage[@game.id]&.dig('master_mode')
+            action.user = @user['id']
+          else
+            msg =
+              if @game.active_players_id.include?(@user['id'])
+                if @valid_actors.empty?
+                  "This action requires the permission of another player. Once "\
+                  "you have confirmed permission with the player via the chat "\
+                  "box or other communication, turn on master mode under the "\
+                  "Tools menu to complete this action."
+                else
+                  "Only #{@valid_actors.map(&:name).join(' and ')} "\
+                  'may perform that action. Turn on master mode under the Tools '\
+                  'menu to act for others.'
+                end
+              else
+                'Not your turn. Turn on master mode under the Tools menu to act '\
+                'for others.'
+              end
+            return store(:flash_opts, msg)
           end
-
-          action.user = @user['id']
         end
 
         game = @game.process_action(action)

@@ -520,6 +520,29 @@ module Engine
         active_players.map(&:id)
       end
 
+      def valid_actors(action)
+        player = action.entity.player
+
+        case action
+        when Action::Undo
+          filtered_actions, _active_undos = self.class.filtered_actions(@actions)
+          valid_actors(filtered_actions.compact.last)
+        when Action::BuyCompany
+          valid_actors_with_agreement(player, action.company.player)
+        when Action::BuyTrain
+          valid_actors_with_agreement(player, action.train.player)
+        when Action::BuySpecial
+          valid_actors_with_agreement(player, action.item.player)
+        else
+          Array(player || active_players)
+        end
+      end
+
+      # no valid actors means master mode is required
+      def valid_actors_with_agreement(player, other_player)
+        (!other_player || (player == other_player)) ? [player] : []
+      end
+
       def self.filtered_actions(actions)
         active_undos = []
         filtered_actions = Array.new(actions.size)

@@ -46,10 +46,19 @@ module Engine
       end
 
       def active_players
-        return super if @finished
+        !@finished && ehime_seller(current_entity) || super
+      end
 
-        company = company_by_id('ER')
-        current_entity == company ? [@round.company_sellers[company]] : super
+      def valid_actors(action)
+        ehime_seller(action.entity) || super
+      end
+
+      def ehime_seller(entity)
+        (entity == ehime_railway) && [@round.company_sellers[ehime_railway]]
+      end
+
+      def ehime_railway
+        @ehime_railway ||= company_by_id('ER')
       end
     end
   end
