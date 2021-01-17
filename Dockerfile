@@ -11,5 +11,5 @@ RUN if [ "$RACK_ENV" = "production" ]; \
     bundle install;
 COPY . .
 
-CMD bundle exec rake dev_up && \
+CMD bundle exec rake prod_up && \
     bundle exec rerun --background -i 'build/*' -i 'public/*' 'unicorn -c config/unicorn.rb'

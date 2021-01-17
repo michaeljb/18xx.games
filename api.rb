@@ -88,7 +88,7 @@ class Api < Roda
   end
 
   route do |r|
-    r.public unless PRODUCTION
+    r.public
 
     r.hash_branches
 

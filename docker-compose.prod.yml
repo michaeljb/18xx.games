@@ -15,7 +15,7 @@ x-rack: &rack
       RACK_ENV: production
     context: .
   volumes:
-    - ./public:/18xx/public
+    - .:/18xx
   depends_on:
     - db
     - redis
@@ -26,6 +26,8 @@ x-rack: &rack
 services:
   rack:
     <<: *rack
+    ports:
+      - 9292:9292
 
   rack_backup:
     <<: *rack
@@ -39,19 +41,3 @@ services:
       - POSTGRES_USER
       - POSTGRES_PASSWORD
       - POSTGRES_DB
-
-  nginx:
-    build: ./nginx/
-    ports:
-      - 80:80
-      - 443:443
-      - 127.0.0.1:8080:8080
-    volumes:
-      - ./public:/public
-      - /etc/18xxgames/ssl:/etc/18xxgames/ssl
-    depends_on:
-      - rack
-      - rack_backup
-    logging:
-      options:
-        max-size: "300m"

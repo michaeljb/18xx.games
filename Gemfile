@@ -20,9 +20,10 @@ gem 'uglifier'
 gem 'unicorn'
 gem 'unicorn-worker-killer'
 
+gem 'pry-byebug'
+gem 'rerun'
+
 group :development do
-  gem 'pry-byebug'
-  gem 'rerun'
   gem 'rubocop'
   gem 'sequel-annotate'
   gem 'stackprof'

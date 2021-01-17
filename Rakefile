@@ -92,7 +92,9 @@ end
 desc 'Precompile assets for production'
 task :precompile do
   require_relative 'lib/assets'
-  bundle = Assets.new(cache: false, make_map: false, compress: true, gzip: true).combine
+  bundle = Assets.new(cache: true, make_map: false, compress: false, gzip: true).combine
+
+  # TODO: fix (and figure out) pin stuff
 
   # Copy to the pin directory
   git_rev = `git rev-parse --short HEAD`.strip
@@ -102,7 +104,8 @@ task :precompile do
     url: "https://github.com/tobymao/18xx/commit/#{git_rev}",
   ))
   FileUtils.mkdir_p(pin_dir)
-  FileUtils.cp("#{bundle}.gz", "#{pin_dir}/#{git_rev}.js.gz")
+
+  # FileUtils.cp("#{bundle}.gz", "#{pin_dir}/#{git_rev}.js.gz")
 end
 
 desc 'Profile loading data'
