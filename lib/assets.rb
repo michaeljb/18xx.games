@@ -11,11 +11,14 @@ class Assets
   OUTPUT_BASE = 'public'
   PIN_DIR = '/pinned/'
 
+  # set some instance vars
   def initialize(make_map: true, compress: false, gzip: false, cache: true, precompiled: false)
     @build_path = 'build'
     @out_path = OUTPUT_BASE + '/assets'
     @root_path = '/assets'
-    @bundle_path = "#{@out_path}/main.js"
+
+    @main_path = "#{@out_path}/main.js"
+    @opal_path = "#{@out_path}/opal.js"
 
     @cache = cache
     @make_map = make_map
@@ -24,6 +27,7 @@ class Assets
     @precompiled = precompiled
   end
 
+  # create a new MiniRacer JS Context
   def context
     @context ||= JsContext.new(combine)
   end
@@ -32,39 +36,66 @@ class Assets
     context.eval(Snabberb.html_script(script, **needs))
   end
 
-  def build
-    return [@bundle_path] if @precompiled
-
-    @build ||= [
-      compile_lib('opal'),
-      compile_lib('deps', 'assets'),
-      compile('engine', 'lib', 'engine'),
-      compile('app', 'assets/app', ''),
-    ]
+  # returns Hash of name -> strings pointing to compiled paths; compiles them
+  # iff @precompiled is false
+  def builds
+    if @precompiled
+      {
+        'opal' => {
+          'path' => @opal_path,
+          'files' => [@opal_path],
+        },
+        'main' => {
+          'path' => @main_path,
+          'files' => [@main_path],
+        },
+      }
+    else
+      @builds ||= {
+        'opal' => {
+          'path' => @opal_path,
+          'files' => [compile_lib('opal')],
+        },
+        'main' => {
+          'path' => @main_path,
+          'files' => [
+            compile_lib('deps', 'assets'),
+            compile('engine', 'lib', 'engine'),
+            compile('app', 'assets/app', ''),
+          ],
+        },
+      }
+    end
   end
 
+  # HTML: <script> tags at /assets/<file>.js for all files returned by build()
   def js_tags
-    build.map do |file|
+    builds.values.map { |v| v['files'] }.flatten.map do |file|
       file = file.gsub(@out_path, @root_path)
       %(<script type="text/javascript" src="#{file}"></script>)
     end.join
   end
 
+  # bundle all the files into main.js[.gz]; return array of paths
   def combine
     @combine ||=
       begin
-        unless @precompiled
-          source = build.map { |file| File.read(file).to_s }.join
-          if @compress
-            time = Time.now
-            source = Uglifier.compile(source, harmony: true)
-            puts "Compressing - #{Time.now - time}"
+        if @precompiled
+          [@opal_path, @main_path]
+        else
+          builds.each do |key, build|
+            source = build['files'].map { |file| File.read(file).to_s }.join
+            if @compress
+              time = Time.now
+              source = Uglifier.compile(source, harmony: true)
+              puts "Compressing - #{Time.now - time}"
+            end
+            File.write(build['path'], source)
+            Zlib::GzipWriter.open("#{build['path']}.gz") { |gz| gz.write(source) } if @gzip
           end
-          File.write(@bundle_path, source)
-          Zlib::GzipWriter.open("#{@bundle_path}.gz") { |gz| gz.write(source) } if @gzip
-        end
 
-        @bundle_path
+          [@opal_path, @main_path]
+        end
       end
   end
 
