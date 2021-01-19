@@ -104,7 +104,7 @@ class Api < Roda
       halt(404, 'Game not found') unless (game = Game[id])
 
       pin = game.settings['pin']
-      render(pin: pin, game_data: pin ? game.to_h(include_actions: true) : game.to_h)
+      render(game: game, pin: pin, game_data: pin ? game.to_h(include_actions: true) : game.to_h)
     end
   end
 
@@ -112,7 +112,7 @@ class Api < Roda
     render(pin: request.params['pin'], games: Game.home_games(user, **request.params).map(&:to_h))
   end
 
-  def render(**needs)
+  def render(game: nil, **needs)
     needs[:user] = user&.to_h(for_user: true)
 
     return render_pin(**needs) if needs[:pin]
@@ -121,7 +121,7 @@ class Api < Roda
       'Index',
       'App',
       'app',
-      javascript_include_tags: ASSETS.js_tags,
+      javascript_include_tags: ASSETS.js_tags(game&.title),
       app_route: request.path,
       **needs,
     )

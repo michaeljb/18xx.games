@@ -18,7 +18,8 @@ class Assets
     @root_path = '/assets'
 
     @main_path = "#{@out_path}/main.js"
-    @opal_path = "#{@out_path}/opal.js"
+    @deps_path = "#{@out_path}/deps.js"
+    @g_1889_path = "#{@out_path}/g_1889.js"
 
     @cache = cache
     @make_map = make_map
@@ -41,27 +42,41 @@ class Assets
   def builds
     if @precompiled
       {
-        'opal' => {
-          'path' => @opal_path,
-          'files' => [@opal_path],
+        'deps' => {
+          'path' => @deps_path,
+          'files' => [@deps_path],
         },
         'main' => {
           'path' => @main_path,
           'files' => [@main_path],
         },
+        'g_1889' => {
+          'path' => [@g_1889_path],
+          'files' => [
+            compile('g_1889', 'lib/games/g_1889', ''),
+          ],
+        },
       }
     else
       @builds ||= {
-        'opal' => {
-          'path' => @opal_path,
-          'files' => [compile_lib('opal')],
+        'deps' => {
+          'path' => @deps_path,
+          'files' => [
+            compile_lib('opal'),
+            compile_lib('deps', 'assets'),
+          ],
         },
         'main' => {
           'path' => @main_path,
           'files' => [
-            compile_lib('deps', 'assets'),
             compile('engine', 'lib', 'engine'),
             compile('app', 'assets/app', ''),
+          ],
+        },
+        'g_1889' => {
+          'path' => @g_1889_path,
+          'files' => [
+            compile('g_1889', 'lib/games/g_1889', ''),
           ],
         },
       }
@@ -69,8 +84,13 @@ class Assets
   end
 
   # HTML: <script> tags at /assets/<file>.js for all files returned by build()
-  def js_tags
+  def js_tags(*titles)
     builds.values.map { |v| v['files'] }.flatten.map do |file|
+      if file =~ /\bg_/
+        next unless titles.any? do |title|
+          file =~ /\bg_#{title}()/
+        end
+      end
       file = file.gsub(@out_path, @root_path)
       %(<script type="text/javascript" src="#{file}"></script>)
     end.join
@@ -81,9 +101,9 @@ class Assets
     @combine ||=
       begin
         if @precompiled
-          [@opal_path, @main_path]
+          [@deps_path, @main_path, @g_1889_path]
         else
-          builds.each do |key, build|
+          builds.each do |_key, build|
             source = build['files'].map { |file| File.read(file).to_s }.join
             if @compress
               time = Time.now
@@ -94,7 +114,7 @@ class Assets
             Zlib::GzipWriter.open("#{build['path']}.gz") { |gz| gz.write(source) } if @gzip
           end
 
-          [@opal_path, @main_path]
+          [@deps_path, @main_path, @g_1889_path]
         end
       end
   end

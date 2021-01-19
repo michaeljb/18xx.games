@@ -67,7 +67,7 @@ module Engine
 
       actions = actions.take(at_action) if at_action
 
-      Engine::GAMES_BY_TITLE[title].new(
+      Engine.game_by_title(title).new(
         names, id: id, actions: actions, pin: pin, optional_rules: optional_rules, **kwargs
       )
     end

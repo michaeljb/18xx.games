@@ -1,12 +1,16 @@
 # frozen_string_literal: true
 
-require_relative '../config/game/g_1889'
-require_relative '../step/g_1889/special_track'
-require_relative 'base'
+if RUBY_ENGINE == 'opal'
+else
+  require_relative '../../engine/game/base'
+end
+
+require_relative 'g_1889_config'
+require_relative 'special_track'
 
 module Engine
   module Game
-    class G1889 < Base
+    class G1889 < Engine::Game::Base
       register_colors(black: '#37383a',
                       orange: '#f48221',
                       brightGreen: '#76a042',
