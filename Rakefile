@@ -90,12 +90,12 @@ task 'annotate' do
 end
 
 desc 'Precompile assets for production'
-task :precompile, [:cache, :compress] do |task, args|
+task :precompile, [:cache, :compress] do |_task, args|
   cache = args[:cache].nil? ? false : (args[:cache] == 'true')
   compress = args[:compress].nil? ? true : (args[:compress] == 'true')
 
   require_relative 'lib/assets'
-  bundle = Assets.new(cache: cache, make_map: false, compress: true, gzip: true).combine
+  bundle = Assets.new(cache: cache, make_map: false, compress: compress, gzip: true).combine
 
   # TODO: fix (and figure out) pin stuff
 

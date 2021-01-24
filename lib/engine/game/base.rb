@@ -322,7 +322,10 @@ module Engine
       def optional_tiles; end
 
       def self.title
-        name.split('::').last.slice(1..-1)
+        parts = name.split('::')
+        last = parts.last
+        second_last = parts[-2]
+        (last == 'Game' ? second_last : last).slice(1..-1)
       end
 
       def self.<=>(other)

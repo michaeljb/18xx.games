@@ -1,16 +1,12 @@
 # frozen_string_literal: true
 
-if RUBY_ENGINE == 'opal'
-else
-  require_relative '../../engine/game/base'
-end
-
-require_relative 'g_1889_config'
-require_relative 'special_track'
+require_relative '../game/base'
+require_relative 'config'
+require_relative 'step/special_track'
 
 module Engine
-  module Game
-    class G1889 < Engine::Game::Base
+  module G1889
+    class Game < Game::Base
       register_colors(black: '#37383a',
                       orange: '#f48221',
                       brightGreen: '#76a042',
@@ -19,7 +15,7 @@ module Engine
                       blue: '#0189d1',
                       brown: '#7b352a')
 
-      load_from_json(Config::Game::G1889::JSON)
+      load_from_json(G1889::Config::JSON)
 
       DEV_STAGE = :production
 
@@ -37,7 +33,7 @@ module Engine
         Round::Operating.new(self, [
           Step::Bankrupt,
           Step::Exchange,
-          Step::G1889::SpecialTrack,
+          G1889::Step::SpecialTrack,
           Step::BuyCompany,
           Step::Track,
           Step::Token,

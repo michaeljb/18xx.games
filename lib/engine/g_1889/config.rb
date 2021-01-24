@@ -5,10 +5,9 @@
 # rubocop:disable Lint/RedundantCopDisableDirective, Layout/LineLength, Layout/HeredocIndentation
 
 module Engine
-  module Config
-    module Game
-      module G1889
-        JSON = <<-'DATA'
+  module G1889
+    module Config
+      JSON = <<-'DATA'
 {
   "filename": "1889",
   "modulename": "1889",
@@ -656,8 +655,7 @@ module Engine
     }
   ]
 }
-        DATA
-      end
+      DATA
     end
   end
 end

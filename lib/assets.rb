@@ -7,6 +7,8 @@ require 'zlib'
 
 require_relative 'js_context'
 
+require 'pry-byebug'
+
 class Assets
   OUTPUT_BASE = 'public'
   PIN_DIR = '/pinned/'
@@ -51,10 +53,8 @@ class Assets
           'files' => [@main_path],
         },
         'g_1889' => {
-          'path' => [@g_1889_path],
-          'files' => [
-            compile('g_1889', 'lib/games/g_1889', ''),
-          ],
+          'path' => @g_1889_path,
+          'files' => [@g_1889_path],
         },
       }
     else
@@ -76,7 +76,7 @@ class Assets
         'g_1889' => {
           'path' => @g_1889_path,
           'files' => [
-            compile('g_1889', 'lib/games/g_1889', ''),
+            compile('g_1889', 'lib/engine', 'g_1889'),
           ],
         },
       }
@@ -104,12 +104,18 @@ class Assets
           [@deps_path, @main_path, @g_1889_path]
         else
           builds.each do |_key, build|
+            # binding.pry
             source = build['files'].map { |file| File.read(file).to_s }.join
             if @compress
               time = Time.now
               source = Uglifier.compile(source, harmony: true)
               puts "Compressing - #{Time.now - time}"
             end
+
+            if _key == 'g_1889'
+              # binding.pry
+            end
+
             File.write(build['path'], source)
             Zlib::GzipWriter.open("#{build['path']}.gz") { |gz| gz.write(source) } if @gzip
           end
@@ -132,10 +138,18 @@ class Assets
   end
 
   def compile(name, lib_path, ns = nil)
+    puts "\n\n\ncompile(#{name}, #{lib_path}, #{ns})"
     output = "#{@out_path}/#{name}.js"
     metadata = lib_metadata(ns || name, lib_path)
 
+    puts "    metadata.keys = #{metadata.keys}"
+
     compilers = metadata.map do |file, opts|
+      if name =~ /1889/
+        require 'pry-byebug'
+        # binding.pry
+      end
+
       FileUtils.mkdir_p(opts[:build_path])
       js_path = opts[:js_path]
       next if @cache && File.exist?(js_path) && File.mtime(js_path) >= opts[:mtime]
@@ -143,7 +157,14 @@ class Assets
       Opal::Compiler.new(File.read(opts[:path]), file: file, requirable: true)
     end.compact
 
-    return output if compilers.empty?
+    if compilers.empty?
+
+      if name =~ /1889/
+        puts 'compilers empty'
+      end
+
+      return output
+    end
 
     if @make_map
       sm_path = "#{@build_path}/#{name}.json"
@@ -155,6 +176,9 @@ class Assets
       raise "#{file} not found put in deps." unless (opts = metadata[file])
 
       time = Time.now
+      if name =~ /1889/
+        # binding.pry
+      end
       File.write(opts[:js_path], compiler.compile)
       puts "Compiling #{file} - #{Time.now - time}"
       next unless @make_map
@@ -196,6 +220,11 @@ class Assets
     end.join("\n")
     source += "\nOpal.load('#{name}')"
     source += to_data_uri_comment(source_map) if @make_map
+
+    if name =~ /1889/
+      # binding.pry
+    end
+
     File.write(output, source)
     output
   end
@@ -205,6 +234,8 @@ class Assets
 
     Dir["#{lib_path}/**/*.rb"].each do |file|
       next unless file.start_with?("#{lib_path}/#{ns}")
+
+      next if (ns !~ /\bg_/) && (file =~ /\bg_1889/)
 
       mtime = File.new(file).mtime
       path = file.split('/')[0..-2].join('/')

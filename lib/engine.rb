@@ -8,17 +8,18 @@ else
 end
 
 module Engine
-  #  GAMES = Game.constants.map do |c|
-  #    klass = Game.const_get(c)
-  #    next if !klass.is_a?(Class) || klass == Game::Base
-  #
-  #  klass
-  # end.compact
+  GAMES = Game.constants.map do |c|
+    klass = Game.const_get(c)
+    next if !klass.is_a?(Class) || klass == Game::Base
+    klass
+  end.compact
+  GAMES.concat(Engine.constants.select { |c| c =~ /^G18/ }.map { |c| Engine.const_get(c) }
+                 .flat_map { |c| c.constants.select { |cc| cc == :Game }.map { |cc| c.const_get(cc)} })
 
   # Games that are alpha or above
-  # VISIBLE_GAMES = GAMES.select { |game| %i[alpha beta production].include?(game::DEV_STAGE) }
+  VISIBLE_GAMES = GAMES.select { |game| %i[alpha beta production].include?(game::DEV_STAGE) }
 
-  # GAMES_BY_TITLE = GAMES.map { |game| [game.title, game] }.to_h
+  GAMES_BY_TITLE = GAMES.map { |game| [game.title, game] }.to_h
 
   def self.game_by_title(title)
     if RUBY_ENGINE != 'opal'
