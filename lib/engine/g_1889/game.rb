@@ -1,12 +1,19 @@
 # frozen_string_literal: true
 
-require_relative '../game/base'
+if RUBY_ENGINE == 'opal'
+  require 'engine/g_1889'
+else
+  require_relative '../game/base'
+end
+
 require_relative 'config'
 require_relative 'step/special_track'
 
 module Engine
   module G1889
     class Game < Game::Base
+      include G1889::Meta
+
       register_colors(black: '#37383a',
                       orange: '#f48221',
                       brightGreen: '#76a042',
@@ -17,12 +24,8 @@ module Engine
 
       load_from_json(G1889::Config::JSON)
 
-      DEV_STAGE = :production
-
-      GAME_LOCATION = 'Shikoku, Japan'
       GAME_RULES_URL = 'http://dl.deepthoughtgames.com/1889-Rules.pdf'
       GAME_DESIGNER = 'Yasutaka Ikeda (池田 康隆)'
-      GAME_PUBLISHER = :grand_trunk_games
       GAME_INFO_URL = 'https://github.com/tobymao/18xx/wiki/1889'
 
       EBUY_PRES_SWAP = false # allow presidential swaps of other corps when ebuying
@@ -31,17 +34,17 @@ module Engine
 
       def operating_round(round_num)
         Round::Operating.new(self, [
-          Step::Bankrupt,
-          Step::Exchange,
+          Engine::Step::Bankrupt,
+          Engine::Step::Exchange,
           G1889::Step::SpecialTrack,
-          Step::BuyCompany,
-          Step::Track,
-          Step::Token,
-          Step::Route,
-          Step::Dividend,
-          Step::DiscardTrain,
-          Step::BuyTrain,
-          [Step::BuyCompany, blocks: true],
+          Engine::Step::BuyCompany,
+          Engine::Step::Track,
+          Engine::Step::Token,
+          Engine::Step::Route,
+          Engine::Step::Dividend,
+          Engine::Step::DiscardTrain,
+          Engine::Step::BuyTrain,
+          [Engine::Step::BuyCompany, blocks: true],
         ], round_num: round_num)
       end
 

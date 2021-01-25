@@ -218,7 +218,7 @@ class Assets
 
       File.read(opts[:js_path]).to_s
     end.join("\n")
-    source += "\nOpal.load('#{name}')"
+    source += "\nOpal.load('#{name}')" unless name =~ /^g_/
     source += to_data_uri_comment(source_map) if @make_map
 
     if name =~ /1889/
@@ -235,7 +235,10 @@ class Assets
     Dir["#{lib_path}/**/*.rb"].each do |file|
       next unless file.start_with?("#{lib_path}/#{ns}")
 
-      next if (ns !~ /\bg_/) && (file =~ /\bg_1889/)
+      if exclude_from_bundle?(ns, file)
+        # binding.pry
+        next
+      end
 
       mtime = File.new(file).mtime
       path = file.split('/')[0..-2].join('/')
@@ -254,5 +257,18 @@ class Assets
   def to_data_uri_comment(source_map)
     map_json = JSON.dump(source_map)
     "//# sourceMappingURL=data:application/json;base64,#{Base64.encode64(map_json).delete("\n")}"
+  end
+
+  def exclude_from_bundle?(ns, file)
+    # binding.pry if ns == 'g_1889'
+
+    return file !~ %r{/#{ns}/} if ns =~ %r{^g_}
+    return false unless file =~ %r{/g_.*/}
+
+    games_to_bundle.any? { |game| file =~ /#{game}/ }
+  end
+
+  def games_to_bundle
+    @games_to_bundle ||= Dir.glob('lib/engine/*/game.rb').map { |f| f.split('/')[-2] }
   end
 end

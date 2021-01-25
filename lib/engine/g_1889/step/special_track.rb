@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
-require_relative '../../step/special_track'
-require_relative '../../step/track_lay_when_company_sold'
+if RUBY_ENGINE != 'opal'
+  require_relative '../../step/special_track'
+  require_relative '../../step/track_lay_when_company_sold'
+end
 
 module Engine
   module G1889

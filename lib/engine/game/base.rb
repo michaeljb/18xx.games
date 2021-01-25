@@ -29,6 +29,7 @@ require_relative '../tile'
 require_relative '../train'
 require_relative '../player_info'
 require_relative '../game_log'
+require_relative 'title'
 
 module Engine
   module Game
@@ -73,6 +74,8 @@ module Engine
     end
 
     class Base
+      include Game::Title
+
       attr_reader :raw_actions, :actions, :bank, :cert_limit, :cities, :companies, :corporations,
                   :depot, :finished, :graph, :hexes, :id, :loading, :loans, :log, :minors,
                   :phase, :players, :operating_rounds, :round, :share_pool, :stock_market, :tile_groups,
@@ -320,13 +323,6 @@ module Engine
 
       # use to modify tiles based on optional rules
       def optional_tiles; end
-
-      def self.title
-        parts = name.split('::')
-        last = parts.last
-        second_last = parts[-2]
-        (last == 'Game' ? second_last : last).slice(1..-1)
-      end
 
       def self.<=>(other)
         [DEV_STAGES.index(self::DEV_STAGE), title.sub(/18\s+/, '18').downcase] <=>
