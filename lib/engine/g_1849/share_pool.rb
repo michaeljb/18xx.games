@@ -5,7 +5,7 @@ require_relative 'share_pool'
 module Engine
   module G1849
     class SharePool < SharePool
-      def change_president(presidents_share, swap_to, president)
+      def change_president(presidents_share, swap_to, president, previous_president)
         corporation = presidents_share.corporation
 
         incoming_pres_shares = president.shares_of(corporation)
@@ -13,8 +13,9 @@ module Engine
         double = incoming_pres_shares.find(&:last_cert)
         shares =
           if double
-            if !swap_to.share_pool? && incoming_pres_shares.sum(&:percent) >= 40
-              @game.swap_choice_player = swap_to
+            if incoming_pres_shares.sum(&:percent) >= 40
+              @game.swap_choice_player = previous_president
+              @game.swap_location = swap_to
               @game.swap_other_player = president
               @game.swap_corporation = corporation
               @game.log << "Presidency swapped for last cert by default.
@@ -28,6 +29,10 @@ module Engine
           move_share(s, swap_to)
         end
         move_share(presidents_share, president)
+      end
+
+      def handle_partial(bundle, from, to)
+        move_share(from.shares_of(bundle.corporation).find { |s| !s.last_cert }, to)
       end
 
       def swap_double_cert(from, to, corporation)

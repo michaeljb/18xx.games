@@ -33,6 +33,7 @@ module Engine
       "A9":"L'Aquila",
       "B14":"Pescara",
       "C5":"Rome",
+      "C7":"Avezzano",
       "D10":"Isernia",
       "D14":"Vasto",
       "E11":"Campobasso",
@@ -49,6 +50,7 @@ module Engine
       "J16":"Matera",
       "J18":"Bari",
       "K9":"Scalea",
+      "K13":"Metaponto",
       "L12":"Montegiordano",
       "L18":"Taranto",
       "L20":"Brindisi",
@@ -155,12 +157,12 @@ module Engine
       "X1":{
          "count":1,
          "color":"green",
-         "code":"label=A;city=revenue:60,slots:2;path=a:1,b:_0,track:narrow;path=a:4,b:_0;path=a:0,b:_0,track:narrow;path=a:5,b:_0,track:narrow"
+         "code":"label=A;city=revenue:60,slots:2;path=a:1,b:_0,track:dual;path=a:4,b:_0;path=a:0,b:_0,track:narrow;path=a:5,b:_0,track:narrow"
       },
       "X2":{
          "count":1,
          "color":"green",
-         "code":"label=N;city=revenue:70,slots:1;path=a:4,b:_0,track:narrow;path=a:5,b:_0;path=a:1,b:_0,track:dual"
+         "code":"label=N;city=revenue:50,slots:1;path=a:4,b:_0,track:narrow;path=a:5,b:_0;path=a:1,b:_0,track:dual"
       },
       "X3":{
          "count":1,
@@ -175,12 +177,12 @@ module Engine
       "X5":{
          "count":1,
          "color":"brown",
-         "code":"label=A;city=revenue:90,slots:2;path=a:1,b:_0,track:dual;path=a:4,b:_0;path=a:0,b:_0,track:narrow;path=a:5,b:_0,track:narrow"
+         "code":"label=A;city=revenue:90,slots:2;path=a:1,b:_0,track:dual;path=a:4,b:_0;path=a:0,b:_0,track:dual;path=a:5,b:_0,track:dual"
       },
       "X6":{
          "count":1,
          "color":"brown",
-         "code":"label=N;city=revenue:120,slots:3;path=a:4,b:_0,track:dual;path=a:5,b:_0;path=a:1,b:_0,track:dual;path=a:3,b:_0"
+         "code":"label=N;city=revenue:90,slots:3;path=a:4,b:_0,track:dual;path=a:5,b:_0;path=a:1,b:_0,track:dual;path=a:3,b:_0"
       },
       "X7":{
          "count":1,
@@ -340,25 +342,18 @@ module Engine
             "A11",
             "A13",
             "B12",
-            "C13",
             "D6",
             "D8",
             "E7",
-            "E9",
-            "E13",
             "E15",
             "F16",
-            "H10",
             "H14",
             "I17",
             "J8",
-            "K13",
             "K19",
             "K15",
-            "M11",
             "M19",
             "M21",
-            "N8",
             "N18",
             "L10",
             "O7"
@@ -367,20 +362,22 @@ module Engine
             "H16"
          ],
          "upgrade=cost:40,terrain:mountain":[
-            "F12",
-            "G11",
+            "E9",
+            "E13",
             "G13",
-            "H12",
+            "H10",
             "I9",
-            "I11"
+            "N8"
          ],
          "upgrade=cost:80,terrain:mountain":[
-            "C9",
+            "C13",
+            "F12",
+            "G11",
             "I15",
             "J14",
             "K17",
-            "O3",
-            "P4"
+            "M11",
+            "O3"
          ],
          "upgrade=cost:160,terrain:mountain":[
             "B8",
@@ -389,7 +386,11 @@ module Engine
             "D12",
             "J12",
             "K11",
-            "N10"
+            "N10",
+            "P4",
+            "H12",
+            "I11",
+            "C9"
          ],
          "city=revenue:0":[
             "L20",
@@ -399,10 +400,8 @@ module Engine
             "L12"
          ],
          "town=revenue:0":[
-            "D14",
             "F8",
             "F10",
-            "F14",
             "O5",
             "M9"
          ],
@@ -410,17 +409,24 @@ module Engine
             "G17"
          ],
          "town=revenue:0;upgrade=cost:40,terrain:mountain":[
-            "G9",
+            "D14",
+            "F14",
             "J10",
             "J16"
          ],
+         "town=revenue:0;upgrade=cost:80,terrain:mountain":[
+            "K13"
+         ],
          "town=revenue:0;upgrade=cost:160,terrain:mountain":[
-            "D10"
+            "D10",
+            "G9"
          ]
       },
       "blue":{
-         "offboard=revenue:60,route:optional;path=a:1,b:_0,track:dual":[
-            "B16",
+         "offboard=revenue:30,route:optional;path=a:1,b:_0,track:dual":[
+            "B16"
+         ],
+         "offboard=revenue:40,route:optional;path=a:1,b:_0,track:dual":[
             "J20"
          ],
          "offboard=revenue:40,route:optional;path=a:4,b:_0,track:dual":[
@@ -435,7 +441,7 @@ module Engine
          "offboard=revenue:white_30|gray_50|black_80;path=a:0,b:_0,track:dual":[
             "N2"
          ],
-         "offboard=revenue:white_80|gray_120|black_160;path=a:5,b:_0,track:dual":[
+         "offboard=revenue:white_60|gray_90|black_120;path=a:5,b:_0,track:dual;path=a:4,b:_0,track:dual":[
             "C5"
          ],
          "path=a:3,b:5,track:dual":[
@@ -443,6 +449,9 @@ module Engine
          ],
          "path=a:0,b:2,track:dual":[
             "N12"
+         ],
+         "town=revenue:30;path=a:1,b:_0,track:narrow;path=a:4,b:_0,track:narrow":[
+            "C7"
          ],
          "town=revenue:20;path=a:3,b:_0,track:dual;path=a:1,b:_0,track:dual":[
             "O11"
@@ -470,7 +479,7 @@ module Engine
          ]
       },
       "yellow":{
-         "label=A;city=revenue:30;upgrade=cost:80,terrain:mountain;path=a:1,b:_0,track:narrow;path=a:4,b:_0":[
+         "label=A;city=revenue:30;upgrade=cost:80,terrain:mountain;path=a:0,b:_0,track:narrow;path=a:1,b:_0,track:narrow;path=a:5,b:_0,track:narrow;path=a:4,b:_0":[
             "A9"
          ],
          "label=R;city=revenue:10;path=a:3,b:_0,track:narrow;path=a:4,b:_0":[
@@ -577,14 +586,14 @@ module Engine
          "name":"Società Corriere",
          "value":20,
          "revenue":5,
-         "desc":"Blocks Salerno (H8) while owned by a player.",
+         "desc":"Blocks Caserta (F8) while owned by a player.",
          "sym":"SCE",
          "abilities":[
             {
                "type":"blocks_hexes",
                "owner_type":"player",
                "hexes":[
-                  "H8"
+                  "F8"
                ]
             }
          ]
@@ -707,7 +716,7 @@ module Engine
             10,
             20
          ],
-         "coordinates":"P2",
+         "coordinates":"O9",
          "always_market_price":true,
          "color":"green"
       },
@@ -906,8 +915,13 @@ module Engine
          "num":1,
          "distance":12,
          "price":800,
-         "events": [
-           {"type": "close_companies"}
+         "events":[
+            {
+               "type":"close_companies"
+            },
+            {
+               "type":"earthquake"
+            }
          ]
       },
       {
@@ -921,7 +935,7 @@ module Engine
          "num":2,
          "available_on":"16H",
          "distance":6,
-         "price":350
+         "price":600
       }
    ]
 }

@@ -40,12 +40,16 @@ module View
         end
 
         extra_bank = []
-        unless @game.respond_to?(:unstarted_corporation_summary)
+        if @game.respond_to?(:unstarted_corporation_summary)
+          others = @game.unstarted_corporation_summary.last
+          extra_bank.concat(others.map { |c| h(Corporation, corporation: c) })
+        else
           extra_bank.concat(bank_owned.map { |c| h(Corporation, corporation: c) })
         end
         children << h(:div, [
           h(Bank, game: @game),
           h(GameInfo, game: @game, layout: 'upcoming_trains'),
+          *@game.unowned_purchasable_companies(@current_entity).map { |company| h(Company, company: company) },
           *@game.corporations.select(&:receivership?).map { |c| h(Corporation, corporation: c) },
           *extra_bank,
         ].compact)

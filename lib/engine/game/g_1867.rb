@@ -39,7 +39,7 @@ module Engine
       SELL_MOVEMENT = :left_block_pres
       ALL_COMPANIES_ASSIGNABLE = true
       SELL_AFTER = :operate
-      DEV_STAGE = :beta
+      DEV_STAGE = :production
       SELL_BUY_ORDER = :sell_buy
       EBUY_DEPOT_TRAIN_MUST_BE_CHEAPEST = false
       GAME_END_CHECK = { bank: :current_or, custom: :one_more_full_or_set }.freeze
@@ -89,7 +89,7 @@ module Engine
       STOCKMARKET_COLORS = Base::STOCKMARKET_COLORS.merge(par_1: :orange, par_2: :green).freeze
       CORPORATION_SIZES = { 2 => :small, 5 => :medium, 10 => :large }.freeze
       # A token is reserved for Montreal is reserved for nationalization
-      CN_RESERVATIONS = ['L12'].freeze
+      NATIONAL_RESERVATIONS = ['L12'].freeze
       GREEN_CORPORATIONS = %w[BBG LPS QLS SLA TGB THB].freeze
 
       include InterestOnLoans
@@ -217,8 +217,17 @@ module Engine
       end
 
       def unstarted_corporation_summary
-        minor, major = @corporations.reject(&:ipoed).partition { |c| c.type == :minor }
-        "#{minor.size} minor, #{major.size} major"
+        unipoed = @corporations.reject(&:ipoed)
+        minor = unipoed.select { |c| c.type == :minor }
+        major = unipoed.select { |c| c.type == :major }
+        ["#{minor.size} minor, #{major.size} major", []]
+      end
+
+      def nationalization_loan_movement(corporation)
+        corporation.loans.each do
+          stock_market.move_left(corporation)
+          stock_market.move_left(corporation)
+        end
       end
 
       def nationalize!(corporation)
@@ -234,10 +243,7 @@ module Engine
         price = corporation.share_price.price
         stock_market.move_left(corporation)
 
-        corporation.loans.each do
-          stock_market.move_left(corporation)
-          stock_market.move_left(corporation)
-        end
+        nationalization_loan_movement(corporation)
         log_share_price(corporation, price)
 
         # Payout players for shares
@@ -272,21 +278,21 @@ module Engine
 
           next if city.tile.cities.any? do |c|
                     c.tokens.any? do |t|
-                      t&.corporation == @cn_corporation && t&.type != :neutral
+                      t&.corporation == @national && t&.type != :neutral
                     end
                   end
 
-          new_token = @cn_corporation.next_token
+          new_token = @national.next_token
           next unless new_token
 
-          if @cn_reservations.include?(city.hex.id)
-            @cn_reservations.delete(city.hex.id)
-          elsif @cn_corporation.tokens.count { |t| !t.used } == @cn_reservations.size
+          if @national_reservations.include?(city.hex.id)
+            @national_reservations.delete(city.hex.id)
+          elsif @national.tokens.count { |t| !t.used } == @national_reservations.size
             # Don't place if only reservations are left
             next
           end
 
-          city.place_token(@cn_corporation, new_token, check_tokenable: false)
+          city.place_token(@national, new_token, check_tokenable: false)
         end
 
         # Close corp (minors close, majors reset)
@@ -298,15 +304,15 @@ module Engine
         end
       end
 
-      def place_cn_montreal_token(tile)
-        return unless @cn_reservations.any?
-        return if tile.cities.any? { |c| c.tokened_by?(@cn_corporation) }
-        return unless (new_token = @cn_corporation.next_token)
+      def place_639_token(tile)
+        return unless @national_reservations.any?
+        return if tile.cities.any? { |c| c.tokened_by?(@national) }
+        return unless (new_token = @national.next_token)
 
-        @log << 'CN lays token on Montreal'
-        @cn_reservations.delete(tile.hex.id)
+        @log << "#{@national.name} places a token on #{tile.hex.location_name}"
+        @national_reservations.delete(tile.hex.id)
         # Montreal only has the one city, given it should be reserved then next token should be valid
-        tile.cities.first.place_token(@cn_corporation, new_token, check_tokenable: false)
+        tile.cities.first.place_token(@national, new_token, check_tokenable: false)
       end
 
       def revenue_for(route, stops)
@@ -506,29 +512,33 @@ module Engine
         @hidden_company = company_by_id('3')
 
         # CN corporation only exists to hold tokens
-        @cn_corporation = corporation_by_id('CN')
-        @cn_reservations = CN_RESERVATIONS.dup
-        @corporations.delete(@cn_corporation)
+        @national = corporation_by_id('CN')
+        @national.ipoed = true
+        @national.shares.clear
+        @national.shares_by_corporation[@national].clear
+
+        @national_reservations = NATIONAL_RESERVATIONS.dup
+        @corporations.delete(@national)
 
         @green_tokens = []
         logo = '/logos/1867/neutral.svg'
         @hexes.each do |hex|
           case hex.id
           when 'D2'
-            token = Token.new(@cn_corporation, price: 0, logo: logo, simple_logo: logo, type: :neutral)
+            token = Token.new(@national, price: 0, logo: logo, simple_logo: logo, type: :neutral)
             hex.tile.cities.first.exchange_token(token)
             @green_tokens << token
           when 'L12'
-            token = Token.new(@cn_corporation, price: 0, logo: logo, simple_logo: logo, type: :neutral)
+            token = Token.new(@national, price: 0, logo: logo, simple_logo: logo, type: :neutral)
             hex.tile.cities.last.exchange_token(token)
             @green_tokens << token
           when 'F16'
-            hex.tile.cities.first.exchange_token(@cn_corporation.tokens.first)
+            hex.tile.cities.first.exchange_token(@national.tokens.first)
           end
         end
 
         # Set minors maximum share price
-        max_price = @stock_market.market.first.find { |stockprice| stockprice.types.include?(:max_price) }
+        max_price = @stock_market.market.first.find { |stockprice| stockprice&.types&.include?(:max_price) }
         @corporations.select { |c| c.type == :minor }.each { |c| c.max_share_price = max_price }
 
         # Move green and majors out of the normal list
@@ -594,7 +604,7 @@ module Engine
         trainless.each do |c|
           if c.type == :major
             @trainless_major << c
-          else
+          elsif c.type == :minor
             nationalize!(c)
           end
         end
