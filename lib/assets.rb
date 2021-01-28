@@ -76,7 +76,7 @@ class Assets
         'g_1889' => {
           'path' => @g_1889_path,
           'files' => [
-            compile('g_1889', 'lib/engine', 'g_1889'),
+            compile_game('1889'),
           ],
         },
       }
@@ -104,16 +104,11 @@ class Assets
           [@deps_path, @main_path, @g_1889_path]
         else
           builds.each do |_key, build|
-            # binding.pry
             source = build['files'].map { |file| File.read(file).to_s }.join
             if @compress
               time = Time.now
               source = Uglifier.compile(source, harmony: true)
               puts "Compressing - #{Time.now - time}"
-            end
-
-            if _key == 'g_1889'
-              # binding.pry
             end
 
             File.write(build['path'], source)
@@ -138,18 +133,10 @@ class Assets
   end
 
   def compile(name, lib_path, ns = nil)
-    puts "\n\n\ncompile(#{name}, #{lib_path}, #{ns})"
     output = "#{@out_path}/#{name}.js"
     metadata = lib_metadata(ns || name, lib_path)
 
-    puts "    metadata.keys = #{metadata.keys}"
-
     compilers = metadata.map do |file, opts|
-      if name =~ /1889/
-        require 'pry-byebug'
-        # binding.pry
-      end
-
       FileUtils.mkdir_p(opts[:build_path])
       js_path = opts[:js_path]
       next if @cache && File.exist?(js_path) && File.mtime(js_path) >= opts[:mtime]
@@ -157,14 +144,7 @@ class Assets
       Opal::Compiler.new(File.read(opts[:path]), file: file, requirable: true)
     end.compact
 
-    if compilers.empty?
-
-      if name =~ /1889/
-        puts 'compilers empty'
-      end
-
-      return output
-    end
+    return output if compilers.empty?
 
     if @make_map
       sm_path = "#{@build_path}/#{name}.json"
@@ -176,9 +156,6 @@ class Assets
       raise "#{file} not found put in deps." unless (opts = metadata[file])
 
       time = Time.now
-      if name =~ /1889/
-        # binding.pry
-      end
       File.write(opts[:js_path], compiler.compile)
       puts "Compiling #{file} - #{Time.now - time}"
       next unless @make_map
@@ -221,10 +198,6 @@ class Assets
     source += "\nOpal.load('#{name}')" unless name =~ /^g_/
     source += to_data_uri_comment(source_map) if @make_map
 
-    if name =~ /1889/
-      # binding.pry
-    end
-
     File.write(output, source)
     output
   end
@@ -234,11 +207,7 @@ class Assets
 
     Dir["#{lib_path}/**/*.rb"].each do |file|
       next unless file.start_with?("#{lib_path}/#{ns}")
-
-      if exclude_from_bundle?(ns, file)
-        # binding.pry
-        next
-      end
+      next if file =~ %r{^lib/engine/game/g_.*/}
 
       mtime = File.new(file).mtime
       path = file.split('/')[0..-2].join('/')
@@ -259,16 +228,99 @@ class Assets
     "//# sourceMappingURL=data:application/json;base64,#{Base64.encode64(map_json).delete("\n")}"
   end
 
-  def exclude_from_bundle?(ns, file)
-    # binding.pry if ns == 'g_1889'
-
-    return file !~ %r{/#{ns}/} if ns =~ %r{^g_}
-    return false unless file =~ %r{/g_.*/}
-
-    games_to_bundle.any? { |game| file =~ /#{game}/ }
-  end
-
   def games_to_bundle
     @games_to_bundle ||= Dir.glob('lib/engine/*/game.rb').map { |f| f.split('/')[-2] }
+  end
+
+  def compile_game(title)
+    name = "g_#{title}"
+    lib_path = 'lib/engine/game'
+    ns = name
+
+    output = "#{@out_path}/#{name}.js"
+    metadata = game_metadata(name)
+
+    compilers = metadata.map do |file, opts|
+      FileUtils.mkdir_p(opts[:build_path])
+      js_path = opts[:js_path]
+      next if @cache && File.exist?(js_path) && File.mtime(js_path) >= opts[:mtime]
+
+      Opal::Compiler.new(File.read(opts[:path]), file: file, requirable: true)
+    end.compact
+
+    return output if compilers.empty?
+
+    if @make_map
+      sm_path = "#{@build_path}/#{name}.json"
+      sm_data = File.exist?(sm_path) ? JSON.parse(File.binread(sm_path)) : {}
+    end
+
+    compilers.each do |compiler|
+      file = compiler.file
+      raise "#{file} not found put in deps." unless (opts = metadata[file])
+
+      time = Time.now
+      File.write(opts[:js_path], compiler.compile)
+      puts "Compiling #{file} - #{Time.now - time}"
+      next unless @make_map
+
+      source_map = compiler.source_map
+      code = source_map.generated_code + "\n"
+      sm_data[file] = {
+        'lines' => code.count("\n"),
+        'map' => source_map.to_h,
+      }
+    end
+
+    File.write(sm_path, JSON.dump(sm_data)) if @make_map
+
+    source_map = {
+      version: 3,
+      file: "#{name}.js",
+      sections: [],
+    }
+
+    offset_line = 0
+
+    source = metadata.map do |file, opts|
+      if @make_map
+        sm = sm_data[file]
+
+        source_map[:sections] << {
+          offset: {
+            line: offset_line,
+            column: 0,
+          },
+          map: sm['map'],
+        }
+
+        offset_line += sm['lines']
+      end
+
+      File.read(opts[:js_path]).to_s
+    end.join("\n")
+    source += "\nOpal.load('engine/game/#{name}')"
+    source += to_data_uri_comment(source_map) if @make_map
+
+    File.write(output, source)
+    output
+  end
+
+  def game_metadata(title)
+    metadata = {}
+
+    Dir["lib/engine/game/#{title}/**/*.rb"].each do |file|
+      mtime = File.new(file).mtime
+      path = file.split('/')[0..-2].join('/')
+
+      metadata[file.gsub("lib/", '')] = {
+        path: file,
+        build_path: "#{@build_path}/#{path}",
+        js_path: "#{@build_path}/#{file.gsub('.rb', '.js')}",
+        mtime: mtime,
+      }
+    end
+
+    metadata
   end
 end

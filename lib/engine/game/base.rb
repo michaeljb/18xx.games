@@ -74,7 +74,7 @@ module Engine
     end
 
     class Base
-      include Game::Title
+      include Title
 
       attr_reader :raw_actions, :actions, :bank, :cert_limit, :cities, :companies, :corporations,
                   :depot, :finished, :graph, :hexes, :id, :loading, :loans, :log, :minors,

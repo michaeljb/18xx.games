@@ -12,30 +12,31 @@ module Engine
 
   GAMES = Game.constants.map do |c|
     klass = Game.const_get(c)
-    next if !klass.is_a?(Class) || klass == Game::Base
 
-    @games[klass.title] = klass
-
-    klass
+    if c.start_with?('G')
+      if klass.is_a?(Class)
+        klass
+      elsif klass.is_a?(Module)
+        klass::Meta
+      end
+    end
   end.compact
 
   # Games that are alpha or above
-  # GAME_PUBLISHER
   VISIBLE_GAMES = GAMES.select { |game| %i[alpha beta production].include?(game::DEV_STAGE) }
 
   GAMES_BY_TITLE = GAMES.map { |game| [game.title, game] }.to_h
 
   def self.game_by_title(title)
-    return @games[title] if @games.key?(title)
+    return @games[title] if @games[title]
+    return GAMES_BY_TITLE[title] if GAMES_BY_TITLE[title].is_a?(Class)
 
-    if (RUBY_ENGINE == 'opal')
-      require "g_#{title}/game"
-    else
-      require_all Dir.glob("lib/engine/**/game.rb").select { |f| File.dirname(f) =~ %r{/g_} }
-    end
+    require_tree 'engine/game'
 
-    games = Engine.constants.select { |c| c =~ /^G18/ }.map { |c| Engine.const_get(c) }
-              .flat_map { |c| c.constants.select { |cc| cc == :Game }.map { |cc| c.const_get(cc)} }
+    games = Engine::Game.constants
+              .map { |c| Engine::Game.const_get(c) }
+              .select { |c| c.constants.include?(:Game) }
+              .map { |c| c.const_get(:Game) }
 
     game = games.find { |c| c.title == title }
 
@@ -44,5 +45,9 @@ module Engine
 
   def self.player_range(game)
     game::CERT_LIMIT.keys.minmax
+  end
+
+  def self.game(game_or_meta)
+    return game_by_title(game_or_meta.title)
   end
 end

@@ -5,21 +5,15 @@
 # rubocop:disable Lint/RedundantCopDisableDirective, Layout/LineLength, Layout/HeredocIndentation
 
 module Engine
-  module G1889
-    module Config
-      JSON = <<-'DATA'
+  module Game
+    module G1889
+      module Config
+        JSON = <<-'DATA'
 {
   "filename": "1889",
   "modulename": "1889",
   "currencyFormatStr": "¥%d",
   "bankCash": 7000,
-  "certLimit": {
-    "2": 25,
-    "3": 19,
-    "4": 14,
-    "5": 12,
-    "6": 11
-  },
   "startingCash": {
     "2": 420,
     "3": 420,
@@ -656,8 +650,8 @@ module Engine
   ]
 }
       DATA
+      end
     end
   end
 end
-
 # rubocop:enable Lint/RedundantCopDisableDirective, Layout/LineLength, Layout/HeredocIndentation
