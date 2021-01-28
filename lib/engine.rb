@@ -13,6 +13,9 @@ module Engine
   GAMES = Game.constants.map do |c|
     klass = Game.const_get(c)
     next if !klass.is_a?(Class) || klass == Game::Base
+
+    @games[klass.title] = klass
+
     klass
   end.compact
 
@@ -25,24 +28,16 @@ module Engine
   def self.game_by_title(title)
     return @games[title] if @games.key?(title)
 
-    if RUBY_ENGINE == 'opal'
+    if (RUBY_ENGINE == 'opal')
       require "g_#{title}/game"
     else
       require_all Dir.glob("lib/engine/**/game.rb").select { |f| File.dirname(f) =~ %r{/g_} }
     end
 
-    puts 'hello there'
+    games = Engine.constants.select { |c| c =~ /^G18/ }.map { |c| Engine.const_get(c) }
+              .flat_map { |c| c.constants.select { |cc| cc == :Game }.map { |cc| c.const_get(cc)} }
 
-    games = GAMES.dup
-    games.concat(Engine.constants.select { |c| c =~ /^G18/ }.map { |c| Engine.const_get(c) }
-                   .flat_map { |c| c.constants.select { |cc| cc == :Game }.map { |cc| c.const_get(cc)} })
-
-    puts 'general kenobi'
     game = games.find { |c| c.title == title }
-
-    puts "game = #{game}"
-
-    puts "G1889 = #{Engine::G1889::Game}"
 
     @games[title] = game
   end
