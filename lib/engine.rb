@@ -48,7 +48,7 @@ module Engine
   end
 
   def self.player_range(game)
-    game::CERT_LIMIT.keys.minmax
+    game::PLAYER_RANGE || game::CERT_LIMIT.keys.minmax
   end
 
   def self.game(game_or_meta)

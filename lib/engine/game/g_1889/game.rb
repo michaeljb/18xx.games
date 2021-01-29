@@ -14,7 +14,8 @@ module Engine
   module Game
     module G1889
       class Game < Game::Base
-        include G1889::Meta
+        load_from_json(G1889::Config::JSON)
+        load_from_meta(G1889::Meta)
 
         register_colors(black: '#37383a',
                         orange: '#f48221',
@@ -23,8 +24,6 @@ module Engine
                         turquoise: '#00a993',
                         blue: '#0189d1',
                         brown: '#7b352a')
-
-        load_from_json(G1889::Config::JSON)
 
         GAME_RULES_URL = 'http://dl.deepthoughtgames.com/1889-Rules.pdf'
         GAME_DESIGNER = 'Yasutaka Ikeda (池田 康隆)'

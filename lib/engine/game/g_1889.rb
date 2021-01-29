@@ -11,13 +11,7 @@ module Engine
         GAME_LOCATION = 'Shikoku, Japan'
         GAME_PUBLISHER = :grand_trunk_games
 
-        CERT_LIMIT = {
-          2 => 25,
-          3 => 19,
-          4 => 14,
-          5 => 12,
-          6 => 11,
-        }.freeze
+        PLAYER_RANGE = [2, 6]
       end
     end
   end

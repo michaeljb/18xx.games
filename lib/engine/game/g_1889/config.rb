@@ -14,6 +14,13 @@ module Engine
   "modulename": "1889",
   "currencyFormatStr": "¥%d",
   "bankCash": 7000,
+  "certLimit": {
+    "2": 25,
+    "3": 19,
+    "4": 14,
+    "5": 12,
+    "6": 11
+  },
   "startingCash": {
     "2": 420,
     "3": 420,

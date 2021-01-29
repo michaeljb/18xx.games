@@ -122,14 +122,6 @@ module Engine
 
       TRAINS = [].freeze
 
-      CERT_LIMIT = {
-        2 => 28,
-        3 => 20,
-        4 => 16,
-        5 => 13,
-        6 => 11,
-      }.freeze
-
       CERT_LIMIT_TYPES = %i[multiple_buy unlimited no_cert_limit].freeze
       # Does the cert limit decrease when a player becomes bankrupt?
       CERT_LIMIT_CHANGE_ON_BANKRUPTCY = false
@@ -327,6 +319,14 @@ module Engine
         const_set(:COLORS, colors)
       end
 
+      def self.load_from_meta(meta_module)
+        include meta_module
+
+        meta_module.constants.each do |const|
+          const_set(const, meta_module.const_get(const))
+        end
+      end
+
       def self.load_from_json(*jsons)
         data = Array(jsons).reverse.reduce({}) do |memo, json|
           memo.merge!(JSON.parse(json))
@@ -385,7 +385,7 @@ module Engine
 
         const_set(:CURRENCY_FORMAT_STR, data['currencyFormatStr'])
         const_set(:BANK_CASH, data['bankCash'])
-        const_set(:CERT_LIMIT, data['certLimit'])
+        const_set(:CERT_LIMIT, data['certLimit']) if data['certLimit']
         const_set(:STARTING_CASH, data['startingCash'])
         const_set(:CAPITALIZATION, data['capitalization'].to_sym) if data['capitalization']
         const_set(:MUST_SELL_IN_BLOCKS, data['mustSellInBlocks'])

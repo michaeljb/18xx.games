@@ -7,7 +7,7 @@ module Engine
       GAME_LOCATION = nil
       GAME_PUBLISHER = nil
 
-      CERT_LIMIT = {}
+      PLAYER_RANGE = nil
 
       def self.included(klass)
         klass.extend(ClassMethods)

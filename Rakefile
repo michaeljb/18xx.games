@@ -94,7 +94,7 @@ task :precompile, [:cache, :compress] do |_task, args|
   compress = args[:compress].nil? ? true : (args[:compress] == 'true')
 
   require_relative 'lib/assets'
-  bundle = Assets.new(cache: cache, make_map: false, compress: compress, gzip: true).combine
+  bundle = Assets.new(cache: cache, make_map: true, compress: compress, gzip: true).combine
 
   # TODO: fix (and figure out) pin stuff
 
