@@ -29,7 +29,11 @@ module Engine
 
   def self.game_by_title(title)
     return @games[title] if @games[title]
-    return GAMES_BY_TITLE[title] if GAMES_BY_TITLE[title].is_a?(Class)
+
+    if GAMES_BY_TITLE[title].is_a?(Class)
+      @games[title] = GAMES_BY_TITLE[title]
+      return @games[title]
+    end
 
     require_tree 'engine/game'
 

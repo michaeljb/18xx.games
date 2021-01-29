@@ -1,10 +1,10 @@
-require_relative 'title'
+require_relative 'meta'
 
 module Engine
   module Game
     module G1889
       module Meta
-        include Title
+        include Game::Meta
 
         DEV_STAGE = :production
 

@@ -29,7 +29,7 @@ require_relative '../tile'
 require_relative '../train'
 require_relative '../player_info'
 require_relative '../game_log'
-require_relative 'title'
+require_relative 'meta'
 
 module Engine
   module Game
@@ -74,7 +74,7 @@ module Engine
     end
 
     class Base
-      include Title
+      include Game::Meta
 
       attr_reader :raw_actions, :actions, :bank, :cert_limit, :cities, :companies, :corporations,
                   :depot, :finished, :graph, :hexes, :id, :loading, :loans, :log, :minors,
@@ -83,13 +83,8 @@ module Engine
                   :optional_rules, :exception, :last_processed_action, :broken_action,
                   :turn_start_action_id, :last_turn_start_action_id
 
-      DEV_STAGES = %i[production beta alpha prealpha].freeze
-      DEV_STAGE = :prealpha
-
-      GAME_LOCATION = nil
       GAME_RULES_URL = nil
       GAME_DESIGNER = nil
-      GAME_PUBLISHER = nil
       GAME_IMPLEMENTER = nil
       GAME_INFO_URL = nil
 
@@ -323,11 +318,6 @@ module Engine
 
       # use to modify tiles based on optional rules
       def optional_tiles; end
-
-      def self.<=>(other)
-        [DEV_STAGES.index(self::DEV_STAGE), title.sub(/18\s+/, '18').downcase] <=>
-          [DEV_STAGES.index(other::DEV_STAGE), other.title.sub(/18\s+/, '18').downcase]
-      end
 
       def self.register_colors(colors)
         colors.default_proc = proc do |_, key|
