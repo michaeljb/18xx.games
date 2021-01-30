@@ -38,7 +38,7 @@ class Assets
   end
 
   def game_builds
-    @game_builds ||= Dir["lib/engine/game/*/game.rb"].map do |dir|
+    @game_builds ||= Dir['lib/engine/game/*/game.rb'].map do |dir|
       game = dir.split('/')[-2]
       path = "#{@out_path}/#{game}.js"
       build = {
@@ -71,7 +71,7 @@ class Assets
 
   # HTML: <script> tags at /assets/<file>.js for all files returned by build()
   def js_tags(title)
-    scripts = ['deps', 'main'].map do |key|
+    scripts = %w[deps main].map do |key|
       file = builds[key]['path'].gsub(@out_path, @root_path)
       %(<script type="text/javascript" src="#{file}"></script>)
     end

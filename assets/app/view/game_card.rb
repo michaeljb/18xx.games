@@ -30,9 +30,9 @@ module View
         render_header,
         render_body,
       ])
-    # rescue StandardError => e
-    #   puts e
-    #   render_broken
+      # rescue StandardError => e
+      #   puts e
+      #   render_broken
     end
 
     def new?
@@ -71,7 +71,9 @@ module View
           buttons << render_link(url(@gdata), -> { Engine.game_by_title(@gdata['title']); enter_game(@gdata) }, 'Enter')
           acting?(@user) ? color_for(:your_turn) : ENTER_GREEN
         when 'finished', 'archived'
-          buttons << render_link(url(@gdata), -> { Engine.game_by_title(@gdata['title']); enter_game(@gdata) }, 'Review')
+          buttons << render_link(url(@gdata), lambda {
+                                                Engine.game_by_title(@gdata['title']); enter_game(@gdata)
+                                              }, 'Review')
           FINISHED_GREY
         end
 

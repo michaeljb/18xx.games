@@ -15,7 +15,7 @@ module Engine
         GAME_PUBLISHER = :all_aboard_games
         GAME_RULES_URL = 'https://www.dropbox.com/s/x0dsehrxqr1tl6w/18Chesapeake_Rules.pdf'
 
-        PLAYER_RANGE = [2, 6]
+        PLAYER_RANGE = [2, 6].freeze
       end
     end
   end

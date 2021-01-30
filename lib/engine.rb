@@ -37,9 +37,7 @@ module Engine
     game_meta = GAMES_BY_TITLE[title]
 
     get_game = lambda do
-      if RUBY_ENGINE == 'opal'
-        require_tree 'engine/game'
-      end
+      require_tree 'engine/game' if RUBY_ENGINE == 'opal'
 
       Engine::Game.constants
         .map { |c| Engine::Game.const_get(c) }

@@ -16,7 +16,7 @@ module Engine
         GAME_PUBLISHER = :grand_trunk_games
         GAME_RULES_URL = 'http://dl.deepthoughtgames.com/1889-Rules.pdf'
 
-        PLAYER_RANGE = [2, 6]
+        PLAYER_RANGE = [2, 6].freeze
       end
     end
   end

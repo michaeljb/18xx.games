@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Engine
   module Game
     module Meta
@@ -34,11 +36,11 @@ module Engine
         def title
           @title ||=
             self::GAME_TITLE || begin
-                                  parts = name.split('::')
-                                  last = parts.last
-                                  part = ((last == 'Game' || last == 'Meta') ? parts[-2] : last)
-                                  part.slice(1..-1)
-                                end
+              parts = name.split('::')
+              last = parts.last
+              part = (last == 'Game' || last == 'Meta' ? parts[-2] : last)
+              part.slice(1..-1)
+            end
         end
 
         # file/dir name
@@ -47,7 +49,7 @@ module Engine
             begin
               parts = name.split('::')
               last = parts.last
-              part = ((last == 'Game' || last == 'Meta') ? parts[-2] : last)
+              part = (last == 'Game' || last == 'Meta' ? parts[-2] : last)
               part.sub(/^G/, 'g_').gsub(/(.)([A-Z])/, '\1_\2').downcase
             end
         end
