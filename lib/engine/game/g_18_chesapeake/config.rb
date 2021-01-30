@@ -5,15 +5,15 @@
 # rubocop:disable Lint/RedundantCopDisableDirective, Layout/LineLength, Layout/HeredocIndentation
 
 module Engine
-  module Config
-    module Game
-      module G18ChesapeakeOffTheRails
+  module Game
+    module G18Chesapeake
+      module Config
         JSON = <<-'DATA'
 {
-  "filename": "18_chesapeake_off_the_rails",
-  "modulename": "18Chesapeake Off The Rails",
+  "filename": "18_chesapeake",
+  "modulename": "18Chesapeake",
   "currencyFormatStr": "$%d",
-  "bankCash": 12000,
+  "bankCash": 8000,
   "certLimit": {
     "2": 20,
     "3": 20,
@@ -65,9 +65,9 @@ module Engine
     "2": 1,
     "3": 2,
     "4": 2,
-    "7": 20,
-    "8": 20,
-    "9": 20,
+    "7": "unlimited",
+    "8": "unlimited",
+    "9": "unlimited",
     "14": 5,
     "15": 6,
     "16": 1,
@@ -145,114 +145,97 @@ module Engine
   },
   "market": [
     [
-      "76",
-      "82",
+      "80",
+      "85",
       "90",
-      "100p",
-      "112",
-      "126",
-      "142",
+      "100",
+      "110",
+      "125",
+      "140",
       "160",
       "180",
       "200",
       "225",
       "250",
       "275",
-      "300e"
+      "300",
+      "325",
+      "350",
+      "375"
     ],
     [
-      "70",
-      "76",
-      "82",
-      "90p",
-      "100",
-      "112",
-      "126",
-      "142",
-      "160",
-      "180",
-      "200",
-      "220",
-      "240",
-      "260"
-    ],
-    [
-      "65",
-      "70",
-      "76",
-      "82p",
-      "90",
-      "100",
-      "111",
-      "125",
-      "140",
-      "155",
-      "170",
-      "185"
-    ],
-    [
-      "60y",
-      "66",
-      "71",
-      "76p",
-      "82",
+      "75",
+      "80",
+      "85",
       "90",
       "100",
       "110",
-      "120",
-      "130"
+      "125",
+      "140",
+      "160",
+      "180",
+      "200",
+      "225",
+      "250",
+      "275",
+      "300",
+      "325",
+      "350"
+    ],
+    [
+      "70",
+      "75",
+      "80",
+      "85",
+      "95p",
+      "105",
+      "115",
+      "130",
+      "145",
+      "160",
+      "180",
+      "200"
+    ],
+    [
+      "65",
+      "70",
+      "75",
+      "80p",
+      "85",
+      "95",
+      "105",
+      "115",
+      "130",
+      "145"
+    ],
+    [
+      "60",
+      "65",
+      "70p",
+      "75",
+      "80",
+      "85",
+      "95",
+      "105"
     ],
     [
       "55y",
-      "62",
-      "67",
-      "71p",
-      "76",
-      "82",
-      "90",
-      "100"
-    ],
-    [
-      "50y",
-      "58y",
+      "60",
       "65",
-      "67p",
-      "71",
+      "70",
       "75",
       "80"
     ],
     [
-      "45o",
-      "54y",
-      "63",
-      "67",
-      "69",
-      "70"
-    ],
-    [
-      "40o",
       "50y",
-      "60y",
-      "67",
-      "68"
+      "55y",
+      "60",
+      "65"
     ],
     [
-      "30b",
-      "40o",
-      "50y",
-      "60y"
-    ],
-    [
-      "20b",
-      "30b",
-      "40o",
+      "40y",
+      "45y",
       "50y"
-    ],
-    [
-      "10b",
-      "20b",
-      "30b",
-      "40o"
     ]
   ],
   "companies": [
@@ -396,7 +379,7 @@ module Engine
   ],
   "corporations": [
     {
-      "float_percent": 50,
+      "float_percent": 60,
       "sym": "PRR",
       "name": "Pennsylvania Railroad",
       "logo": "18_chesapeake/PRR",
@@ -410,7 +393,7 @@ module Engine
       "color": "green"
     },
     {
-      "float_percent": 50,
+      "float_percent": 60,
       "sym": "PLE",
       "name": "Pittsburgh and Lake Erie Railroad",
       "logo": "18_chesapeake/PLE",
@@ -423,7 +406,7 @@ module Engine
       "color": "black"
     },
     {
-      "float_percent": 50,
+      "float_percent": 60,
       "sym": "SRR",
       "name": "Strasburg Rail Road",
       "logo": "18_chesapeake/SRR",
@@ -435,7 +418,7 @@ module Engine
       "color": "red"
     },
     {
-      "float_percent": 50,
+      "float_percent": 60,
       "sym": "B&O",
       "name": "Baltimore & Ohio Railroad",
       "logo": "18_chesapeake/BO",
@@ -449,7 +432,7 @@ module Engine
       "color": "blue"
     },
     {
-      "float_percent": 50,
+      "float_percent": 60,
       "sym": "C&O",
       "name": "Chesapeake & Ohio Railroad",
       "logo": "18_chesapeake/CO",
@@ -464,7 +447,7 @@ module Engine
       "text_color": "black"
     },
     {
-      "float_percent": 50,
+      "float_percent": 60,
       "sym": "LV",
       "name": "Lehigh Valley Railroad",
       "logo": "18_chesapeake/LV",
@@ -477,7 +460,7 @@ module Engine
       "text_color": "black"
     },
     {
-      "float_percent": 50,
+      "float_percent": 60,
       "sym": "C&A",
       "name": "Camden & Amboy Railroad",
       "logo": "18_chesapeake/CA",
@@ -489,7 +472,7 @@ module Engine
       "color": "orange"
     },
     {
-      "float_percent": 50,
+      "float_percent": 60,
       "sym": "N&W",
       "name": "Norfolk & Western Railway",
       "logo": "18_chesapeake/NW",
@@ -508,27 +491,27 @@ module Engine
       "distance": 2,
       "price": 80,
       "rusts_on": "4",
-      "num": 5
+      "num": 7
     },
     {
       "name": "3",
       "distance": 3,
       "price": 180,
       "rusts_on": "6",
-      "num": 4
+      "num": 6
     },
     {
       "name": "4",
       "distance": 4,
       "price": 300,
       "rusts_on": "D",
-      "num": 3
+      "num": 5
     },
     {
       "name": "5",
       "distance": 5,
       "price": 500,
-      "num": 2,
+      "num": 3,
       "events":[
         {"type": "close_companies"}
       ]
@@ -542,13 +525,13 @@ module Engine
     {
       "name": "D",
       "distance": 999,
-      "price": 1100,
+      "price": 900,
       "num": 20,
       "available_on": "6",
       "discount": {
-        "4": 300,
-        "5": 300,
-        "6": 300
+        "4": 200,
+        "5": 200,
+        "6": 200
       }
     }
   ],

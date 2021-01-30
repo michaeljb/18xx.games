@@ -1,27 +1,25 @@
 # frozen_string_literal: true
 
-require_relative '../config/game/g_18_chesapeake_off_the_rails'
-require_relative 'g_18_chesapeake'
+require_relative 'meta'
 
 module Engine
   module Game
-    class G18ChesapeakeOffTheRails < G18Chesapeake
-      load_from_json(Config::Game::G18ChesapeakeOffTheRails::JSON)
+    module G18ChesapeakeOffTheRails
+      module Meta
+        include Game::Meta
 
-      DEV_STAGE = :beta
+        DEV_STAGE = :beta
 
-      GAME_RULES_URL = 'https://www.dropbox.com/s/ivm4jsopnzabhru/18ChesOTR_Rules.png?dl=0'
-      GAME_DESIGNER = 'Scott Petersen'
+        GAME_DESIGNER = 'Scott Petersen'
+        GAME_PUBLISHER = :all_aboard_games
+        GAME_RULES_URL = 'https://www.dropbox.com/s/ivm4jsopnzabhru/18ChesOTR_Rules.png?dl=0'
 
-      SELL_BUY_ORDER = :sell_buy_sell
+        PLAYER_RANGE = [2, 6]
 
-      GAME_END_CHECK = { bankrupt: :immediate, stock_market: :current_round, bank: :full_or }.freeze
-
-      def self.title
-        '18Chesapeake: Off the Rails'
+        def self.title
+          '18Chesapeake: Off the Rails'
+        end
       end
-
-      def or_set_finished; end
     end
   end
 end
