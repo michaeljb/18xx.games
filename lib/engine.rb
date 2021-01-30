@@ -10,6 +10,7 @@ end
 module Engine
   @games = {}
 
+  # Game or Meta
   GAMES = Game.constants.map do |c|
     klass = Game.const_get(c)
 
@@ -22,36 +23,28 @@ module Engine
     end
   end.compact
 
-  # Games that are alpha or above
+  # Game or Meta; all that are alpha or above
   VISIBLE_GAMES = GAMES.select { |game| %i[alpha beta production].include?(game::DEV_STAGE) }
 
+  # Game or Meta
   GAMES_BY_TITLE = GAMES.map { |game| [game.title, game] }.to_h
 
+  # Game only, not Meta; if called from Opal, the separately bundled game file
+  # needs to have been imported by a <script>
   def self.game_by_title(title)
     return @games[title] if @games[title]
-
-    if GAMES_BY_TITLE[title].is_a?(Class)
-      @games[title] = GAMES_BY_TITLE[title]
-      return @games[title]
-    end
+    return @games[title] = GAMES_BY_TITLE[title] if GAMES_BY_TITLE[title].is_a?(Class)
 
     require_tree 'engine/game'
 
-    games = Engine::Game.constants
-              .map { |c| Engine::Game.const_get(c) }
-              .select { |c| c.constants.include?(:Game) }
-              .map { |c| c.const_get(:Game) }
-
-    game = games.find { |c| c.title == title }
-
-    @games[title] = game
+    @games[title] = Engine::Game.constants
+                      .map { |c| Engine::Game.const_get(c) }
+                      .select { |c| c.constants.include?(:Game) }
+                      .map { |c| c.const_get(:Game) }
+                      .find { |c| c.title == title }
   end
 
   def self.player_range(game)
     game::PLAYER_RANGE || game::CERT_LIMIT.keys.minmax
-  end
-
-  def self.game(game_or_meta)
-    return game_by_title(game_or_meta.title)
   end
 end

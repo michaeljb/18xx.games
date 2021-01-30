@@ -35,17 +35,17 @@ module Engine
 
         def operating_round(round_num)
           Round::Operating.new(self, [
-                                 Step::Bankrupt,
-                                 Step::Exchange,
+                                 Engine::Step::Bankrupt,
+                                 Engine::Step::Exchange,
                                  G1889::Step::SpecialTrack,
-                                 Step::BuyCompany,
-                                 Step::Track,
-                                 Step::Token,
-                                 Step::Route,
-                                 Step::Dividend,
-                                 Step::DiscardTrain,
-                                 Step::BuyTrain,
-                                 [Step::BuyCompany, blocks: true],
+                                 Engine::Step::BuyCompany,
+                                 Engine::Step::Track,
+                                 Engine::Step::Token,
+                                 Engine::Step::Route,
+                                 Engine::Step::Dividend,
+                                 Engine::Step::DiscardTrain,
+                                 Engine::Step::BuyTrain,
+                                 [Engine::Step::BuyCompany, blocks: true],
                                ], round_num: round_num)
         end
 

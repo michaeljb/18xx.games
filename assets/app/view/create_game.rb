@@ -186,7 +186,7 @@ module View
     def params
       params = super
 
-      game = Engine.game_by_title(params['title'])
+      game = Engine::GAMES_BY_TITLE[params['title']]
       params[:optional_rules] = game::OPTIONAL_RULES
                                   .map { |o_r| o_r[:sym] }
                                   .select { |rule| params.delete(rule) }

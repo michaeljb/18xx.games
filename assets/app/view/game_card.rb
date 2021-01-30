@@ -30,8 +30,9 @@ module View
         render_header,
         render_body,
       ])
-    rescue StandardError
-      render_broken
+    # rescue StandardError => e
+    #   puts e
+    #   render_broken
     end
 
     def new?
@@ -53,6 +54,16 @@ module View
       acting.include?(player['id'] || player['name'])
     end
 
+    def thing(title)
+      name = title.gsub(/(.)([A-Z])/, '\1_\2').downcase
+      src = "/assets/g_#{name}.js"
+
+      `var s = document.createElement('script');
+        s.type = 'text/javascript';
+        s.src = #{src};
+        document.body.appendChild(s);`
+    end
+
     def render_header
       buttons = []
 
@@ -67,10 +78,10 @@ module View
           end
           JOIN_YELLOW
         when 'active'
-          buttons << render_link(url(@gdata), -> { enter_game(@gdata) }, 'Enter')
+          buttons << render_link(url(@gdata), -> { thing(@gdata['title']); enter_game(@gdata) }, 'Enter')
           acting?(@user) ? color_for(:your_turn) : ENTER_GREEN
         when 'finished', 'archived'
-          buttons << render_link(url(@gdata), -> { enter_game(@gdata) }, 'Review')
+          buttons << render_link(url(@gdata), -> { thing(@gdata['title']); enter_game(@gdata) }, 'Review')
           FINISHED_GREY
         end
 
@@ -82,7 +93,7 @@ module View
                    end
       end
 
-      game = Engine.game_by_title(@gdata['title'])
+      game = Engine::GAMES_BY_TITLE[@gdata['title']]
       @min_p, _max_p = Engine.player_range(game)
 
       can_start = owner? && new? && players.size >= @min_p
@@ -160,7 +171,7 @@ module View
       selected_rules = @gdata.dig('settings', 'optional_rules') || []
       return if selected_rules.empty?
 
-      rendered_rules = Engine.game_by_title(@gdata['title'])::OPTIONAL_RULES
+      rendered_rules = Engine::GAMES_BY_TITLE[@gdata['title']]::OPTIONAL_RULES
         .select { |r| selected_rules.include?(r[:sym]) }
         .map { |r| r[:short_name] }
         .sort

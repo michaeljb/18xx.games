@@ -21,7 +21,6 @@ class Assets
 
     @main_path = "#{@out_path}/main.js"
     @deps_path = "#{@out_path}/deps.js"
-    @g_1889_path = "#{@out_path}/g_1889.js"
 
     @cache = cache
     @make_map = make_map
@@ -39,61 +38,55 @@ class Assets
     context.eval(Snabberb.html_script(script, **needs))
   end
 
+  def game_builds
+    @game_builds ||= Dir["lib/engine/game/*/game.rb"].map do |dir|
+      game = dir.split('/')[-2]
+      path = "#{@out_path}/#{game}.js"
+      build = {
+        'path' => path,
+        'files' => @precompiled ? [path] : [compile_game(game)],
+      }
+      [game, build]
+    end.to_h
+  end
+
+  def game_paths
+    Dir["#{@out_path}/g_*.js"]
+  end
+
   # returns Hash of name -> strings pointing to compiled paths; compiles them
   # iff @precompiled is false
   def builds
-    if @precompiled
-      {
-        'deps' => {
-          'path' => @deps_path,
-          'files' => [@deps_path],
-        },
-        'main' => {
-          'path' => @main_path,
-          'files' => [@main_path],
-        },
-        'g_1889' => {
-          'path' => @g_1889_path,
-          'files' => [@g_1889_path],
-        },
-      }
-    else
-      @builds ||= {
-        'deps' => {
-          'path' => @deps_path,
-          'files' => [
-            compile_lib('opal'),
-            compile_lib('deps', 'assets'),
-          ],
-        },
-        'main' => {
-          'path' => @main_path,
-          'files' => [
-            compile('engine', 'lib', 'engine'),
-            compile('app', 'assets/app', ''),
-          ],
-        },
-        'g_1889' => {
-          'path' => @g_1889_path,
-          'files' => [
-            compile_game('1889'),
-          ],
-        },
-      }
-    end
+    @builds ||= {
+      'deps' => {
+        'path' => @deps_path,
+        'files' => @precompiled ? [@deps_path] : [compile_lib('opal'), compile_lib('deps', 'assets')],
+      },
+      'main' => {
+        'path' => @main_path,
+        'files' => @precompiled ? [@main_path] : [compile('engine', 'lib', 'engine'), compile('app', 'assets/app', '')],
+      },
+      **game_builds,
+    }
   end
 
   # HTML: <script> tags at /assets/<file>.js for all files returned by build()
-  def js_tags(*titles)
-    builds.values.map { |v| v['files'] }.flatten.map do |file|
-      if file =~ /\bg_/
-        next unless titles.any? do |title|
-          file =~ /\bg_#{title}()/
-        end
-      end
-      file = file.gsub(@out_path, @root_path)
+  def js_tags(title)
+    scripts = ['deps', 'main'].map do |key|
+      file = builds[key]['path'].gsub(@out_path, @root_path)
       %(<script type="text/javascript" src="#{file}"></script>)
-    end.join
+    end
+    scripts << game_js_tag(title) if title
+
+    scripts.compact.join
+  end
+
+  def game_js_tag(title)
+    key = "g_#{title.gsub(/(.)([A-Z])/, '\1_\2').downcase}"
+    return nil unless builds.key?(key)
+
+    file = builds[key]['path'].gsub(@out_path, @root_path)
+    %(<script type="text/javascript" src="#{file}"></script>)
   end
 
   # bundle all the files into main.js[.gz]; return array of paths
@@ -101,7 +94,7 @@ class Assets
     @combine ||=
       begin
         if @precompiled
-          [@deps_path, @main_path, @g_1889_path]
+          [@deps_path, @main_path, *game_paths]
         else
           builds.each do |_key, build|
             source = build['files'].map { |file| File.read(file).to_s }.join
@@ -115,7 +108,7 @@ class Assets
             Zlib::GzipWriter.open("#{build['path']}.gz") { |gz| gz.write(source) } if @gzip
           end
 
-          [@deps_path, @main_path, @g_1889_path]
+          [@deps_path, @main_path, *game_paths]
         end
       end
   end
@@ -232,8 +225,7 @@ class Assets
     @games_to_bundle ||= Dir.glob('lib/engine/*/game.rb').map { |f| f.split('/')[-2] }
   end
 
-  def compile_game(title)
-    name = "g_#{title}"
+  def compile_game(name)
     lib_path = 'lib/engine/game'
     ns = name
 
@@ -306,14 +298,14 @@ class Assets
     output
   end
 
-  def game_metadata(title)
+  def game_metadata(name)
     metadata = {}
 
-    Dir["lib/engine/game/#{title}/**/*.rb"].each do |file|
+    Dir["lib/engine/game/#{name}/**/*.rb"].each do |file|
       mtime = File.new(file).mtime
       path = file.split('/')[0..-2].join('/')
 
-      metadata[file.gsub("lib/", '')] = {
+      metadata[file.gsub('lib/', '')] = {
         path: file,
         build_path: "#{@build_path}/#{path}",
         js_path: "#{@build_path}/#{file.gsub('.rb', '.js')}",
