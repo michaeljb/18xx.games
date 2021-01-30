@@ -232,9 +232,6 @@ class Assets
   end
 
   def compile_game(name)
-    lib_path = 'lib/engine/game'
-    ns = name
-
     output = "#{@out_path}/#{name}.js"
     metadata = game_metadata(name)
 
