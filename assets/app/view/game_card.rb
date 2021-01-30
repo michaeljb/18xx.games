@@ -54,16 +54,6 @@ module View
       acting.include?(player['id'] || player['name'])
     end
 
-    def thing(title)
-      name = title.gsub(/(.)([A-Z])/, '\1_\2').downcase
-      src = "/assets/g_#{name}.js"
-
-      `var s = document.createElement('script');
-        s.type = 'text/javascript';
-        s.src = #{src};
-        document.body.appendChild(s);`
-    end
-
     def render_header
       buttons = []
 
@@ -78,10 +68,10 @@ module View
           end
           JOIN_YELLOW
         when 'active'
-          buttons << render_link(url(@gdata), -> { thing(@gdata['title']); enter_game(@gdata) }, 'Enter')
+          buttons << render_link(url(@gdata), -> { Engine.game_by_title(@gdata['title']); enter_game(@gdata) }, 'Enter')
           acting?(@user) ? color_for(:your_turn) : ENTER_GREEN
         when 'finished', 'archived'
-          buttons << render_link(url(@gdata), -> { thing(@gdata['title']); enter_game(@gdata) }, 'Review')
+          buttons << render_link(url(@gdata), -> { Engine.game_by_title(@gdata['title']); enter_game(@gdata) }, 'Review')
           FINISHED_GREY
         end
 

@@ -35,13 +35,31 @@ module Engine
     return @games[title] if @games[title]
     return @games[title] = GAMES_BY_TITLE[title] if GAMES_BY_TITLE[title].is_a?(Class)
 
-    require_tree 'engine/game'
+    get_game = lambda do
+      require_tree 'engine/game'
+      Engine::Game.constants
+        .map { |c| Engine::Game.const_get(c) }
+        .select { |c| c.constants.include?(:Game) }
+        .map { |c| c.const_get(:Game) }
+        .find { |c| c.title == title }
+    end
+    game = get_game.call
 
-    @games[title] = Engine::Game.constants
-                      .map { |c| Engine::Game.const_get(c) }
-                      .select { |c| c.constants.include?(:Game) }
-                      .map { |c| c.const_get(:Game) }
-                      .find { |c| c.title == title }
+    # TODO: make sure this is the right place to load the script, might be best
+    # to do it in game_manager
+    # need to test with pins and hotseat
+    if game.nil? && RUBY_ENGINE == 'opal'
+      name = title.gsub(/(.)([A-Z])/, '\1_\2').downcase
+      src = "/assets/g_#{name}.js"
+
+      `var s = document.createElement('script');
+       s.type = 'text/javascript';
+       s.src = #{src};
+       document.body.appendChild(s);`
+      game = get_game.call
+    end
+
+    @games[title] = game
   end
 
   def self.player_range(game)
