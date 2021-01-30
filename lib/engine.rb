@@ -29,14 +29,18 @@ module Engine
   # Game or Meta
   GAMES_BY_TITLE = GAMES.map { |game| [game.title, game] }.to_h
 
-  # Game only, not Meta; if called from Opal, the separately bundled game file
-  # needs to have been imported by a <script>
+  # Game only, not Meta
   def self.game_by_title(title)
     return @games[title] if @games[title]
     return @games[title] = GAMES_BY_TITLE[title] if GAMES_BY_TITLE[title].is_a?(Class)
 
+    game_meta = GAMES_BY_TITLE[title]
+
     get_game = lambda do
-      require_tree 'engine/game'
+      if RUBY_ENGINE == 'opal'
+        require_tree 'engine/game'
+      end
+
       Engine::Game.constants
         .map { |c| Engine::Game.const_get(c) }
         .select { |c| c.constants.include?(:Game) }
@@ -45,13 +49,14 @@ module Engine
     end
     game = get_game.call
 
-    # TODO: make sure this is the right place to load the script, might be best
-    # to do it in game_manager
     # need to test with pins and hotseat
     if game.nil? && RUBY_ENGINE == 'opal'
-      name = title.gsub(/(.)([A-Z])/, '\1_\2').downcase
-      src = "/assets/g_#{name}.js"
+      # load any dependency games
+      game_by_title(game_meta::DEPENDS_ON) if game_meta::DEPENDS_ON
 
+      src = "/assets/#{game_meta.fs_name}.js"
+
+      # add <script> tag to DOM to load the target game file
       `var s = document.createElement('script');
        s.type = 'text/javascript';
        s.src = #{src};

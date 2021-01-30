@@ -9,7 +9,7 @@ module Engine
     module G18ChesapeakeOffTheRails
       class Game < G18Chesapeake::Game
         load_from_json(G18ChesapeakeOffTheRails::Config::JSON)
-        load_from_meta(G18Chesapeake::Meta)
+        load_from_meta(G18ChesapeakeOffTheRails::Meta)
 
         SELL_BUY_ORDER = :sell_buy_sell
 

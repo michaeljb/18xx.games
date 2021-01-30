@@ -5,9 +5,8 @@ require 'snabberb'
 require 'uglifier'
 require 'zlib'
 
+require_relative 'engine'
 require_relative 'js_context'
-
-require 'pry-byebug'
 
 class Assets
   OUTPUT_BASE = 'public'
@@ -76,17 +75,23 @@ class Assets
       file = builds[key]['path'].gsub(@out_path, @root_path)
       %(<script type="text/javascript" src="#{file}"></script>)
     end
-    scripts << game_js_tag(title) if title
+    scripts.concat(game_js_tags(title))
 
     scripts.compact.join
   end
 
-  def game_js_tag(title)
-    key = "g_#{title.gsub(/(.)([A-Z])/, '\1_\2').downcase}"
-    return nil unless builds.key?(key)
+  def game_js_tags(title)
+    return [] unless title
+
+    game = Engine::GAMES_BY_TITLE[title]
+    tags = game_js_tags(game::DEPENDS_ON)
+
+    key = game.fs_name
+    return [] unless builds.key?(key)
 
     file = builds[key]['path'].gsub(@out_path, @root_path)
-    %(<script type="text/javascript" src="#{file}"></script>)
+    tags << %(<script type="text/javascript" src="#{file}"></script>)
+    tags.compact
   end
 
   # bundle all the files into main.js[.gz]; return array of paths
@@ -98,6 +103,7 @@ class Assets
         else
           builds.each do |_key, build|
             source = build['files'].map { |file| File.read(file).to_s }.join
+
             if @compress
               time = Time.now
               source = Uglifier.compile(source, harmony: true)
@@ -314,5 +320,20 @@ class Assets
     end
 
     metadata
+  end
+
+  def game_meta_module(name)
+    file = "lib/engine/game/#{name}.rb"
+
+    module_name = nil
+    File.read(file).split("\n").each do |line|
+      if (match = /module (G18.*)/.match(line))
+        module_name = match[1]
+        break
+      end
+    end
+
+    load file
+    Engine::Game.const_get("#{module_name}::Meta")
   end
 end

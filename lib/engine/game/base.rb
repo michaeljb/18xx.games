@@ -83,11 +83,6 @@ module Engine
                   :optional_rules, :exception, :last_processed_action, :broken_action,
                   :turn_start_action_id, :last_turn_start_action_id
 
-      GAME_RULES_URL = nil
-      GAME_DESIGNER = nil
-      GAME_IMPLEMENTER = nil
-      GAME_INFO_URL = nil
-
       # Game end check is described as a dictionary
       # with reason => after
       #   reason: What kind of game end check to do
@@ -103,8 +98,6 @@ module Engine
       #  one_more_full_or_set - finish the current OR set, then
       #                         end after the next complete OR set
       GAME_END_CHECK = { bankrupt: :immediate, bank: :full_or }.freeze
-
-      OPTIONAL_RULES = [].freeze
 
       BANKRUPTCY_ALLOWED = true
 
