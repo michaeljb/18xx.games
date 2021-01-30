@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require_relative '../base'
-require_relative '../g_1889'
 require_relative 'config'
+require_relative 'meta'
 require_relative 'step/special_track'
 
 module Engine

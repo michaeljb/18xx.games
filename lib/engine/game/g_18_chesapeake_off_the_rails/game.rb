@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require_relative '../g_18_chesapeake/game'
-require_relative '../g_18_chesapeake_off_the_rails'
 require_relative 'config'
+require_relative 'meta'
 
 module Engine
   module Game

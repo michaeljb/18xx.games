@@ -206,7 +206,7 @@ class Assets
 
     Dir["#{lib_path}/**/*.rb"].each do |file|
       next unless file.start_with?("#{lib_path}/#{ns}")
-      next if file =~ %r{^lib/engine/game/g_.*/}
+      next if file =~ %r{^lib/engine/game/g_.*/} && !file.end_with?('/meta.rb')
 
       mtime = File.new(file).mtime
       path = file.split('/')[0..-2].join('/')
@@ -308,6 +308,8 @@ class Assets
     metadata = {}
 
     Dir["lib/engine/game/#{name}/**/*.rb"].each do |file|
+      next if file.end_with?('/meta.rb')
+
       mtime = File.new(file).mtime
       path = file.split('/')[0..-2].join('/')
 

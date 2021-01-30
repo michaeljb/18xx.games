@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require_relative '../base'
-require_relative '../g_18_chesapeake'
 require_relative 'config'
+require_relative 'meta'
 require_relative 'share_pool'
 require_relative 'round/stock'
 

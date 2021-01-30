@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'meta'
+require_relative '../meta'
 
 module Engine
   module Game
