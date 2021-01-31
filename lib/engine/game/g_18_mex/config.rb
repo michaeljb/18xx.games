@@ -5,13 +5,13 @@
 # rubocop:disable Lint/RedundantCopDisableDirective, Layout/LineLength, Layout/HeredocIndentation
 
 module Engine
-  module Config
-    module Game
-      module G18Mex
+  module Game
+    module G18MEX
+      module Config
         JSON = <<-'DATA'
 {
    "filename":"18_mex",
-   "modulename":"18Mex",
+   "modulename":"18MEX",
    "currencyFormatStr":"$%d",
    "bankCash":9000,
    "certLimit":{
