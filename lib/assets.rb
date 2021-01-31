@@ -75,9 +75,11 @@ class Assets
       file = builds[key]['path'].gsub(@out_path, @root_path)
       %(<script type="text/javascript" src="#{file}"></script>)
     end
-    scripts.concat(game_js_tags(title))
+    tags = scripts.concat(game_js_tags(title)).compact.join
 
-    scripts.compact.join
+    puts "js_tags(#{title}) = #{tags}"
+
+    tags
   end
 
   def game_js_tags(title)
@@ -319,5 +321,19 @@ class Assets
     end
 
     metadata
+  end
+
+  def pin(pin_path)
+    @pin ||=
+      begin
+        time = Time.now
+        source = combine.map { |file| File.read(file).to_s }.join
+        source = Uglifier.compile(source, harmony: true)
+
+        File.write(pin_path.gsub('.gz', ''), source)
+
+        Zlib::GzipWriter.open(pin_path) { |gz| gz.write(source) }
+        puts "Building #{pin_path} - #{Time.now - time}"
+      end
   end
 end

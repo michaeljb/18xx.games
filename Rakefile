@@ -89,25 +89,26 @@ task 'annotate' do
 end
 
 desc 'Precompile assets for production'
-task :precompile, [:cache, :compress] do |_task, args|
+task :precompile, [:cache, :compress, :pin] do |_task, args|
   cache = args[:cache].nil? ? false : (args[:cache] == 'true')
   compress = args[:compress].nil? ? true : (args[:compress] == 'true')
+  pin = args[:pin].nil? ? true : (args[:compress] == 'true')
 
   require_relative 'lib/assets'
-  bundle = Assets.new(cache: cache, make_map: true, compress: compress, gzip: true).combine
+  assets = Assets.new(cache: cache, make_map: true, compress: compress, gzip: true)
+  assets.combine
 
-  # TODO: fix (and figure out) pin stuff
-
-  # Copy to the pin directory
-  git_rev = `git rev-parse --short HEAD`.strip
-  pin_dir = Assets::OUTPUT_BASE + Assets::PIN_DIR
-  File.write(Assets::OUTPUT_BASE + '/assets/version.json', JSON.dump(
-    hash: git_rev,
-    url: "https://github.com/tobymao/18xx/commit/#{git_rev}",
-  ))
-  FileUtils.mkdir_p(pin_dir)
-
-  # FileUtils.cp("#{bundle}.gz", "#{pin_dir}/#{git_rev}.js.gz")
+  if pin
+    # Copy to the pin directory
+    git_rev = `git rev-parse --short HEAD`.strip
+    pin_dir = Assets::OUTPUT_BASE + Assets::PIN_DIR
+    File.write(Assets::OUTPUT_BASE + '/assets/version.json', JSON.dump(
+                 hash: git_rev,
+                 url: "https://github.com/tobymao/18xx/commit/#{git_rev}",
+               ))
+    FileUtils.mkdir_p(pin_dir)
+    assets.pin("#{pin_dir}#{git_rev}.js.gz")
+  end
 end
 
 desc 'Profile loading data'

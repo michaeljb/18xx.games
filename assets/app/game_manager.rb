@@ -108,7 +108,9 @@ module GameManager
       end
 
       store(:game_data, game_data.merge(loaded: true), skip: true)
-      store(:app_route, hs_url(game, game_data)) unless @app_route.include?(hs_url(game, game_data))
+      game_url = hs_url(game, game_data)
+      # store(:app_route, game_url) unless @app_route.include?(game_url)
+      `window.location = #{game_url}` unless @app_route.include?(game_url)
       return
     end
 
@@ -154,11 +156,12 @@ module GameManager
 
   def hs_url(game, game_data)
     pin = game_data&.dig('settings', 'pin')
+    title = game_data['title']
 
     if pin
       "/hotseat/#{game['id']}?pin=#{pin}"
     else
-      "/hotseat/#{game['id']}"
+      "/hotseat/#{game['id']}?title=#{title}"
     end
   end
 
