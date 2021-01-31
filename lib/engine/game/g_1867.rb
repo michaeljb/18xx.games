@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative '../config/game/g_1867'
+require_relative '../g_1867/stock_market'
 require_relative '../loan'
 require_relative 'base'
 require_relative 'company_price_up_to_face'
@@ -15,6 +16,7 @@ module Engine
                       brown: '#7b352a',
                       gray: '#7c7b8c',
                       green: '#3c7b5c',
+                      olive: '#808000',
                       lightBlue: '#4cb5d2',
                       lightishBlue: '#0097df',
                       teal: '#009595',
@@ -23,6 +25,7 @@ module Engine
                       purple: '#772282',
                       red: '#ef4223',
                       white: '#fff36b',
+                      navy: '#000080',
                       yellow: '#ffdea8')
 
       load_from_json(Config::Game::G1867::JSON)
@@ -73,8 +76,8 @@ module Engine
                                             'minors_cannot_start' => ['Minors cannot start'],
                                             'minors_nationalized' => ['Minors are nationalized'],
                                             'nationalize_companies' =>
-                                            ['Nationalize Companies',
-                                             'All companies close paying their owner their value'],
+                                            ['Nationalize Private Companies',
+                                             'Private companies close, paying their owner their value'],
                                             'train_trade_allowed' =>
                                             ['Train trade in allowed',
                                              'Trains can be traded in for 50% towards Phase 8 trains'],
@@ -107,6 +110,11 @@ module Engine
 
       def interest_rate
         5 # constant
+      end
+
+      def init_stock_market
+        Engine::G1867::StockMarket.new(self.class::MARKET, self.class::CERT_LIMIT_TYPES,
+                                       multiple_buy_types: self.class::MULTIPLE_BUY_TYPES)
       end
 
       def init_corporations(stock_market)
@@ -513,12 +521,12 @@ module Engine
         @hidden_company = company_by_id('3')
 
         # CN corporation only exists to hold tokens
-        @national = corporation_by_id('CN')
+        @national = @corporations.find { |c| c.type == :national }
         @national.ipoed = true
         @national.shares.clear
         @national.shares_by_corporation[@national].clear
 
-        @national_reservations = NATIONAL_RESERVATIONS.dup
+        @national_reservations = self.class::NATIONAL_RESERVATIONS.dup
         @corporations.delete(@national)
 
         @green_tokens = []
@@ -538,13 +546,9 @@ module Engine
           end
         end
 
-        # Set minors maximum share price
-        max_price = @stock_market.market.first.find { |stockprice| stockprice&.types&.include?(:max_price) }
-        @corporations.select { |c| c.type == :minor }.each { |c| c.max_share_price = max_price }
-
         # Move green and majors out of the normal list
         @corporations, @future_corporations = @corporations.partition do |corporation|
-          corporation.type == :minor && !GREEN_CORPORATIONS.include?(corporation.id)
+          corporation.type == :minor && !self.class::GREEN_CORPORATIONS.include?(corporation.id)
         end
       end
 

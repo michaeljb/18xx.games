@@ -205,7 +205,7 @@ module Engine
       # operating_round // 1889 places on first operating round
       HOME_TOKEN_TIMING = :operate
 
-      DISCARDED_TRAINS = :discard # discarded or removed?
+      DISCARDED_TRAINS = :discard # discard or remove
       DISCARDED_TRAIN_DISCOUNT = 0 # percent
       CLOSED_CORP_TRAINS_REMOVED = true
       CLOSED_CORP_RESERVATIONS_REMOVED = true
@@ -293,6 +293,10 @@ module Engine
 
       # use to modify hexes based on optional rules
       def optional_hexes
+        game_hexes
+      end
+
+      def game_hexes
         self.class::HEXES
       end
 
@@ -349,7 +353,7 @@ module Engine
         data['companies'].map! do |company|
           company.transform_keys!(&:to_sym)
           company[:abilities]&.each { |ability| ability.transform_keys!(&:to_sym) }
-          company[:color] = const_get(:COLORS)[company[:color]] if const_defined?(:COLORS)
+          company[:color] = const_get(:COLORS)[company[:color]&.to_sym] if const_defined?(:COLORS)
           company
         end
 
@@ -357,7 +361,7 @@ module Engine
 
         data['minors'].map! do |minor|
           minor.transform_keys!(&:to_sym)
-          minor[:color] = const_get(:COLORS)[minor[:color]] if const_defined?(:COLORS)
+          minor[:color] = const_get(:COLORS)[minor[:color]&.to_sym] if const_defined?(:COLORS)
           minor[:abilities]&.each { |ability| ability.transform_keys!(&:to_sym) }
           minor
         end
@@ -365,7 +369,7 @@ module Engine
         data['corporations'].map! do |corporation|
           corporation.transform_keys!(&:to_sym)
           corporation[:abilities]&.each { |ability| ability.transform_keys!(&:to_sym) }
-          corporation[:color] = const_get(:COLORS)[corporation[:color]] if const_defined?(:COLORS)
+          corporation[:color] = const_get(:COLORS)[corporation[:color]&.to_sym] if const_defined?(:COLORS)
           corporation
         end
 
@@ -1618,7 +1622,11 @@ module Engine
       end
 
       def init_phase
-        Phase.new(self.class::PHASES, self)
+        Phase.new(game_phases, self)
+      end
+
+      def game_phases
+        self.class::PHASES
       end
 
       def init_round
@@ -1626,20 +1634,28 @@ module Engine
       end
 
       def init_stock_market
-        StockMarket.new(self.class::MARKET, self.class::CERT_LIMIT_TYPES,
+        StockMarket.new(game_market, self.class::CERT_LIMIT_TYPES,
                         multiple_buy_types: self.class::MULTIPLE_BUY_TYPES)
       end
 
+      def game_market
+        self.class::MARKET
+      end
+
       def init_companies(players)
-        self.class::COMPANIES.map do |company|
+        game_companies.map do |company|
           next if players.size < (company[:min_players] || 0)
 
           Company.new(**company)
         end.compact
       end
 
+      def game_companies
+        self.class::COMPANIES
+      end
+
       def init_train_handler
-        trains = self.class::TRAINS.flat_map do |train|
+        trains = game_trains.flat_map do |train|
           (train[:num] || num_trains(train)).times.map do |index|
             Train.new(**train, index: index)
           end
@@ -1648,12 +1664,20 @@ module Engine
         Depot.new(trains, self)
       end
 
+      def game_trains
+        self.class::TRAINS
+      end
+
       def num_trains(_train)
         raise NotImplementedError
       end
 
       def init_minors
-        self.class::MINORS.map { |minor| Minor.new(**minor) }
+        game_minors.map { |minor| Minor.new(**minor) }
+      end
+
+      def game_minors
+        self.class::MINORS
       end
 
       def init_loans
@@ -1673,13 +1697,17 @@ module Engine
       end
 
       def init_corporations(stock_market)
-        self.class::CORPORATIONS.map do |corporation|
+        game_corporations.map do |corporation|
           Corporation.new(
             min_price: stock_market.par_prices.map(&:price).min,
             capitalization: self.class::CAPITALIZATION,
             **corporation.merge(corporation_opts),
           )
         end
+      end
+
+      def game_corporations
+        self.class::CORPORATIONS
       end
 
       def init_hexes(companies, corporations)
@@ -1763,7 +1791,11 @@ module Engine
       end
 
       def init_tiles
-        self.class::TILES.flat_map { |name, val| init_tile(name, val) }
+        game_tiles.flat_map { |name, val| init_tile(name, val) }
+      end
+
+      def game_tiles
+        self.class::TILES
       end
 
       def init_tile(name, val)
@@ -2148,6 +2180,10 @@ module Engine
       # Override this, and add elements (paragraphs of text) here to display it on Info page.
       def timeline
         []
+      end
+
+      def token_string(corporation)
+        "#{corporation.tokens.map { |t| t.used ? 0 : 1 }.sum}/#{corporation.tokens.size}"
       end
 
       # minors to show on player cards
