@@ -44,7 +44,7 @@ module Engine
         STATUS_TEXT = Base::STATUS_TEXT.merge(
           'can_buy_companies_from_other_players' => ['Interplayer Company Buy', 'Companies can be bought between players']
         ).merge(
-          Step::SingleDepotTrainBuy::STATUS_TEXT
+          Engine::Step::SingleDepotTrainBuy::STATUS_TEXT
         ).merge(
           'ndm_unavailable' => ['NdM unavailable', 'NdM shares unavailable during stock round'],
         ).freeze
@@ -167,24 +167,24 @@ module Engine
         end
 
         def init_share_pool
-          Engine::G18MEX::SharePool.new(self)
+          G18MEX::SharePool.new(self)
         end
 
         def operating_round(round_num)
           Round::Operating.new(self, [
-                                 Step::Bankrupt,
-                                 Step::G18MEX::Assign,
-                                 Step::G18MEX::BuyCompany,
-                                 Step::HomeToken,
-                                 Step::G18MEX::Merge,
-                                 Step::G18MEX::SpecialTrack,
-                                 Step::G18MEX::Track,
-                                 Step::Token,
-                                 Step::Route,
-                                 Step::G18MEX::Dividend,
-                                 Step::DiscardTrain,
-                                 Step::G18MEX::SingleDepotTrainBuy,
-                                 [Step::BuyCompany, blocks: true],
+                                 Engine::Step::Bankrupt,
+                                 G18MEX::Step::Assign,
+                                 G18MEX::Step::BuyCompany,
+                                 Engine::Step::HomeToken,
+                                 G18MEX::Step::Merge,
+                                 G18MEX::Step::SpecialTrack,
+                                 G18MEX::Step::Track,
+                                 Engine::Step::Token,
+                                 Engine::Step::Route,
+                                 G18MEX::Step::Dividend,
+                                 Engine::Step::DiscardTrain,
+                                 G18MEX::Step::SingleDepotTrainBuy,
+                                 [Engine::Step::BuyCompany, blocks: true],
                                ], round_num: round_num)
         end
 
@@ -194,15 +194,15 @@ module Engine
 
         def new_auction_round
           Round::Auction.new(self, [
-                               Step::CompanyPendingPar,
-                               Step::G18MEX::WaterfallAuction,
+                               Engine::Step::CompanyPendingPar,
+                               G18MEX::Step::WaterfallAuction,
                              ])
         end
 
         def stock_round
           Round::Stock.new(self, [
-                             Step::DiscardTrain,
-                             Step::G18MEX::BuySellParShares,
+                             Engine::Step::DiscardTrain,
+                             G18MEX::Step::BuySellParShares,
                            ])
         end
 

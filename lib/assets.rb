@@ -320,19 +320,4 @@ class Assets
 
     metadata
   end
-
-  def game_meta_module(name)
-    file = "lib/engine/game/#{name}.rb"
-
-    module_name = nil
-    File.read(file).split("\n").each do |line|
-      if (match = /module (G18.*)/.match(line))
-        module_name = match[1]
-        break
-      end
-    end
-
-    load file
-    Engine::Game.const_get("#{module_name}::Meta")
-  end
 end
