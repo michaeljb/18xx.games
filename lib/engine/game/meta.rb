@@ -27,15 +27,16 @@ module Engine
       end
 
       module ClassMethods
+        # sort games by display title, whether it is the Game class or Meta module
         def <=>(other)
           [DEV_STAGES.index(self::DEV_STAGE), title.sub(/18\s+/, '18').downcase] <=>
             [DEV_STAGES.index(other::DEV_STAGE), other.title.sub(/18\s+/, '18').downcase]
         end
 
-        # display title
         def title
           @title ||=
-            self::GAME_TITLE || begin
+            self::GAME_TITLE ||
+            begin
               parts = name.split('::')
               last = parts.last
               part = (last == 'Game' || last == 'Meta' ? parts[-2] : last)
@@ -43,7 +44,6 @@ module Engine
             end
         end
 
-        # file/dir name
         def fs_name
           @fs_name ||=
             begin
