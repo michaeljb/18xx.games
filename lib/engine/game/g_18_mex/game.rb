@@ -37,12 +37,14 @@ module Engine
 
         EVENTS_TEXT = Base::EVENTS_TEXT.merge(
           'companies_buyable' => ['Companies become buyable', 'All companies may now be bought in by corporation'],
-          'minors_closed' => ['Minors closed', 'Minors closed, NdM becomes available for buy & sell during stock round'],
+          'minors_closed' => ['Minors closed',
+                              'Minors closed, NdM becomes available for buy & sell during stock round'],
           'ndm_merger' => ['NdM merger', 'Potential NdM merger if NdM has floated']
         ).freeze
 
         STATUS_TEXT = Base::STATUS_TEXT.merge(
-          'can_buy_companies_from_other_players' => ['Interplayer Company Buy', 'Companies can be bought between players']
+          'can_buy_companies_from_other_players' => ['Interplayer Company Buy',
+                                                     'Companies can be bought between players']
         ).merge(
           Engine::Step::SingleDepotTrainBuy::STATUS_TEXT
         ).merge(
@@ -330,7 +332,9 @@ module Engine
           end
 
           @mergeable_candidates = mergeable_corporations
-          @log << "Merge candidates: #{present_mergeable_candidates(@mergeable_candidates)}" if @mergeable_candidates.any?
+          if @mergeable_candidates.any?
+            @log << "Merge candidates: #{present_mergeable_candidates(@mergeable_candidates)}"
+          end
           possible_auto_merge
         end
 

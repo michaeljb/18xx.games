@@ -30,9 +30,7 @@ module Engine
   GAMES_BY_TITLE = GAMES.map { |game| [game.title, game] }.to_h
 
   def self.get_game(game_meta)
-    if RUBY_ENGINE == 'opal'
-      require_tree "engine/game/#{game_meta.fs_name}"
-    end
+    require_tree "engine/game/#{game_meta.fs_name}" if RUBY_ENGINE == 'opal'
 
     Engine::Game.constants
       .map { |c| Engine::Game.const_get(c) }
@@ -53,7 +51,7 @@ module Engine
 
     # need to test with pins and hotseat
     if game.nil? && RUBY_ENGINE == 'opal'
-      puts "hello there"
+      puts 'hello there'
 
       # load any dependency games
       game_by_title(game_meta::DEPENDS_ON) if game_meta::DEPENDS_ON
