@@ -55,11 +55,8 @@ module View
     end
 
     def ensure_and_enter_game(gdata)
-      puts "ensure_and_enter_game(#{gdata})"
-
       if gdata['title'] && !gdata.dig('settings', 'pin')
         klass = Engine.game_by_title(gdata['title'])
-        puts "klass = #{klass}"
       end
       enter_game(gdata)
     end

@@ -75,11 +75,7 @@ class Assets
       file = builds[key]['path'].gsub(@out_path, @root_path)
       %(<script type="text/javascript" src="#{file}"></script>)
     end
-    tags = scripts.concat(game_js_tags(title)).compact.join
-
-    puts "js_tags(#{title}) = #{tags}"
-
-    tags
+    scripts.concat(game_js_tags(title)).compact.join
   end
 
   def game_js_tags(title)

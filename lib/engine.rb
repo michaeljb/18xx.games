@@ -41,8 +41,6 @@ module Engine
 
   # Game only, not Meta
   def self.game_by_title(title)
-    puts "game_by_title(#{title})"
-
     return @games[title] if @games[title]
     return @games[title] = GAMES_BY_TITLE[title] if GAMES_BY_TITLE[title].is_a?(Class)
 
@@ -51,8 +49,6 @@ module Engine
 
     # need to test with pins and hotseat
     if game.nil? && RUBY_ENGINE == 'opal'
-      puts 'hello there'
-
       # load any dependency games
       game_by_title(game_meta::DEPENDS_ON) if game_meta::DEPENDS_ON
 

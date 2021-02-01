@@ -109,8 +109,8 @@ module GameManager
 
       store(:game_data, game_data.merge(loaded: true), skip: true)
       game_url = hs_url(game, game_data)
-      # store(:app_route, game_url) unless @app_route.include?(game_url)
-      `window.location = #{game_url}` unless @app_route.include?(game_url)
+      # store(:app_route, game_url) unless @app_route.gsub('%20', ' ').include?(game_url)
+      `window.location = #{game_url}` unless @app_route.gsub('%20', ' ').include?(game_url)
       return
     end
 
