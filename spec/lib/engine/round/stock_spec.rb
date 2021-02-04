@@ -12,7 +12,7 @@ require 'engine/round/operating'
 module Engine
   describe Round::Stock do
     let(:players) { %w[a b c d e f] }
-    let(:game) { Game::G1889.new(players) }
+    let(:game) { Game::G1889::Game.new(players) }
     let(:market) { game.stock_market }
     let(:corp_0) { game.corporations[0] }
     let(:corp_1) { game.corporations[1] }
@@ -144,7 +144,7 @@ module Engine
     end
 
     context '2p 18Chesapeake' do
-      let(:game) { Game::G18Chesapeake.new(%w[a b]) }
+      let(:game) { Game::G18Chesapeake::Game.new(%w[a b]) }
       it '30% presidency, remove share from share pool, allow dumping' do
         bo = game.corporation_by_id('B&O')
         cv = game.abilities(game.cornelius, :shares).shares.first.corporation
