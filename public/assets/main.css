@@ -26,6 +26,7 @@ button, .button_link {
 .button_link {
   display: inline-block; /* else padding doesn’t work => different height than button */
   box-sizing: border-box;
+  text-align: center;
 }
 button.small {
   padding: 0.2rem 0.5rem;
@@ -45,11 +46,6 @@ h3 {
   font-size: 1.1rem;
   margin-bottom: 0.4rem;
 }
-
-p {
-  margin: 0.7rem 0;
-}
-
 
 /* prevent hover effects on mobile devices */
 @media(hover: hover) and (pointer: fine) {
@@ -98,6 +94,9 @@ input + label, select + label {
   margin-right: 1rem;
 }
 
+p {
+  margin: 0.7rem 0;
+}
 p:first-child {
   margin-top: 0;
 }
@@ -173,21 +172,9 @@ nav#game_menu {
   height: 1.8rem;
   width: 2.7rem;
 }
-
-#profile-settings > #settings__notifications {
-  height: 2rem;
-}
-
-#settings__colors .input-container label {
+#settings__colors label, #settings__simple_logos label, #settings__notifications label  {
     display: inline-block;
     width: 11.5rem;
-}
-
-#settings__tiles > label {
-  margin-right: 0.5rem;
-}
-#settings__tiles__buttons {
-  display: inline-flex;
 }
 #settings__tiles__buttons > .input-container {
   margin: 0;

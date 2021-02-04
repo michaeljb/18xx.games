@@ -1501,6 +1501,30 @@ module Engine
         end
       end
 
+      def discountable_trains_for(corporation)
+        discountable_trains = @depot.depot_trains.select(&:discount)
+
+        corporation.trains.flat_map do |train|
+          discountable_trains.flat_map do |discount_train|
+            discounted_price = discount_train.price(train)
+            next if discount_train.price == discounted_price
+
+            name = discount_train.name
+            discount_info = [[train, discount_train, name, discounted_price]]
+
+            # Add variants if any - they have same discount as base version
+            discount_train.variants.each do |_, v|
+              next if v[:name] == name
+
+              price = v[:price] - (discount_train.price - discounted_price)
+              discount_info << [train, discount_train, v[:name], price]
+            end
+
+            discount_info
+          end.compact
+        end
+      end
+
       def remove_train(train)
         return unless (owner = train.owner)
         return @depot.remove_train(train) if train.from_depot?
@@ -1935,7 +1959,7 @@ module Engine
         %i[immediate current_round current_or full_or one_more_full_or_set].each do |after|
           triggers.keys.each do |reason|
             if game_end_check_values[reason] == after
-              (@turn == (@final_turn ||= @turn + 1)) if after == :one_more_full_or_set
+              @final_turn ||= @turn + 1 if after == :one_more_full_or_set
               return [reason, after]
             end
           end
@@ -2182,8 +2206,12 @@ module Engine
         []
       end
 
+      def count_available_tokens(corporation)
+        corporation.tokens.map { |t| t.used ? 0 : 1 }.sum
+      end
+
       def token_string(corporation)
-        "#{corporation.tokens.map { |t| t.used ? 0 : 1 }.sum}/#{corporation.tokens.size}"
+        "#{count_available_tokens(corporation)}/#{corporation.tokens.size}"
       end
 
       # minors to show on player cards

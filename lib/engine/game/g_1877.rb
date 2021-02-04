@@ -6,27 +6,6 @@ require_relative 'g_1817'
 module Engine
   module Game
     class G1877 < G1817
-      register_colors(black: '#16190e',
-                      blue: '#165633',
-                      brightGreen: '#0a884b',
-                      brown: '#984573',
-                      gold: '#904098',
-                      gray: '#984d2d',
-                      green: '#bedb86',
-                      lavender: '#e96f2c',
-                      lightBlue: '#bedef3',
-                      lightBrown: '#bec8cc',
-                      lime: '#00afad',
-                      navy: '#003d84',
-                      natural: '#e31f21',
-                      orange: '#f2a847',
-                      pink: '#ee3e80',
-                      red: '#ef4223',
-                      turquoise: '#0095da',
-                      violet: '#e48329',
-                      white: '#fff36b',
-                      yellow: '#ffdea8')
-
       load_from_json(Config::Game::G1877::JSON)
 
       GAME_DESIGNER = 'Scott Petersen & Toby Mao'
@@ -37,7 +16,13 @@ module Engine
 
       DISCARDED_TRAINS = :remove
 
-      OPTIONAL_RULES = [].freeze
+      OPTIONAL_RULES = [
+        {
+          sym: :cross_train,
+          short_name: 'Cross Train Purchases',
+          desc: 'Allows corporations to purchase trains from others',
+        },
+      ].freeze
 
       DEV_STAGE = :alpha
 
@@ -47,11 +32,10 @@ module Engine
                                                                   'Game Ends 3 ORs after purchase/export'\
                                                                   ' of first 4 train']).freeze
       def event_signal_end_game!
-        # If we're in round 1, we have another set of ORs with 2 ORs
-        # If we're in round 2, we have another set of ORs with 3 ORs
-        @final_operating_rounds = @round.round_num == 2 ? 3 : 2
-
-        @log << "First 4 train bought/exported, ending game at the end of #{@turn + 1}.#{@final_operating_rounds}"
+        @final_operating_rounds = 2
+        game_end_check
+        @final_turn -= 1 if @round.stock?
+        @log << "First 4 train bought/exported, ending game at the end of #{@final_turn}.#{@final_operating_rounds}"
       end
 
       def size_corporation(corporation, size)
@@ -86,7 +70,7 @@ module Engine
 
       def buy_train(operator, train, price = nil)
         super
-        train.buyable = false
+        train.buyable = false unless @optional_rules&.include?(:cross_train)
       end
 
       private
