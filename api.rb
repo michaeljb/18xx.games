@@ -64,7 +64,11 @@ class Api < Roda
   use Rack::Deflater unless PRODUCTION
 
   STANDARD_ROUTES = %w[
-    / about hotseat login map market new_game profile signup tiles tutorial forgot reset fixture
+    / about hotseat login new_game profile signup tutorial forgot reset
+  ].freeze
+
+  ROUTES_WITH_GAME_TITLES = %w[
+     map market tiles fixture
   ].freeze
 
   Dir['./routes/*'].sort.each { |file| require file }
@@ -98,6 +102,10 @@ class Api < Roda
 
     r.on STANDARD_ROUTES do
       render_with_games
+    end
+
+    r.on ROUTES_WITH_GAME_TITLES do
+      render(title: request.path.split('/')[2])
     end
 
     r.on 'game', Integer do |id|
