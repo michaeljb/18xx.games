@@ -96,9 +96,7 @@ class Assets
   def combine
     @combine ||=
       begin
-        if @precompiled
-          [@deps_path, @main_path, *game_paths]
-        else
+        unless @precompiled
           builds.each do |_key, build|
             source = build['files'].map { |file| File.read(file).to_s }.join
 
@@ -111,9 +109,8 @@ class Assets
             File.write(build['path'], source)
             Zlib::GzipWriter.open("#{build['path']}.gz") { |gz| gz.write(source) } if @gzip
           end
-
-          [@deps_path, @main_path, *game_paths]
         end
+        [@deps_path, @main_path, *game_paths]
       end
   end
 

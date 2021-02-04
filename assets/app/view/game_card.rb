@@ -53,13 +53,6 @@ module View
       acting.include?(player['id'] || player['name'])
     end
 
-    def ensure_and_enter_game(gdata)
-      if gdata['title'] && !gdata.dig('settings', 'pin')
-        klass = Engine.game_by_title(gdata['title'])
-      end
-      enter_game(gdata)
-    end
-
     def render_header
       buttons = []
 
@@ -74,10 +67,10 @@ module View
           end
           JOIN_YELLOW
         when 'active'
-          buttons << render_link(url(@gdata), -> { ensure_and_enter_game(@gdata) }, 'Enter')
+          buttons << render_link(url(@gdata), -> { enter_game(@gdata) }, 'Enter')
           acting?(@user) ? color_for(:your_turn) : ENTER_GREEN
         when 'finished', 'archived'
-          buttons << render_link(url(@gdata), -> { ensure_and_enter_game(@gdata) }, 'Review')
+          buttons << render_link(url(@gdata), -> { enter_game(@gdata) }, 'Review')
           FINISHED_GREY
         end
 

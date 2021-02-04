@@ -57,7 +57,7 @@ module Engine
       # add <script> tag to DOM to load the target game file
       `var s = document.createElement('script');
        s.type = 'text/javascript';
-       s.src = src;
+       s.src = #{src};
        s.async = false;
        document.body.appendChild(s);`
       game = get_game(game_meta)

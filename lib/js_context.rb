@@ -9,7 +9,7 @@ class JsContext
     @snapshot = MiniRacer::Snapshot.new(combined_files)
   end
 
-  def eval(script, warmup: nil)
+  def eval(script)
     MiniRacer::Context
       .new(snapshot: @snapshot)
       .eval(script, filename: @files.join('|'))
