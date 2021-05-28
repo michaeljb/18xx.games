@@ -7,7 +7,8 @@ on:
     branches: [ master ]
 
 jobs:
-  RuboCop:
+
+  setup:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -19,47 +20,18 @@ jobs:
     - name: Compile
       run: |
         bundle exec rake precompile:spec
-    - name: Cache Build
-      id: cache-build
-      uses: actions/cache@v2
-      with:
-        path: build
-        key: ${{ runner.os }}-build
-    - name: Cache Public
-      id: cache-public
-      uses: actions/cache@v2
-      with:
-        path: public
-        key: ${{ runner.os }}-public
+
+  RuboCop:
+    needs: setup
+    runs-on: ubuntu-latest
     - name: RuboCop
       run: |
         bundle exec rubocop
 
   Spec1:
-    name: Test
+    needs: setup
     runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Ruby 3.0 and install dependencies
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: 3.0.1
-        bundler-cache: true
-    - name: Compile
-      run: |
-        bundle exec rake precompile:spec
-    - name: Cache Build
-      id: cache-build
-      uses: actions/cache@v2
-      with:
-        path: build
-        key: ${{ runner.os }}-build
-    - name: Cache Public
-      id: cache-public
-      uses: actions/cache@v2
-      with:
-        path: public
-        key: ${{ runner.os }}-public
+    name: Test
     - name: Test Thing
       run: |
         bundle exec rspec spec/assets_spec.rb
