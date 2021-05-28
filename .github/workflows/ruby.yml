@@ -31,13 +31,13 @@ jobs:
   RuboCop:
     needs: setup
     runs-on: ubuntu-latest
+    steps:
     - uses: actions/checkout@v2
     - name: Set up Ruby 3.0 and install dependencies
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: 3.0.1
         bundler-cache: true
-    steps:
     - name: RuboCop
       run: |
         bundle exec rubocop
@@ -52,7 +52,6 @@ jobs:
       with:
         ruby-version: 3.0.1
         bundler-cache: true
-    steps:
     - name: Test Thing
       run: |
         bundle exec rspec spec/assets_spec.rb
