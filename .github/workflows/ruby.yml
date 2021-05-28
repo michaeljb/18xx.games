@@ -24,6 +24,7 @@ jobs:
   RuboCop:
     needs: setup
     runs-on: ubuntu-latest
+    steps:
     - name: RuboCop
       run: |
         bundle exec rubocop
@@ -32,6 +33,7 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     name: Test
+    steps:
     - name: Test Thing
       run: |
         bundle exec rspec spec/assets_spec.rb
