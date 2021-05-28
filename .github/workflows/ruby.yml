@@ -20,10 +20,23 @@ jobs:
     - name: Compile
       run: |
         bundle exec rake precompile:spec
+    - name: Cache
+      uses: actions/cache@v2
+      with:
+        path: |
+          build
+          public
+        key: Cache-${{ github.sha }}
 
   RuboCop:
     needs: setup
     runs-on: ubuntu-latest
+    - uses: actions/checkout@v2
+    - name: Set up Ruby 3.0 and install dependencies
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 3.0.1
+        bundler-cache: true
     steps:
     - name: RuboCop
       run: |
@@ -33,6 +46,12 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     name: Test
+    - uses: actions/checkout@v2
+    - name: Set up Ruby 3.0 and install dependencies
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 3.0.1
+        bundler-cache: true
     steps:
     - name: Test Thing
       run: |
