@@ -46,6 +46,7 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     name: Test
+    steps:
     - uses: actions/checkout@v2
     - name: Set up Ruby 3.0 and install dependencies
       uses: ruby/setup-ruby@v1
