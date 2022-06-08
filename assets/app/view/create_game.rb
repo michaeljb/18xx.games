@@ -94,7 +94,7 @@ module View
           h(:a, { attrs: { href: '/login' } }, 'login'), ' to play multiplayer.'
         ]
       end
-      description << h(:p, 'If you are new to 18xx games then Shikoku 1889, 18Chesapeake or 18MS are good games to begin with.')
+      description << h(:p, '1868 Wyoming test server')
       render_form('Create New Game', inputs, description)
     end
 
@@ -435,7 +435,7 @@ module View
     end
 
     def visible_games
-      @visible_games ||= (@production ? Engine::VISIBLE_GAMES : Engine::GAME_METAS).sort
+      [Engine::Game::G1868WY::Meta]
     end
 
     def selected_game
