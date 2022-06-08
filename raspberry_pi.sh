@@ -20,7 +20,7 @@ sudo apt install -y \
 
 git clone -o michaeljb https://github.com/michaeljb/18xx.games.git 18xx
 cd 18xx
-git checkout 1868WY
+git checkout 1868WY-pi
 
 
 # set up postgres role for user 'pi'
