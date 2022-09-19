@@ -31,7 +31,7 @@ rescue Sequel::ValidationFailed
 end
 
 def import_game(game_id)
-  game_uri = URI.parse("https://18xx.games/api/game/#{game_id}")
+  game_uri = URI.parse("https://18xx.michaeljb.dev/api/game/#{game_id}")
   res = Net::HTTP.get_response game_uri
   game_json_string = res.body
   game_json = JSON.parse(game_json_string)
@@ -68,7 +68,7 @@ def import_game(game_id)
     game.update(game_json)
 
     # Filter out actions already in the database
-    max_existing_action_id = Action.where(game_id: game.id).max(:action_id)
+    max_existing_action_id = Action.where(game_id: game.id).max(:action_id) || -1
     actions_json.delete_if { |action_json| action_json['id'] <= max_existing_action_id }
   else
     # Create new game
