@@ -220,12 +220,12 @@ class Assets
   def pin(pin_path)
     @pin ||=
       begin
-        prealphas = Engine::GAME_META_BY_TITLE
+        non_wy = Engine::GAME_META_BY_TITLE
           .values
-          .select { |g| g::DEV_STAGE == :prealpha }
+          .reject { |g| g::GAME_TITLE == '1868 Wyoming' }
           .map { |g| "public/assets/#{g.fs_name}.js" }
 
-        source = (combine - prealphas).map { |file| File.read(file).to_s }.join
+        source = (combine - non_wy).map { |file| File.read(file).to_s }.join
         source = compress('pin', source)
         File.write(pin_path.gsub('.gz', ''), source)
         Zlib::GzipWriter.open(pin_path) { |gz| gz.write(source) }
