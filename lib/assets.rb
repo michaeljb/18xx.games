@@ -37,7 +37,7 @@ class Assets
   end
 
   def game_builds
-    @game_builds ||= Dir['lib/engine/game/*/game.rb'].to_h do |dir|
+    @game_builds ||= Dir['lib/engine/game/g_1868_wy/game.rb'].to_h do |dir|
       game = dir.split('/')[-2]
       path = "#{@out_path}/#{game}.js"
       build = {
