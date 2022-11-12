@@ -125,6 +125,7 @@ module Engine
         discount = 0
         teleport = false
         ability_found = false
+        discount_ability = nil
 
         abilities(entity) do |ability|
           next if ability.owner != entity
@@ -148,6 +149,7 @@ module Engine
 
             free = ability.free
             discount = ability.discount
+            discount_ability = ability if discount&.positive?
             extra_cost += ability.cost
           end
         end
@@ -168,8 +170,15 @@ module Engine
           else
             border, border_types = remove_border_calculate_cost!(tile, entity, spender)
             terrain += border_types if border.positive?
-            base_cost = @game.upgrade_cost(old_tile, hex, entity, spender) + border + extra_cost - discount
-            @game.tile_cost_with_discount(tile, hex, entity, spender, base_cost)
+
+            base_cost = @game.upgrade_cost(old_tile, hex, entity, spender) + border + extra_cost + @game.new_tile_cost(tile)
+
+            if discount_ability
+              discount = [base_cost, discount_ability.discount].min
+              @game.log_cost_discount(spender, discount_ability, discount)
+            end
+
+            @game.tile_cost_with_discount(tile, hex, entity, spender, base_cost - discount)
           end
 
         pay_tile_cost!(entity, tile, rotation, hex, spender, cost, extra_cost)

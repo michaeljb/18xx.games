@@ -693,7 +693,7 @@ module Engine
         @actions << action
 
         # Process the main action we came here to do first
-        process_single_action(action)
+        process_single_action(action) # calls action_processed
 
         unless action.is_a?(Action::Message)
           @redo_possible = false
@@ -1495,6 +1495,10 @@ module Engine
           total_cost = upgrade.cost - discount
           total_cost
         end
+      end
+
+      def new_tile_cost(_tile)
+        0
       end
 
       def tile_cost_with_discount(_tile, hex, entity, spender, cost)

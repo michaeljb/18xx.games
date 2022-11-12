@@ -5,7 +5,7 @@ require_relative 'base'
 module Engine
   module Step
     module ShareBuying
-      def buy_shares(entity, shares, exchange: nil, swap: nil, allow_president_change: true, borrow_from: nil)
+      def buy_shares(entity, shares, exchange: nil, swap: nil, allow_president_change: true, borrow_from: nil, silent: nil)
         check_legal_buy(entity,
                         shares,
                         exchange: exchange,
@@ -17,7 +17,8 @@ module Engine
                                     exchange: exchange,
                                     swap: swap,
                                     borrow_from: borrow_from,
-                                    allow_president_change: allow_president_change)
+                                    allow_president_change: allow_president_change,
+                                    silent: silent)
 
         maybe_place_home_token(shares.corporation)
       end
@@ -46,6 +47,10 @@ module Engine
       def swap_buy(_player, _corporation, _ipo_or_pool_share); end
 
       def swap_sell(_player, _corporation, _bundle, _pool_share); end
+
+      def ipo_type(_entity)
+        :par
+      end
     end
   end
 end
