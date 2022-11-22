@@ -86,32 +86,32 @@ module Engine
           {
             name: '2',
             distance: 2,
-            price: 80,
+            price: 1,
             obsolete_on: '5',
             rusts_on: '6',
           },
           {
             name: '4',
             distance: 4,
-            price: 180,
+            price: 1,
             obsolete_on: '6',
             variants: [
               {
                 name: '3/5',
                 distance: [{ 'nodes' => %w[city offboard], 'pay' => 3, 'visit' => 5 }],
-                price: 160,
+                price: 1,
               },
             ],
           },
           {
             name: '5',
             distance: 5,
-            price: 500,
+            price: 1,
             variants: [
               {
                 name: '4/6',
                 distance: [{ 'nodes' => %w[city offboard], 'pay' => 4, 'visit' => 6 }],
-                price: 450,
+                price: 1,
               },
             ],
             events: [{ 'type' => 'close_companies' }],
@@ -119,12 +119,12 @@ module Engine
           {
             name: '6',
             distance: 6,
-            price: 800,
+            price: 1,
             variants: [
               {
                 name: '7/8',
                 distance: [{ 'nodes' => %w[city offboard], 'pay' => 7, 'visit' => 8 }],
-                price: 900,
+                price: 1,
               },
             ],
             events: [
@@ -592,6 +592,19 @@ module Engine
           draft_step = two_player? ? G1846::Step::Draft2pDistribution : G1846::Step::DraftDistribution
           Engine::Round::Draft.new(self, [draft_step], reverse_order: true)
         end
+
+        # def dotify(tile)
+        #   tile.towns.each { |town| town.style = :dot }
+        #   tile
+        # end
+
+        # def init_tiles
+        #   super.each { |tile| dotify(tile) }
+        # end
+
+        # def init_hexes(companies, corporations)
+        #   super.each { |hex| dotify(hex.tile) }
+        # end
 
         def new_draft_round
           @log << "-- #{round_description('Draft')} --"

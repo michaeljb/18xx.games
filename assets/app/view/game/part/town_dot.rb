@@ -110,40 +110,35 @@ module View
         def render_part
           radius = 10 * (0.8 + (@width.to_i / 40))
 
-          dot_attrs = {
-            transform: translate.to_s,
-            r: radius,
-            fill: (@town.halt? ? 'gray' : @color),
-            stroke: (@town.halt? ? @color : 'white'),
-            'stroke-width': 4,
-          }
-
           children = []
 
-          if @town.double
-            x = radius
-            y = 0
-            angle = layout == :pointy ? -30 : 0
-
-            double_children = []
-            if @town.boom
-              double_children.concat(
-                [
-                  render_boom(transform: "translate(#{-x} #{y})"),
-                  render_boom(transform: "translate(#{x} #{y})"),
-                ]
-              )
-            end
-            double_children.concat([
-              h(:circle, attrs: dot_attrs.merge(transform: "translate(#{-x} #{y})")),
-              h(:circle, attrs: dot_attrs.merge(transform: "translate(#{x} #{y})")),
-            ])
-
-            children << h(:g, { attrs: { transform: "#{translate} rotate(#{angle})" } }, double_children)
+          if @town.image
+            puts "@town.image = #{@town.image}"
+            img_attrs = {
+              transform: "#{rotation_for_layout} #{translate.to_s}",
+              href: @town.image,
+            }
+            outline_attrs = {
+              transform: "#{rotation_for_layout} #{translate.to_s}",
+              width: 64,
+              height: 64,
+              stroke: @color,
+              'stroke-width': 4,
+            }
+            children << h(:image, attrs: img_attrs)
+            children << h(:rect, attrs: outline_attrs)
           else
-            children << h(:circle, attrs: dot_attrs)
-            children << render_boom if @town.boom
+            attrs = {
+              transform: translate.to_s,
+              r: radius,
+              fill: (@town.halt? ? 'gray' : @color),
+              stroke: (@town.halt? ? @color : 'white'),
+              'stroke-width': 4,
+            }
+            children << h(:circle, attrs: attrs)
           end
+
+          children << render_boom if @town.boom
 
           children << render_revenue if @show_revenue
           children << h(HitBox, click: -> { touch_node(@town) }, transform: translate) unless @town.solo?

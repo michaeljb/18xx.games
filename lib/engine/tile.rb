@@ -144,7 +144,8 @@ module Engine
                               boom: params['boom'],
                               style: params['style'],
                               double: params['double'],
-                              to_city: params['to_city'])
+                              to_city: params['to_city'],
+                              image: params['image'])
         cache << town
         town
       when 'halt'

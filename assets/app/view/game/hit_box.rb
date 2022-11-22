@@ -12,7 +12,8 @@ module View
           on: { click: @click },
           style: { cursor: 'pointer', pointerEvents: 'all' },
           attrs: {
-            stroke: 'none',
+            stroke: 'black',
+            'stroke-width': 4,
             transform: @transform,
             r: @r,
           })

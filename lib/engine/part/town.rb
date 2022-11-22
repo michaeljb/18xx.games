@@ -5,7 +5,7 @@ require_relative 'revenue_center'
 module Engine
   module Part
     class Town < RevenueCenter
-      attr_accessor :style
+      attr_accessor :style, :image
       attr_reader :to_city, :boom, :double
 
       def initialize(revenue, **opts)
@@ -15,6 +15,7 @@ module Engine
         @boom = opts[:boom]
         @style = opts[:style]&.to_sym
         @double = !!opts[:double]
+        @image = "/icons/#{opts[:image]}.svg" if opts[:image]
       end
 
       def <=(other)

@@ -150,7 +150,11 @@ module Engine
           white: {
             %w[B14 C11 C13 D8 D10 D12 E7 E9 E13 E15 F4 F8 F10 F12 G11 H2 H4 H8
                H10 I3 I7 I9 J8 D18 B10 B12 F14 F16] => '',
-            ['E19'] => 'border=edge:5,type:mountain,cost:40',
+            ['E19'] => 'border=edge:5,type:mountain,cost:40;'\
+                       'label=JL;'\
+                       'junction;path=a:1,b:_0;path=a:5,b:_0;'\
+                       'town=revenue:20,style:dot,loc:center,image:1846/lager-4;path=a:1,b:_1;path=a:5,b:_1;'\
+                       'town=revenue:30,style:dot,loc:center,image:1846/porter-2;path=a:1,b:_2;path=a:5,b:_2;',
             %w[E5 F6 G5 H6] => 'icon=image:1846/ic',
             ['J4'] => 'border=edge:4,type:water,cost:40;icon=image:1846/ic',
             ['J6'] => 'border=edge:1,type:water,cost:40',
