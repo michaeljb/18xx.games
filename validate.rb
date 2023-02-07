@@ -19,9 +19,19 @@ def run_game(game, actions = nil, strict: false)
 
   $total += 1
   time = Time.now
-  engine = Engine::Game.load(game, strict: strict)
+
   begin
-    engine.maybe_raise!    
+    engine = Engine::Game.load(game, strict: strict)
+  rescue Exception => e
+    $count += 1
+    data['url']="https://18xx.games/game/#{game.id}"
+    data['finished'] = false
+    data['exception'] = "failed to load: #{e}"
+    return data
+  end
+
+  begin
+    engine.maybe_raise!
 
     time = Time.now - time
     $total_time += time
