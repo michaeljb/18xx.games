@@ -79,10 +79,12 @@ module Engine
 
           payouts = {}
 
-          payout = union_pacific.num_treasury_shares * per_share
-          payouts[union_pacific] = payout
-          @bank.spend(payout, union_pacific) if payout.positive?
-          @cm_cumulative[union_pacific.id] += payout
+          unless optional_rules.include?(:cm_no_treasury)
+            payout = union_pacific.num_treasury_shares * per_share
+            payouts[union_pacific] = payout
+            @bank.spend(payout, union_pacific) if payout.positive?
+            @cm_cumulative[union_pacific.id] += payout
+          end
 
           union_pacific.player_share_holders.each do |player, share_percentage|
             payout = (share_percentage / 10) * per_share

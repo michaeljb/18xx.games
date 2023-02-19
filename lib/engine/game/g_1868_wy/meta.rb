@@ -37,6 +37,12 @@ module Engine
                   'the three corresponding private companies, rather than those being randomly '\
                   'chosen during setup.',
           },
+          {
+            sym: :cm_no_treasury,
+            short_name: 'CM Pays Players Only',
+            desc: 'When Credit Mobilier makes payments for terrain costs, it does '\
+                  'not pay out to shares in the Union Pacific treasury.',
+          },
         ].freeze
       end
     end
