@@ -80,7 +80,10 @@ module Engine
           payouts = {}
 
           unless optional_rules.include?(:cm_no_treasury)
-            payout = union_pacific.num_treasury_shares * per_share
+            num_shares = union_pacific.num_treasury_shares
+            num_shares -= 2 if optional_rules.include?(:double_share_no_dividends) &&
+                               union_pacific == up_double_share.owner
+            payout = num_shares * per_share
             payouts[union_pacific] = payout
             @bank.spend(payout, union_pacific) if payout.positive?
             @cm_cumulative[union_pacific.id] += payout

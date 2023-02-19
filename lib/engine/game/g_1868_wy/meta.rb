@@ -43,6 +43,13 @@ module Engine
             desc: 'When Credit Mobilier makes payments for terrain costs, it does '\
                   'not pay out to shares in the Union Pacific treasury.',
           },
+          {
+            sym: :double_share_no_dividends,
+            short_name: 'Ames Bros. No Dividends to UP',
+            desc: 'The Union Pacific Double Share does not pay dividends '\
+                  '(including CM payments) while it is owned by Union Pacific. '\
+                  'It still capitalizes Union Pacific on the exchange of P11.',
+          },
         ].freeze
       end
     end

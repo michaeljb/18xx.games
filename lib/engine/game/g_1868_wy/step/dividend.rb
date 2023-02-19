@@ -48,6 +48,19 @@ module Engine
             @log << "#{entity.name} pays out #{@game.format_currency(revenue)} = "\
                     "$#{revenue / 10.0} per share, rounded up (#{receivers})"
           end
+
+          def dividends_for_entity(entity, holder, per_share)
+            if @game.optional_rules.include?(:double_share_no_dividends) &&
+               (up = @game.union_pacific) == @game.up_double_share.owner &&
+               up == entity &&
+               up == holder
+              num_shares = up.num_shares_of(up) - 2
+              # Teapot Dome private can cause per_share to be a float
+              (num_shares * per_share).ceil
+            else
+              super
+            end
+          end
         end
       end
     end
