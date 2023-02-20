@@ -17,7 +17,7 @@ module View
         },
       }
       a_props = {
-        attrs: { href: '/', title: '18xx.Games' },
+        attrs: { href: '/', title: '18xx.michaeljb.dev' },
         style: {
           color: 'currentColor',
           fontWeight: 'bold',
@@ -40,7 +40,7 @@ module View
       h('h1#logo', h1_props, [
         h(:a, a_props, [
           h(:span, logo_props, '18xx'),
-          h(:span, ' . Games'),
+          h(:span, ' . michaeljb.dev'),
         ]),
       ])
     end
