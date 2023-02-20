@@ -53,6 +53,11 @@ module View
         # modified before being passed on to the next one
         @region_use = Hash.new(0)
 
+        # array of parts to render
+        # - `render_tile_part` is called in the order they impact the region
+        #   usage
+        # - the order of this array determines the order the parts are added to
+        #   the DOM; parts at the end of the array render on top of ealier parts
         children = []
 
         render_revenue = should_render_revenue?
@@ -64,7 +69,7 @@ module View
         borders = render_tile_part(Part::Borders) if @tile.borders.any?(&:type)
         # OO tiles have different rules...
         rendered_loc_name = render_tile_part(Part::LocationName) if @tile.location_name && @tile.cities.size > 1
-        children << render_tile_part(Part::Revenue) if render_revenue
+        revenue = render_tile_part(Part::Revenue) if render_revenue
         @tile.labels.each { |x| children << render_tile_part(Part::Label, label: x) }
 
         children << render_tile_part(Part::Upgrades) unless @tile.upgrades.empty?
@@ -77,10 +82,14 @@ module View
         children << render_tile_part(Part::FutureLabel) if @tile.future_label
 
         children << render_tile_part(Part::Assignments) unless @tile.hex&.assignments&.empty?
-        # borders should always be the top layer
+
+        # these parts should always be on the top layer
+        children << revenue if revenue
         children << borders if borders
         children << render_tile_part(Part::Partitions) unless @tile.partitions.empty?
 
+        # location name and coordinates on top of other "top" layer since they
+        # can be hidden
         children << rendered_loc_name if rendered_loc_name && setting_for(:show_location_names, @game)
         children << render_coords if @show_coords
 
