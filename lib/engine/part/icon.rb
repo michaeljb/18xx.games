@@ -9,9 +9,9 @@ module Engine
       include Ownable
 
       attr_accessor :preprinted, :image, :large
-      attr_reader :name, :sticky
+      attr_reader :name, :sticky, :loc
 
-      def initialize(image, name = nil, sticky = true, blocks_lay = nil, preprinted = true, large: false, owner: nil)
+      def initialize(image, name = nil, sticky = true, blocks_lay = nil, preprinted = true, large: false, owner: nil, loc: nil)
         @image = "/icons/#{image}.svg"
         @name = name || image.split('/')[-1]
         @sticky = !!sticky
@@ -19,6 +19,7 @@ module Engine
         @blocks_lay = !!blocks_lay
         @large = !!large
         @owner = owner
+        @loc = loc
       end
 
       def blocks_lay?

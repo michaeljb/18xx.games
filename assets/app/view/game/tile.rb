@@ -26,6 +26,12 @@ module View
         h(part_class, region_use: @region_use, tile: @tile, **kwargs)
       end
 
+      def render_tile_parts_by_loc(part_class, parts: nil, **kwargs)
+        parts.map(&:loc).uniq.map do |loc|
+          render_tile_part(part_class, loc: loc, **kwargs)
+        end
+      end
+
       # if false, then the revenue is rendered by Part::Cities or Part::Towns
       def should_render_revenue?
         revenue = @tile.revenue_to_render
@@ -76,11 +82,12 @@ module View
         children << render_tile_part(Part::Blocker)
         rendered_loc_name = render_tile_part(Part::LocationName) if @tile.location_name && (@tile.cities.size <= 1)
         @tile.reservations.each { |x| children << render_tile_part(Part::Reservation, reservation: x) }
-        large, normal = @tile.icons.partition(&:large)
-        children << render_tile_part(Part::Icons) unless normal.empty?
-        children << render_tile_part(Part::LargeIcons) unless large.empty?
-        children << render_tile_part(Part::FutureLabel) if @tile.future_label
 
+        large, normal = @tile.icons.partition(&:large)
+        render_tile_parts_by_loc(Part::Icons, parts: normal).each { |x| children << x } unless normal.empty?
+        children << render_tile_part(Part::LargeIcons) unless large.empty?
+
+        children << render_tile_part(Part::FutureLabel) if @tile.future_label
         children << render_tile_part(Part::Assignments) unless @tile.hex&.assignments&.empty?
 
         # these parts should always be on the top layer

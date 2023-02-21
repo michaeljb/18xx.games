@@ -9,10 +9,14 @@ module View
       class Icons < Base
         include SmallItem
 
+        needs :loc, default: nil
+
         ICON_RADIUS = 16
         DELTA_X = (ICON_RADIUS * 2) + 2
 
         def preferred_render_locations
+          return preferred_render_locations_by_loc if @loc
+
           if layout == :pointy && @icons.one?
             POINTY_SMALL_ITEM_LOCATIONS
           elsif layout == :pointy
@@ -24,8 +28,33 @@ module View
           end
         end
 
+        def preferred_render_locations_by_loc
+          if layout == :pointy
+            case @loc.to_s
+            when '0.5'
+              [PP_BOTTOM_LEFT_CORNER]
+            when '1.5'
+              [PP_UPPER_LEFT_CORNER]
+            when '2.5'
+              [PP_TOP_CORNER]
+            when '3.5'
+              [PP_UPPER_RIGHT_CORNER]
+            when '4.5'
+              [PP_BOTTOM_RIGHT_CORNER]
+            when '5.5'
+              [PP_BOTTOM_CORNER]
+            else
+              @loc = nil
+              preferred_render_locations
+            end
+          else
+            @loc = nil
+            preferred_render_locations
+          end
+        end
+
         def load_from_tile
-          @icons = @tile.icons.reject(&:large)
+          @icons = @tile.icons.select { |i| !i.large && (i.loc == @loc) }
           @num_cities = @tile.cities.size
         end
 
