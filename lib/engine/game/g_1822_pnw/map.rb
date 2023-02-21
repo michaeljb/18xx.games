@@ -83,7 +83,7 @@ module Engine
             %w[N5] => 'city=revenue:0;border=edge:2,type:water,cost:75',
             %w[O8] => 'city=revenue:20,slots:4;upgrade=cost:20;'\
                       'path=a:0,b:_0;path=a:2,b:_0;path=a:3,b:_0;path=a:4,b:_0;path=a:5,b:_0,lanes:2;label=Por;'\
-                      'icon=image:1822_pnw/SPS,name:SPS_home;icon=image:1822_pnw/ORNC,name:ORNC_home',
+                      'icon=image:1822_pnw/SPS,name:SPS_home,loc:4.5;icon=image:1822_pnw/ORNC,name:ORNC_home,loc:3.5',
             %w[O20] => 'city=revenue:0;icon=image:1822_pnw/NP,name:NP_home',
           },
           yellow: {

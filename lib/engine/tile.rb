@@ -177,7 +177,7 @@ module Engine
         junction
       when 'icon'
         Part::Icon.new(params['image'], params['name'], params['sticky'], params['blocks_lay'],
-                       large: params['large'])
+                       large: params['large'], loc: params['loc'])
       when 'stub'
         Part::Stub.new(params['edge'].to_i)
       when 'partition'

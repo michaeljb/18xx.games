@@ -56,6 +56,7 @@ module View
         # "interesting" tiles to display for testing
         common_test_tiles = ['45']
         game_test_tiles = {
+          '1822PNW' => %w[H11 I12 O8],
           '1830' => %w[H12 54],
           '1846' => %w[298],
         }

@@ -132,6 +132,24 @@ module View
           y: 16,
         }.freeze
 
+        PP_WIDE_UPPER_RIGHT_CORNER = {
+          region_weights: Base::RIGHT_CORNER,
+          x: 52,
+          y: -25,
+        }.freeze
+
+        PP_WIDE_UPPER_LEFT_CORNER = {
+          region_weights: Base::LEFT_CORNER,
+          x: -52,
+          y: -25,
+        }.freeze
+
+        PP_WIDE_BOTTOM_RIGHT_CORNER = {
+          region_weights: [9, 10, 11, 16],
+          x: 52,
+          y: 25,
+        }.freeze
+
         PP_WIDE_BOTTOM_LEFT_CORNER = {
           region_weights: [13, 14, 15, 19],
           x: -52,

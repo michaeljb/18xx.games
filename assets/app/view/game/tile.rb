@@ -26,6 +26,18 @@ module View
         h(part_class, region_use: @region_use, tile: @tile, **kwargs)
       end
 
+      def render_icons_grouped_by_loc(icons: nil, **kwargs)
+        return [] if !icons || icons.empty?
+
+        loc_to_icons = icons.each_with_object(Hash.new { |h, k| h[k] = [] }) do |icon, obj|
+          obj[icon.loc] << icon
+        end
+
+        loc_to_icons.map do |loc, icons_|
+          render_tile_part(Part::Icons, icons: icons_, loc: loc, **kwargs)
+        end
+      end
+
       # if false, then the revenue is rendered by Part::Cities or Part::Towns
       def should_render_revenue?
         revenue = @tile.revenue_to_render
@@ -71,11 +83,12 @@ module View
         children << render_tile_part(Part::Blocker)
         rendered_loc_name = render_tile_part(Part::LocationName) if @tile.location_name && (@tile.cities.size <= 1)
         @tile.reservations.each { |x| children << render_tile_part(Part::Reservation, reservation: x) }
-        large, normal = @tile.icons.partition(&:large)
-        children << render_tile_part(Part::Icons) unless normal.empty?
-        children << render_tile_part(Part::LargeIcons) unless large.empty?
-        children << render_tile_part(Part::FutureLabel) if @tile.future_label
 
+        large, normal = @tile.icons.partition(&:large)
+        render_icons_grouped_by_loc(icons: normal).each { |x| children << x }
+        children << render_tile_part(Part::LargeIcons) unless large.empty?
+
+        children << render_tile_part(Part::FutureLabel) if @tile.future_label
         children << render_tile_part(Part::Assignments) unless @tile.hex&.assignments&.empty?
         # borders should always be the top layer
         children << borders if borders
