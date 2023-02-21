@@ -1230,13 +1230,7 @@ module Engine
 
           player.spend(cost, @bank) if cost.positive?
 
-          loc =
-            if entity == union_pacific_coal || entity == bonanza
-              '4.5'
-            else
-              entity.type == :coal ? '1.5' : '0.5'
-            end
-
+          loc = entity == union_pacific_coal || entity == bonanza || entity.type == :oil ? '0.5' : '1.5'
 
           hex.place_token(token, logo: token.logo, preprinted: false, loc: loc)
 
