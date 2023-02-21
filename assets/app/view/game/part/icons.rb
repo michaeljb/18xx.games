@@ -9,14 +9,10 @@ module View
       class Icons < Base
         include SmallItem
 
-        needs :loc, default: nil
-
         ICON_RADIUS = 16
         DELTA_X = (ICON_RADIUS * 2) + 2
 
         def preferred_render_locations
-          return preferred_render_locations_by_loc if @loc
-
           if layout == :pointy && @icons.one?
             POINTY_SMALL_ITEM_LOCATIONS
           elsif layout == :pointy
@@ -32,17 +28,17 @@ module View
           if layout == :pointy
             case @loc.to_s
             when '0.5'
-              [PP_BOTTOM_LEFT_CORNER]
+              @icons.one? ? [PP_BOTTOM_LEFT_CORNER] : [PP_WIDE_BOTTOM_LEFT_CORNER]
             when '1.5'
-              [PP_UPPER_LEFT_CORNER]
+              @icons.one? ? [PP_UPPER_LEFT_CORNER] : [PP_WIDE_UPPER_LEFT_CORNER]
             when '2.5'
-              [PP_TOP_CORNER]
+              @icons.one? ? [PP_TOP_CORNER] : [PP_WIDE_TOP_CORNER]
             when '3.5'
-              [PP_UPPER_RIGHT_CORNER]
+              @icons.one? ? [PP_UPPER_RIGHT_CORNER] : [PP_WIDE_UPPER_RIGHT_CORNER]
             when '4.5'
-              [PP_BOTTOM_RIGHT_CORNER]
+              @icons.one? ? [PP_BOTTOM_RIGHT_CORNER] : [PP_WIDE_BOTTOM_RIGHT_CORNER]
             when '5.5'
-              [PP_BOTTOM_CORNER]
+              @icons.one? ? [PP_BOTTOM_CORNER] : [PP_WIDE_BOTTOM_CORNER]
             else
               @loc = nil
               preferred_render_locations

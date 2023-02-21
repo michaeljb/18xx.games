@@ -27,7 +27,14 @@ module View
       end
 
       def render_tile_parts_by_loc(part_class, parts: nil, **kwargs)
-        parts.map(&:loc).uniq.map do |loc|
+        return [] if !parts || parts.empty?
+
+        loc_to_parts = Hash.new { |h, k| h[k] = [] }
+        parts.each do |part|
+          loc_to_parts[part.loc] << part
+        end
+
+        loc_to_parts.map do |loc, parts|
           render_tile_part(part_class, loc: loc, **kwargs)
         end
       end
@@ -78,13 +85,13 @@ module View
         revenue = render_tile_part(Part::Revenue) if render_revenue
         @tile.labels.each { |x| children << render_tile_part(Part::Label, label: x) }
 
-        children << render_tile_part(Part::Upgrades) unless @tile.upgrades.empty?
+        render_tile_parts_by_loc(Part::Upgrades, parts: @tile.upgrades).each { |x| children << x }
         children << render_tile_part(Part::Blocker)
         rendered_loc_name = render_tile_part(Part::LocationName) if @tile.location_name && (@tile.cities.size <= 1)
         @tile.reservations.each { |x| children << render_tile_part(Part::Reservation, reservation: x) }
 
         large, normal = @tile.icons.partition(&:large)
-        render_tile_parts_by_loc(Part::Icons, parts: normal).each { |x| children << x } unless normal.empty?
+        render_tile_parts_by_loc(Part::Icons, parts: normal).each { |x| children << x }
         children << render_tile_part(Part::LargeIcons) unless large.empty?
 
         children << render_tile_part(Part::FutureLabel) if @tile.future_label

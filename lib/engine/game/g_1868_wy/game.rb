@@ -884,6 +884,7 @@ module Engine
               if @forts.include?(action.hex.id) && action.tile.color == :yellow
                 icon = action.tile.icons.find { |i| i.name == 'fort' }
                 icon.large = false
+                icon.loc = '2.5'
               end
             end
             update_boomcity_revenue!(action.hex.tile)
@@ -891,6 +892,7 @@ module Engine
             if @forts.include?(action.hex.id) && action.hex.tile.color == :white
               icon = action.hex.tile.icons.find { |i| i.name == 'fort' }
               icon.large = false
+              icon.loc = '2.5'
             end
           end
         end
@@ -1227,7 +1229,16 @@ module Engine
           end
 
           player.spend(cost, @bank) if cost.positive?
-          hex.place_token(token, logo: token.logo, preprinted: false)
+
+          loc =
+            if entity == union_pacific_coal || entity == bonanza
+              '4.5'
+            else
+              entity.type == :coal ? '1.5' : '0.5'
+            end
+
+
+          hex.place_token(token, logo: token.logo, preprinted: false, loc: loc)
 
           increment_development_token_count(hex)
           @placed_development_tokens[@phase.name] << hex
