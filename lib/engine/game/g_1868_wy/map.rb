@@ -244,8 +244,7 @@ module Engine
           '57B' => {
             'count' => 'unlimited',
             'color' => 'yellow',
-            'code' => 'city=revenue:#FFFFFF_10|yellow_20|black_30,boom:1;path=a:_0,b:0;path=a:_0,b:3;'\
-                      'path=a:_0,b:1;path=a:_0,b:2;path=a:_0,b:5;path=a:_0,b:4',
+            'code' => 'city=revenue:#FFFFFF_10|yellow_20|black_30,boom:1;path=a:_0,b:0;path=a:_0,b:3',
           },
 
           # custom green
