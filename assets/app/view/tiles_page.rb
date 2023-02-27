@@ -65,25 +65,23 @@ module View
         scale = 2.0
 
         rendered_game_tiles =
-          game_test_tiles.map do |title, hex_or_tile_ids|
+          game_test_tiles.flat_map do |title, hex_or_tile_ids|
             game_class = load_game_class(title)
             players = Array.new(game_class::PLAYER_RANGE.max) { |n| "Player #{n + 1}" }
             game = game_class.new(players)
 
-            h("div##{title}", [
-                h(:h2, game_class.full_title),
-                *hex_or_tile_ids.flat_map { |id| render_individual_tile_from_game(game, id, scale: scale) },
-              ])
+            hex_or_tile_ids.flat_map do |id|
+              puts "render_individual_tile_from_game(#{game}, #{id}, scale: #{scale}, name_prefix: #{game_class.title})"
+              render_individual_tile_from_game(game, id, scale: scale, name_prefix: game_class.title)
+            end
           end
 
         h('div#tiles', [
-            h('div#common_test_tiles', [
-                h(:h2, 'Common Tiles'),
-                *common_test_tiles.flat_map do |t|
-                  render_tile_blocks(t, layout: layout, scale: scale, location_name: @location_name, location_on_plain: true, rotations: @rotations)
-                end,
-              ]),
-            h('div#game_tiles', rendered_game_tiles),
+            *common_test_tiles.flat_map do |t|
+              render_tile_blocks(t, layout: layout, scale: scale, location_name: @location_name, location_on_plain: true,
+                                    rotations: @rotations)
+            end,
+            *rendered_game_tiles,
           ])
 
       elsif dest == 'custom'
@@ -147,7 +145,7 @@ module View
       end
     end
 
-    def render_individual_tile_from_game(game, hex_or_tile_id, scale: 3.0)
+    def render_individual_tile_from_game(game, hex_or_tile_id, scale: 3.0, name_prefix: nil)
       id, rotation = hex_or_tile_id.split('-')
       rotations = rotation ? [rotation.to_i] : @rotations
 
@@ -170,6 +168,7 @@ module View
         scale: scale,
         rotations: rotations,
         hex_coordinates: hex_coordinates,
+        name_prefix: name_prefix,
       )
     end
 

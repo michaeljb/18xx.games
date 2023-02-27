@@ -40,6 +40,7 @@ module View
       hex_coordinates: nil,
       clickable: false,
       location_on_plain: false,
+      name_prefix: nil,
       extra_children: []
     )
       block_props = {
@@ -59,7 +60,8 @@ module View
         tile.rotate!(rotation)
 
         unless setting_for(@hide_tile_names)
-          text = tile.preprinted ? '' : '#'
+          text = name_prefix ? "#{name_prefix}: " : ''
+          text += tile.preprinted ? '' : '#'
           text += name
           text += "-#{rotation}" unless rotations == [0]
         end
