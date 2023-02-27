@@ -39,6 +39,7 @@ module View
       rotations: nil,
       hex_coordinates: nil,
       clickable: false,
+      location_on_plain: false,
       extra_children: []
     )
       block_props = {
@@ -50,7 +51,7 @@ module View
 
       tile ||= Engine::Tile.for(name)
 
-      loc_name = location_name || tile.location_name if (tile.cities + tile.towns + tile.offboards).any?
+      loc_name = location_name || tile.location_name if !(tile.cities + tile.towns + tile.offboards).empty? || location_on_plain
 
       rotations = [0] if tile.preprinted || !rotations
 
