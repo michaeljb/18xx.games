@@ -1193,14 +1193,15 @@ module Engine
         def sell_shares_and_change_price(bundle, allow_president_change: true, swap: nil)
           corporation = bundle.corporation
           old_price = corporation.share_price
+          president_selling = (bundle.owner == corporation.owner)
 
           @share_pool.sell_shares(bundle, allow_president_change: allow_president_change, swap: swap)
           num_shares = bundle.num_shares
-          unless corporation.owner == bundle.owner
+          unless president_selling
             num_shares -= 1 if corporation.share_price.type == :ignore_one_sale
             num_shares -= 2 if corporation.share_price.type == :ignore_two_sales
           end
-          num_shares.times { @stock_market.move_left(corporation) } if selling_movement?(corporation)
+          num_shares.times { @stock_market.move_down(corporation) } if selling_movement?(corporation)
           log_share_price(corporation, old_price)
           check_bankruptcy!(corporation)
         end
