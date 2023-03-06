@@ -611,9 +611,9 @@ module Engine
 
           hex_ids.each do |hex_id|
             hex = hex_by_id(hex_id)
-            hex.tile.icons.find.with_index do |icon, index|
-              hex.tile.icons[index] = Part::Icon.new('1868_wy/uranium', nil, true, false, false, loc: icon.loc) if icon.name == 'uranium_early'
-            end
+            index = hex.tile.icons.rindex { |icon| icon&.name == 'uranium_early' }
+            icon = hex.tile.icons[index]
+            hex.tile.icons[index] = Part::Icon.new('1868_wy/uranium', nil, true, false, false, loc: icon.loc)
             increment_development_token_count(hex)
           end
         end
