@@ -90,7 +90,7 @@ module View
           return if !@town.halt? && revenue.zero?
 
           angle = 0
-          displacement = 38
+          displacement = -33
           x = render_location[:x]
           y = render_location[:y]
           reverse_side = false

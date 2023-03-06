@@ -34,11 +34,11 @@ module Engine
           {
             name: name,
             distance: phase_num,
-            price: price,
+            price: 1,
             variants: [
               {
                 name: plus_name,
-                price: plus_price,
+                price: 1,
                 distance: distance(plus_cities, plus_towns),
               },
             ],
