@@ -198,7 +198,7 @@ module Engine
       # do tile reservations completely block other companies?
       # :never -- token can be placed as long as there is a city space for existing tile reservations
       # :always -- token cannot be placed until tile reservation resolved
-      # :yellow_only -- token cannot be placed while tile is yellow or until the tile reservation is resolved
+      # :single_slot_cities -- token cannot be placed if tile contains any single slot cities
       TILE_RESERVATION_BLOCKS_OTHERS = :never
 
       COMPANIES = [].freeze
@@ -1794,6 +1794,12 @@ module Engine
         @cities.concat(extra_cities)
         extra_cities.each { |c| @_cities[c.id] = c }
 
+        if (opp_name = tile.opposite&.name) && !new_tile.opposite
+          opp_tile = tile_by_id("#{opp_name}-#{new_tile.index}") || add_extra_tile(tile_by_id("#{opp_name}-0"))
+          opp_tile.opposite = new_tile
+          new_tile.opposite = opp_tile
+        end
+
         new_tile
       end
 
@@ -2504,6 +2510,10 @@ module Engine
         nil
       end
 
+      def final_or_in_set?(round)
+        round.round_num == @operating_rounds
+      end
+
       def end_now?(after)
         return false unless after
         return true if after == :immediate
@@ -2511,7 +2521,7 @@ module Engine
         return false unless @round.is_a?(round_end)
         return true if after == :current_or
 
-        final_or_in_set = @round.round_num == @operating_rounds
+        final_or_in_set = final_or_in_set?(@round)
 
         return (@turn == @final_turn) if final_or_in_set && (after == :one_more_full_or_set)
 
