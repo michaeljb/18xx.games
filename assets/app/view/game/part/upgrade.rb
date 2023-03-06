@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
 require 'view/game/part/base'
+require 'view/game/part/small_item'
 
 module View
   module Game
     module Part
       class Upgrade < Base
+        include SmallItem
+
         needs :cost
         needs :terrains, default: []
         needs :size, default: nil
@@ -68,6 +71,31 @@ module View
           ]
         end
 
+        def preferred_render_locations_by_loc
+          if layout == :pointy
+            case @loc.to_s
+            when '0.5'
+              @terrains.one? ? [PP_BOTTOM_LEFT_CORNER] : [PP_WIDE_BOTTOM_LEFT_CORNER]
+            when '1.5'
+              @terrains.one? ? [PP_UPPER_LEFT_CORNER] : [PP_WIDE_UPPER_LEFT_CORNER]
+            when '2.5'
+              @terrains.one? ? [PP_TOP_CORNER] : [PP_WIDE_TOP_CORNER]
+            when '3.5'
+              @terrains.one? ? [PP_UPPER_RIGHT_CORNER] : [PP_WIDE_UPPER_RIGHT_CORNER]
+            when '4.5'
+              @terrains.one? ? [PP_BOTTOM_RIGHT_CORNER] : [PP_WIDE_BOTTOM_RIGHT_CORNER]
+            when '5.5'
+              @terrains.one? ? [PP_BOTTOM_CORNER] : [PP_WIDE_BOTTOM_CORNER]
+            else
+              @loc = nil
+              preferred_render_locations
+            end
+          else
+            @loc = nil
+            preferred_render_locations
+          end
+        end
+
         def render_part
           cost = h('text.number', { attrs: { fill: 'black' } }, @cost)
 
@@ -91,7 +119,11 @@ module View
 
           children = [cost] + terrain
 
-          h(:g, { attrs: { transform: "#{translate} #{rotation_for_layout}" } }, children)
+          h(:g, { attrs: { transform: rotation_for_layout } }, [
+              h(:g, { attrs: { transform: translate } }, children),
+            ])
+
+          #h(:g, { attrs: { transform: "#{translate} #{rotation_for_layout}" } }, children)
         end
 
         def mountain(delta_x: 0, delta_y: 0)
