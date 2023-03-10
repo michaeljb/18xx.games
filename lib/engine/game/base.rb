@@ -2475,33 +2475,45 @@ module Engine
       end
 
       def game_end_check_values
-        self.class::GAME_END_CHECK
+        @game_end_check_values ||=
+          begin
+            reasons = %i[bankrupt bank stock_market final_train final_phase custom]
+            afters = %i[immediate current_round current_or full_or one_more_full_or_set]
+
+            self.class::GAME_END_CHECK.sort_by do |reason, after|
+              [afters.index(after), reasons.index(reason)]
+            end
+          end
       end
 
       def custom_end_game_reached?
         false
       end
 
-      def game_end_check
-        triggers = {
-          bankrupt: bankruptcy_limit_reached?,
-          bank: @bank.broken?,
-          stock_market: @stock_market.max_reached?,
-          final_train: @depot.empty?,
-          final_phase: @phase&.phases&.last == @phase&.current,
-          custom: custom_end_game_reached?,
-        }.select { |_, t| t }
+      def game_end_triggered?(reason)
+        case reason
+        when :bankrupt
+          bankruptcy_limit_reached?
+        when :bank
+          @bank.broken?
+        when :stock_market
+          @stock_market.max_reached?
+        when :final_train
+          @depot.empty?
+        when :final_phase
+          @phase&.phases&.last == @phase&.current
+        when :custom
+          custom_end_game_reached?
+        end
+      end
 
-        %i[immediate current_round current_or full_or one_more_full_or_set].each do |after|
-          triggers.keys.each do |reason|
-            if game_end_check_values[reason] == after
-              @final_turn ||= @turn + 1 if after == :one_more_full_or_set
-              return [reason, after]
-            end
+      def game_end_check
+        game_end_check_values.find do |reason, after|
+          if game_end_triggered?(reason)
+            @final_turn ||= @turn + 1 if after == :one_more_full_or_set
+            true
           end
         end
-
-        nil
       end
 
       def final_or_in_set?(round)
