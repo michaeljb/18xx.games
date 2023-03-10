@@ -36,6 +36,7 @@ module View
             Engine::Action::ProgramMergerPass => ->(settings) { render_merger_pass(settings) },
             Engine::Action::ProgramSharePass => ->(settings) { render_share_pass(settings) },
             Engine::Action::ProgramClosePass => ->(settings) { render_close_pass(settings) },
+            Engine::Action::ProgramRunAndPay => ->(settings) { render_run_and_pay(settings) },
           }.freeze
 
           if !(available = @game.available_programmed_actions).empty?
@@ -76,6 +77,10 @@ module View
 
       def render_buy_shares(settings)
         h(AutoAction::BuyShares, game: @game, sender: sender, settings: settings)
+      end
+
+      def render_run_and_pay(settings)
+        h(AutoAction::RunAndPay, game: @game, sender: sender, settings: settings)
       end
 
       def enable_merger_pass(form)

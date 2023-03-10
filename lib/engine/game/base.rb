@@ -655,8 +655,8 @@ module Engine
       end
 
       def available_programmed_actions
-        # By default assume normal 1830esk buy shares
-        [Action::ProgramBuyShares, Action::ProgramSharePass]
+        # By default assume normal 1830esque buy shares
+        [Action::ProgramBuyShares, Action::ProgramSharePass, Action::ProgramRunAndPay]
       end
 
       def self.filtered_actions(actions)
