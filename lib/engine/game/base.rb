@@ -99,7 +99,38 @@ module Engine
       #  full_or - ends at the next end of a complete OR set
       #  one_more_full_or_set - finish the current OR set, then
       #                         end after the next complete OR set
-      GAME_END_CHECK = { bankrupt: :immediate, bank: :full_or }.freeze
+      GAME_END_CHECK = [
+        %i[custom immediate],
+        %i[final_phase immediate],
+        %i[final_phase current_round],
+        %i[stock_market current_or],
+        %i[final_phase current_or],
+        %i[final_train full_or],
+        %i[stock_market immediate],
+        %i[bank full_or],
+        %i[custom current_round],
+        %i[final_train current_or],
+        %i[stock_market one_more_full_or_set],
+        %i[bank immediate],
+        %i[bank current_or],
+        %i[bank one_more_full_or_set],
+        %i[bankrupt current_or],
+        %i[bankrupt full_or],
+        %i[bank current_round],
+        %i[custom full_or],
+        %i[custom current_or],
+        %i[custom one_more_full_or_set],
+        %i[bankrupt immediate],
+        %i[final_train current_round],
+        %i[stock_market current_round],
+        %i[bankrupt current_round],
+        %i[final_train immediate],
+        %i[stock_market full_or],
+        %i[final_phase one_more_full_or_set],
+        %i[final_phase full_or],
+        %i[bankrupt one_more_full_or_set],
+        %i[final_train one_more_full_or_set],
+      ].freeze
 
       BANKRUPTCY_ALLOWED = true
       # How many players does bankrupcy cause to end the game
@@ -2048,8 +2079,8 @@ module Engine
 
         return unless rusted_trains.any?
 
-        @log << "-- Event: #{rusted_trains.uniq.join(', ')} trains rust " \
-                "( #{owners.map { |c, t| "#{c} x#{t}" }.join(', ')}) --"
+        # @log << "-- Event: #{rusted_trains.uniq.join(', ')} trains rust " \
+        #         "( #{owners.map { |c, t| "#{c} x#{t}" }.join(', ')}) --"
       end
 
       def show_progress_bar?
@@ -2115,8 +2146,6 @@ module Engine
       end
 
       def after_buying_train(train, source); end
-
-      private
 
       def init_graph
         Graph.new(self)
