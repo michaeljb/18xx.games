@@ -7,21 +7,27 @@ module View
     module AutoAction
       class RunAndPay < Base
         needs :current_corporation, store: true, default: nil
-        needs :corporations, store: true, default: {}
+
+        # @settings = programmed action
 
         def name
-          "Run and Pay#{' (Enabled)' if @settings}"
+          corps = @settings.map { |s| s.corporation.id }.sort.join(', ')
+
+          suffix =
+            if corps.empty?
+              ''
+            else
+              " (Enabled for #{corps})"
+            end
+
+          "Run and Pay#{suffix}"
         end
 
         def description
           'Automatically run the same routes as last OR (as long as they are '\
-          'legal) and pay out. All other OR actions are passed. If a better '\
-          'route becomes available, this will not find it.'
+            'legal) and pay out. All other OR actions are passed. If a better '\
+            'route becomes available, this will not find it.'
         end
-
-        # options
-        # - until end of phase
-        # - until end of game (or routes are not legal)
 
         # need to disable for specific corporation, not just general disable
 
@@ -37,22 +43,21 @@ module View
           children << h(:div, render_corporation_selector(form))
           children << h(Corporation, corporation: selected)
 
-          children << render_until_phase(form)
-          children << render_until_end(form)
+          children << render_radio(form, :phase, 'Run until the next phase')
+          children << render_radio(form, :end, 'Run until end of game')
 
-          subchildren = [render_button(@settings ? 'Update' : 'Enable') { enable(form) }]
-          subchildren << render_disable(@settings) if @settings
+          subchildren = [render_button(corp_settings ? "Update (#{selected.id})" : "Enable (#{selected.id})") { enable(form) }]
+          subchildren << render_disable if corp_settings
           children << h(:div, subchildren)
 
           children
         end
 
-        def render_radio(form, id, description, checked)
-          checked =
-            if (corp_id = @settings&.corporation)
-              @settings['corporation'][corp_id] == :id
-            end
+        def corp_settings
+          @settings.find { |s| s.corporation == selected }
+        end
 
+        def render_radio(form, id, description)
           h(:div, [render_input(description,
                                 id: id,
                                 type: 'radio',
@@ -60,34 +65,10 @@ module View
                                 inputs: form,
                                 attrs: {
                                   name: 'mode_options',
-                                  checked: checked,
-                                },
-                               )])
+                                  checked: id == :phase,
+                                },)])
         end
 
-        def render_until_phase(form)
-          checked =
-            if (corp_id = @settings&.corporation)
-              @settings['corporation'][corp_id] == :until_phase
-            else
-              true
-            end
-
-          render_radio(form, :until_phase, 'Run until end of current phase', checked)
-        end
-
-        def render_until_end(form)
-          checked =
-            if (corp_id = @settings&.corporation)
-              @settings['corporation'][corp_id] != :until_phase
-            else
-              false
-            end
-
-          render_radio(form, :until_end, 'Run until end of game', checked)
-        end
-
-        # TODO: render corporations where user is president
         def render_corporation_selector(form)
           values = runnable.map do |entity|
             attrs = { value: entity.name }
@@ -107,22 +88,24 @@ module View
         end
 
         def enable(form)
-          @settings = params(form)
+          form_params = params(form)
+          puts "form_params = #{form_params}"
+          corp_id = form_params['corporation']
+          condition = until_condition(form_params)
 
-          puts "@settings = #{@settings}"
-
-          # process_action(
-          #   Engine::Action::ProgramRunAndPay.new(
-          #     @sender,
-          #     corporation: @game.corporation_by_id(@settings['corporation']),
-          #     until_condition: until_condition,
-          #   )
-          # )
+          process_action(
+            Engine::Action::ProgramRunAndPay.new(
+              @sender,
+              corporation: @game.corporation_by_id(corp_id),
+              until_condition: condition,
+              current_phase: @game.phase.name,
+            )
+          )
         end
 
-        def until_condition
-          return :until_phase if @settings['until_phase']
-          return :until_end if @settings['until_end']
+        def until_condition(form_params)
+          return :phase if form_params['phase']
+          return :end if form_params['end']
 
           nil
         end
@@ -131,16 +114,26 @@ module View
           @current_corporation || runnable.first
         end
 
-        def corp_settings
-          return unless selected == @settings&.corporation
-
-          @settings
-        end
-
         def runnable
           @game.corporations.select do |corp|
             corp.owner == @sender && !corp.trains.empty?
           end
+        end
+
+        def disable(corporation)
+          process_action(
+            Engine::Action::ProgramDisable.new(
+              @sender,
+              reason: 'user',
+              original_type: @settings.first.type,
+              corporation: corporation,
+            )
+          )
+        end
+
+        def render_disable
+          corporation = selected
+          render_button("Disable (#{corporation.id})") { disable(corporation) }
         end
       end
     end

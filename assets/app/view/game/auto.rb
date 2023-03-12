@@ -29,13 +29,13 @@ module View
 
         if @game.players.find { |p| p.name == @user&.dig('name') }
           types = {
-            Engine::Action::ProgramAuctionBid => ->(settings) { render_auction_bid(settings) },
-            Engine::Action::ProgramBuyShares => ->(settings) { render_buy_shares(settings) },
-            Engine::Action::ProgramHarzbahnDraftPass => ->(settings) { render_harzbahn_draft_pass(settings) },
-            Engine::Action::ProgramIndependentMines => ->(settings) { render_independent_mines(settings) },
-            Engine::Action::ProgramMergerPass => ->(settings) { render_merger_pass(settings) },
-            Engine::Action::ProgramSharePass => ->(settings) { render_share_pass(settings) },
-            Engine::Action::ProgramClosePass => ->(settings) { render_close_pass(settings) },
+            Engine::Action::ProgramAuctionBid => ->(settings) { render_auction_bid(settings.first) },
+            Engine::Action::ProgramBuyShares => ->(settings) { render_buy_shares(settings.first) },
+            Engine::Action::ProgramHarzbahnDraftPass => ->(settings) { render_harzbahn_draft_pass(settings.first) },
+            Engine::Action::ProgramIndependentMines => ->(settings) { render_independent_mines(settings.first) },
+            Engine::Action::ProgramMergerPass => ->(settings) { render_merger_pass(settings.first) },
+            Engine::Action::ProgramSharePass => ->(settings) { render_share_pass(settings.first) },
+            Engine::Action::ProgramClosePass => ->(settings) { render_close_pass(settings.first) },
             Engine::Action::ProgramRunAndPay => ->(settings) { render_run_and_pay(settings) },
           }.freeze
 
@@ -43,7 +43,7 @@ module View
             available.each do |type|
               next unless (method = types[type])
 
-              settings = @game.programmed_actions[sender].find { |a| a.is_a?(type) }
+              settings = @game.programmed_actions[sender].select { |a| a.is_a?(type) }
               children.concat(method.call(settings))
             end
           else

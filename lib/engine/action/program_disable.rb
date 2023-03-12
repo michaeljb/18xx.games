@@ -5,18 +5,20 @@ require_relative 'base'
 module Engine
   module Action
     class ProgramDisable < Base
-      attr_reader :reason, :original_type
+      attr_reader :corporation, :reason, :original_type
 
-      def initialize(entity, reason:, original_type: nil)
+      def initialize(entity, reason:, original_type: nil, corporation: nil)
         super(entity)
         @reason = reason
         @original_type = original_type
+        @corporation = corporation
       end
 
-      def self.h_to_args(h, _game)
+      def self.h_to_args(h, game)
         {
           reason: h['reason'],
           original_type: h['original_type'],
+          corporation: game.corporation_by_id(h['corporation']),
         }
       end
 
@@ -24,6 +26,7 @@ module Engine
         {
           'reason' => @reason,
           'original_type' => @original_type,
+          'corporation' => @corporation&.id,
         }
       end
     end

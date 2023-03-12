@@ -14,6 +14,7 @@ module Engine
         program_share_pass
         program_close_pass
         program_disable
+        program_run_and_pay
       ].freeze
 
       def actions(entity)
@@ -60,8 +61,33 @@ module Engine
       end
 
       def process_program_disable(action)
+        return process_program_disable_run_and_pay(action) if action.original_type == Engine::Action::ProgramRunAndPay
+
         program = remove_programmed_action(action.entity, action.original_type)
         return unless program
+
+        reason = action.reason || 'unknown reason'
+        @game.player_log(action.entity, "Disabled programmed action '#{program}' due to '#{reason}'")
+      end
+
+      def process_program_run_and_pay(action)
+        existing = @game.programmed_actions[action.entity].find do |a|
+          a.type == action.type && a.corporation == action.corporation
+        end
+        @game.programmed_actions[action.entity].delete(existing) if existing
+
+        @game.player_log(action.entity, "Enabled programmed action '#{action}'")
+        @game.programmed_actions[action.entity] << action
+        @round.player_enabled_program(action.entity) if @round.respond_to?(:player_enabled_program)
+      end
+
+      def process_program_disable_run_and_pay(action)
+        existing = @game.programmed_actions[action.entity].find do |a|
+          a.type == action.type && a.corporation == action.corporation
+        end
+        @game.programmed_actions[action.entity].delete(existing) if existing
+
+        return unless existing
 
         reason = action.reason || 'unknown reason'
         @game.player_log(action.entity, "Disabled programmed action '#{program}' due to '#{reason}'")
