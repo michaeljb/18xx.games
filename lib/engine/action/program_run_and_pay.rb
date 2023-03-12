@@ -41,7 +41,7 @@ module Engine
 
       def disable?(game)
         @until_condition == :phase &&
-          @phase != @game.phase.name
+          @phase != game.phase.name
       end
     end
   end
