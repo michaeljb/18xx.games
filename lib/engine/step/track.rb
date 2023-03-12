@@ -1,12 +1,15 @@
 # frozen_string_literal: true
 
 require_relative 'base'
+require_relative 'programmer_run_and_pay_passer'
 require_relative 'tracker'
 
 module Engine
   module Step
     class Track < Base
+      include ProgrammerRunAndPayPasser
       include Tracker
+
       ACTIONS = %w[lay_tile pass].freeze
 
       def actions(entity)

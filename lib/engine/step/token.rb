@@ -1,12 +1,15 @@
 # frozen_string_literal: true
 
 require_relative 'base'
+require_relative 'programmer_run_and_pay_passer'
 require_relative 'tokener'
 
 module Engine
   module Step
     class Token < Base
+      include ProgrammerRunAndPayPasser
       include Tokener
+
       ACTIONS = %w[place_token pass].freeze
 
       def actions(entity)

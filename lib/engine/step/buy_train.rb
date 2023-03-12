@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
 require_relative 'base'
+require_relative 'programmer_run_and_pay_passer'
 require_relative 'train'
 
 module Engine
   module Step
     class BuyTrain < Base
+      include ProgrammerRunAndPayPasser
       include Train
 
       def actions(entity)

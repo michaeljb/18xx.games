@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
 require_relative 'base'
+require_relative 'programmer_run_and_pay_passer'
 
 module Engine
   module Step
     class BuyCompany < Base
+      include ProgrammerRunAndPayPasser
+
       ACTIONS = %w[buy_company pass].freeze
       ACTIONS_NO_PASS = %w[buy_company].freeze
       PASS = %w[pass].freeze

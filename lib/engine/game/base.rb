@@ -791,7 +791,7 @@ module Engine
       def transition_to_next_round!
         store_player_info
         next_round!
-        check_programmed_actions(reason: 'round change')
+        remove_disabled_programmed_actions!(reason: 'round change')
 
         finalize_round_setup
       end
@@ -2463,7 +2463,7 @@ module Engine
         @programmed_actions.clear
       end
 
-      def check_programmed_actions(reason:)
+      def remove_disabled_programmed_actions!(reason:)
         @programmed_actions.each do |entity, action_list|
           action_list.reject! do |action|
             if action&.disable?(self)
