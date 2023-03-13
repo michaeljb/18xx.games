@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
 require_relative 'base'
+require_relative 'programmer'
 
 module Engine
   module Step
     class Route < Base
+      include Programmer
+
       ACTIONS = %w[run_routes].freeze
 
       def actions(entity)
@@ -59,6 +62,25 @@ module Engine
         {
           routes: [],
         }
+      end
+
+      def auto_actions(entity)
+        programmed_auto_actions(entity)
+      end
+
+      def activate_program_run_and_pay(entity, program)
+        puts "activate_program_run_and_pay(#{entity.name}, #{program.to_h})"
+        if program.corporation == entity && actions(entity).include?('run_routes')
+          prev_action = @game.actions.reverse_each.find do |action|
+            action.entity == entity && action.is_a?(Engine::Action::RunRoutes)
+          end
+
+          puts "prev_action = #{prev_action&.to_h}"
+
+          if prev_action
+            [Engine::Action::RunRoutes.new(entity, routes: prev_action.routes)]
+          end
+        end
       end
     end
   end

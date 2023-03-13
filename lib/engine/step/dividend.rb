@@ -1,12 +1,15 @@
 # frozen_string_literal: true
 
 require_relative 'base'
+require_relative 'programmer'
 require_relative '../operating_info'
 require_relative '../action/dividend'
 
 module Engine
   module Step
     class Dividend < Base
+      include Programmer
+
       ACTIONS = %w[dividend].freeze
 
       def actions(entity)
@@ -194,6 +197,17 @@ module Engine
 
         @game.close_companies_on_event!(entity, 'operated') if entity.operating_history.size == 1
         super
+      end
+
+      def auto_actions(entity)
+        programmed_auto_actions(entity)
+      end
+
+      def activate_program_run_and_pay(entity, program)
+        puts "activate_program_run_and_pay(#{entity.name}, #{program.to_h})"
+        if program.corporation == entity && actions(entity).include?('dividend')
+          [Engine::Action::Dividend.new(entity, kind: :payout)]
+        end
       end
 
       private

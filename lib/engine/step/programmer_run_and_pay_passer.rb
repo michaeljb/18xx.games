@@ -7,13 +7,13 @@ module Engine
     module ProgrammerRunAndPayPasser
       include Programmer
 
-      def activate_program_run_and_pay(entity, _program)
-        available_actions = actions(entity)
+      def auto_actions(entity)
+        programmed_auto_actions(entity)
+      end
 
-        if available_actions.include?('pass')
+      def activate_program_run_and_pay(entity, program)
+        if program.corporation == entity && actions(entity).include?('pass')
           [Action::Pass.new(entity)]
-        else
-          [Action::ProgramDisable.new(entity, reason: "could not pass #{description.downcase}")]
         end
       end
     end

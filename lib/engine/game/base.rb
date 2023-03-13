@@ -815,6 +815,7 @@ module Engine
       end
 
       def auto_actions_match?(actions_a, actions_b)
+        puts "auto_actions_match?(\n    #{actions_a.to_json},\n    #{actions_b.to_json})"
         return false unless actions_a.size == actions_b.size
 
         actions_a.zip(actions_b).all? do |a, b|

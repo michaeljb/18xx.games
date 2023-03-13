@@ -12,9 +12,6 @@ module Engine
         super(entity)
         @corporation = corporation
         @until_condition = until_condition
-        puts "ProgramRunAndPay#new"
-        puts "    @until_condition = #{@until_condition}"
-
         @phase = phase if @until_condition == :phase
       end
 
@@ -40,6 +37,8 @@ module Engine
       end
 
       def disable?(game)
+        game.log << "disable? @until_condition: #{@until_condition}; @phase: #{@phase}; game.phase.name = #{game.phase.name}"
+
         @until_condition == :phase &&
           @phase != game.phase.name
       end

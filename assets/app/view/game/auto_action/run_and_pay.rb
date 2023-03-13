@@ -89,7 +89,6 @@ module View
 
         def enable(form)
           form_params = params(form)
-          puts "form_params = #{form_params}"
           corp_id = form_params['corporation']
           condition = until_condition(form_params)
 
@@ -98,7 +97,7 @@ module View
               @sender,
               corporation: @game.corporation_by_id(corp_id),
               until_condition: condition,
-              current_phase: @game.phase.name,
+              phase: @game.phase.name,
             )
           )
         end
