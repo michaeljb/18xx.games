@@ -206,7 +206,7 @@ module Engine
       def activate_program_run_and_pay(entity, program)
         puts "activate_program_run_and_pay(#{entity.name}, #{program.to_h})"
         if program.corporation == entity && actions(entity).include?('dividend')
-          [Engine::Action::Dividend.new(entity, kind: :payout)]
+          [Engine::Action::Dividend.new(entity, kind: 'payout')]
         end
       end
 
