@@ -78,7 +78,19 @@ module Engine
           puts "prev_action = #{prev_action&.to_h}"
 
           if prev_action
-            [Engine::Action::RunRoutes.new(entity, routes: prev_action.routes)]
+            routes = prev_action.routes.each do |route|
+              reason =
+                if route.train.owner != entity
+                  'lost train'
+                elsif !route.recompute_connected!
+                  'route disconnected'
+                end
+              return [Action::ProgramDisable.new(entity, reason: reason)] if reason
+
+              route.recompute_revenue!
+            end
+
+            [Engine::Action::RunRoutes.new(entity, routes: routes)]
           end
         end
       end

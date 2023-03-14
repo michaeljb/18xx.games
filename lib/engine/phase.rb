@@ -70,6 +70,7 @@ module Engine
       log_msg += ') --'
       @log << log_msg
       trigger_events!
+      @game.remove_disabled_programmed_actions!(reason: 'phase change')
     end
 
     def trigger_events!

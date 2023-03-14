@@ -651,7 +651,7 @@ module Engine
       end
 
       def player_log(entity, msg)
-        @log << "-- #{msg}" if entity.id == @user
+        @log << "-- #{msg}" if entity.player.id == @user
       end
 
       def available_programmed_actions
@@ -2053,8 +2053,8 @@ module Engine
 
         return unless rusted_trains.any?
 
-        @log << "-- Event: #{rusted_trains.uniq.join(', ')} trains rust " \
-                "( #{owners.map { |c, t| "#{c} x#{t}" }.join(', ')}) --"
+        # @log << "-- Event: #{rusted_trains.uniq.join(', ')} trains rust " \
+        #         "( #{owners.map { |c, t| "#{c} x#{t}" }.join(', ')}) --"
       end
 
       def show_progress_bar?
@@ -2120,6 +2120,17 @@ module Engine
       end
 
       def after_buying_train(train, source); end
+
+      def remove_disabled_programmed_actions!(reason:)
+        @programmed_actions.each do |entity, action_list|
+          action_list.reject! do |action|
+            if action&.disable?(self)
+              player_log(entity, "Programmed action '#{action}' removed due to #{reason}")
+              true
+            end
+          end
+        end
+      end
 
       private
 
@@ -2466,17 +2477,6 @@ module Engine
 
       def clear_programmed_actions
         @programmed_actions.clear
-      end
-
-      def remove_disabled_programmed_actions!(reason:)
-        @programmed_actions.each do |entity, action_list|
-          action_list.reject! do |action|
-            if action&.disable?(self)
-              player_log(entity, "Programmed action '#{action}' removed due to #{reason}")
-              true
-            end
-          end
-        end
       end
 
       def game_end_check_values

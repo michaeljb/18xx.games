@@ -8,17 +8,17 @@ module Engine
     class ProgramRunAndPay < ProgramEnable
       attr_reader :corporation, :until_condition
 
-      def initialize(entity, corporation:, until_condition: false, phase: nil)
+      def initialize(entity, corporation:, until_condition:, phase: nil)
         super(entity)
         @corporation = corporation
-        @until_condition = until_condition
+        @until_condition = until_condition.to_sym
         @phase = phase if @until_condition == :phase
       end
 
       def self.h_to_args(h, game)
         {
           corporation: game.corporation_by_id(h['corporation']),
-          until_condition: h['until_condition'],
+          until_condition: h['until_condition'].to_sym,
           phase: h['phase'],
         }
       end
@@ -37,8 +37,6 @@ module Engine
       end
 
       def disable?(game)
-        game.log << "disable? @until_condition: #{@until_condition}; @phase: #{@phase}; game.phase.name = #{game.phase.name}"
-
         @until_condition == :phase &&
           @phase != game.phase.name
       end

@@ -8,6 +8,10 @@ module Engine
       def programmed_auto_actions(entity)
         return if (p_list = @game.programmed_actions[entity.player]).empty?
 
+        puts 'programmed_auto_actions'
+        puts "---- p_list = #{p_list}"
+
+
         a_list = []
         p_list.each do |program|
           method = "activate_#{program.type}"

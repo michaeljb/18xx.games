@@ -409,6 +409,19 @@ module Engine
       @connection_data
     end
 
+    def recompute_connected!
+      @check_connected = nil
+      @check_connected = check_connected!
+    end
+
+    def recompute_revenue!(suppress_check_other: false, supress_route_token_check: false)
+      @revenue = nil
+      @revenue = revenue(suppress_check_other: suppress_check_other, supress_route_token_check: supress_route_token_check)
+
+      @revenue_str = nil
+      @revenue_str = revenue_str
+    end
+
     private
 
     def chain_id(paths)
