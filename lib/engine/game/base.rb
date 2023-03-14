@@ -815,12 +815,16 @@ module Engine
       end
 
       def auto_actions_match?(actions_a, actions_b)
-        puts "auto_actions_match?(\n    #{actions_a.to_json},\n    #{actions_b.to_json})"
+        puts "auto_actions_match?(\n    #{actions_a.map(&:to_h)},\n    #{actions_b.map(&:to_h)})"
         return false unless actions_a.size == actions_b.size
 
-        actions_a.zip(actions_b).all? do |a, b|
+        matches = actions_a.zip(actions_b).map do |a, b|
           a.to_h.except('created_at') == b.to_h.except('created_at')
         end
+
+        puts "    matches = #{matches}"
+
+        matches.all?
       end
 
       def store_player_info
