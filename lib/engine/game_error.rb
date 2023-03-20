@@ -17,4 +17,8 @@ module Engine
 
   class ReusesCity < GameError
   end
+
+  # used by auto action run_and_pay
+  class RouteDisconnected < GameError
+  end
 end

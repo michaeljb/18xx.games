@@ -91,6 +91,7 @@ module Engine
 
         reason = action.reason || 'unknown reason'
         @game.player_log(action.entity, "Disabled programmed action '#{program}' due to '#{reason}'")
+        puts "Disabled programmed action '#{program}' due to '#{reason}'"
       end
 
       def remove_programmed_action(entity, type)

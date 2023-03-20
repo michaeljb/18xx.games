@@ -1312,7 +1312,7 @@ module Engine
       def check_connected(route, corporation)
         return if route.ordered_paths.each_cons(2).all? { |a, b| a.connects_to?(b, corporation) }
 
-        raise GameError, 'Route is not connected'
+        raise RouteDisconnected, 'Route is not connected'
       end
 
       def check_distance(route, visits, train = nil)

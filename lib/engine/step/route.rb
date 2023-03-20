@@ -82,7 +82,7 @@ module Engine
               reason =
                 if route.train.owner != entity
                   'lost train'
-                elsif !route.recompute_connected!
+                elsif !route_still_connected?(route)
                   'route disconnected'
                 end
               return [Action::ProgramDisable.new(entity, reason: reason)] if reason
@@ -93,6 +93,13 @@ module Engine
             [Engine::Action::RunRoutes.new(entity, routes: routes)]
           end
         end
+      end
+
+      def route_still_connected?(route)
+        route.recompute_connected!
+        true
+      rescue Engine::RouteDisconnected => e
+        false
       end
     end
   end
