@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 # rubocop:disable all
 
+require 'process'
+
 require_relative 'models'
 
 Dir['./models/**/*.rb'].sort.each { |file| require file }
@@ -21,15 +23,17 @@ def run_game(game, actions = nil, strict: false)
   time = Time.now
   engine = Engine::Game.load(game, strict: strict)
   begin
-    engine.maybe_raise!    
+    engine.maybe_raise!
 
     time = Time.now - time
+
     $total_time += time
     data['finished']=true
 
     data['actions']=engine.actions.size
     data['result']=engine.result
   rescue Exception => e # rubocop:disable Lint/RescueException
+    time = Time.now - time
     $count += 1
     data['url']="https://18xx.games/game/#{game.id}?action=#{engine.last_processed_action}"
     data['last_action']=engine.last_processed_action
@@ -37,8 +41,11 @@ def run_game(game, actions = nil, strict: false)
     #data['stack']=e.backtrace
     data['exception']=e
   end
+  data['time'] = time
   data
 end
+
+
 
 def validate_all(*titles, game_ids: nil, strict: false)
   $count = 0
@@ -145,4 +152,41 @@ def pin_games(pin_version, game_ids)
     end
     data.save
   end
+end
+
+def validate(thread_count: 1, page_size: 100, strict: false, **kwargs)
+  selected_ids = DB[:games].order(:id).where(**kwargs).select(:id).all.map { |g| g[:id] }
+
+  slices = []
+  thread_count.times { slices << [] }
+  selected_ids.each.with_index do |id, index|
+    slices[index % thread_count] << id
+  end
+
+  threads = []
+  slices.each do |slice_ids|
+    threads << Thread.new do
+      data = {}
+
+      slice_ids.each_slice(page_size) do |ids|
+        games = Game.eager(:user, :players, :actions).where(id: ids).all
+        games.each do |game|
+          data[game.id] = run_game(game, strict: strict)
+        end
+      end
+
+      data
+    end
+  end
+  threads.each(&:join)
+  data = threads.map(&:value).inject(&:merge)
+
+  total_games = selected_ids.size
+  failed = data.count { |_id, g| g['exception'] }
+  total_time = data.sum { |_id, g| g['time'] || 0 }
+  avg_time = total_time / total_games
+
+  puts "#{failed}/#{total_games} avg #{avg_time}"
+  data['summary'] = {'failed': failed, 'total': total_games, 'total_time': total_time, 'avg_time': avg_time}
+  File.write("validate.json", JSON.pretty_generate(data))
 end
