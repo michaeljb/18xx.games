@@ -152,39 +152,51 @@ def pin_games(pin_version, game_ids)
   end
 end
 
-def validate(thread_count: nil, page_size: 100, strict: false, **kwargs)
-  selected_ids = DB[:games].order(:id).where(**kwargs).select(:id).all.map { |g| g[:id] }
+def validate(process_count: nil, page_size: 100, strict: false, **kwargs)
+
+  where_args = {
+    Sequel.pg_jsonb_op(:settings).has_key?('pin') => false,
+    status: %w[active finished]
+  }.merge(kwargs)
+
+  selected_ids = DB[:games].order(:id).where(**where_args).select(:id).all.map { |g| g[:id] }
+
+  puts "found #{selected_ids.size} matching games"
+
   DB.disconnect
 
   slices = []
 
-  thread_count ||= Etc.nprocessors - 1
+  process_count ||= Etc.nprocessors - 1
+  puts "splitting game IDs into #{process_count} groups"
 
-  thread_count.times { slices << [] }
+  process_count.times { slices << [] }
   selected_ids.each.with_index do |id, index|
-    slices[index % thread_count] << id
+    slices[index % process_count] << id
   end
 
-  pids = []
 
-  slices.each do |slice_ids|
+
+  FileUtils.mkdir_p('validate')
+
+  pids = []
+  slices.each.with_index do |slice_ids, index|
     pids << Process.fork do
       data = {}
-
       slice_ids.each_slice(page_size) do |ids|
         Game.eager(:user, :players, :actions).where(id: ids).all.each do |game|
           data[game.id] = run_game(game, strict: strict)
         end
       end
-
-      pid = Process.getpgid(Process.ppid())
-      File.write("validate_#{pid}.json", JSON.pretty_generate(data))
+      File.write("validate/validate_#{index}.json", JSON.pretty_generate(data))
     end
   end
-
   pids.each { |pid| Process.waitpid(pid) }
 
-  return
+  data = {}
+  (0..(slices.size - 1)).each do |index|
+    data.merge(JSON.parse(File.read("validate/validate_#{index}.json")))
+  end
 
   total_games = selected_ids.size
   failed = data.count { |_id, g| g['exception'] }
