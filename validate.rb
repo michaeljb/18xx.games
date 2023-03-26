@@ -204,6 +204,13 @@ def validate(process_count: nil, page_size: 100, strict: false, **kwargs)
   avg_time = total_time / total_games
 
   puts "#{failed}/#{total_games} avg #{avg_time}"
-  data['summary'] = {'failed': failed, 'total': total_games, 'total_time': total_time, 'avg_time': avg_time}
+  data['summary'] = {
+    'failed': failed,
+    'failed_ids': data.select { |id, g| g['exception'] }.map { |id, g| id.to_i }.sort,
+    'total': total_games,
+    'total_time': total_time,
+    'avg_time': avg_time,
+  }
+
   File.write("validate.json", JSON.pretty_generate(data))
 end
