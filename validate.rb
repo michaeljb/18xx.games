@@ -195,7 +195,7 @@ def validate(process_count: nil, page_size: 100, strict: false, **kwargs)
 
   data = {}
   (0..(slices.size - 1)).each do |index|
-    data.merge(JSON.parse(File.read("validate/validate_#{index}.json")))
+    data.merge!(JSON.parse(File.read("validate/validate_#{index}.json")))
   end
 
   total_games = selected_ids.size
