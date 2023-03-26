@@ -154,6 +154,7 @@ end
 
 def validate(thread_count: 1, page_size: 100, strict: false, **kwargs)
   selected_ids = DB[:games].order(:id).where(**kwargs).select(:id).all.map { |g| g[:id] }
+  DB.disconnect
 
   slices = []
   thread_count.times { slices << [] }
@@ -166,14 +167,16 @@ def validate(thread_count: 1, page_size: 100, strict: false, **kwargs)
   slices.each do |slice_ids|
     pids << Process.fork do
 
+      puts "Sequel.connect(#{ENV['APP_DATABASE_URL']} || #{ENV['DATABASE_URL']})"
+
       db = Sequel.connect(ENV['APP_DATABASE_URL'] || ENV['DATABASE_URL'])
 
       data = {}
 
       slice_ids.each_slice(page_size) do |ids|
-        games = Game.eager(:user, :players, :actions).where(id: ids).all
+        games = db[:games].eager(:user, :players, :actions).where(id: ids).all
         games.each do |game|
-          data[game.id] = run_game(game, strict: strict)
+p          data[game.id] = run_game(game, strict: strict)
         end
       end
 
