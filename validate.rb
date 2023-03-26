@@ -152,11 +152,14 @@ def pin_games(pin_version, game_ids)
   end
 end
 
-def validate(thread_count: 1, page_size: 100, strict: false, **kwargs)
+def validate(thread_count: nil, page_size: 100, strict: false, **kwargs)
   selected_ids = DB[:games].order(:id).where(**kwargs).select(:id).all.map { |g| g[:id] }
   DB.disconnect
 
   slices = []
+
+  thread_count ||= Etc.nprocessors - 1
+
   thread_count.times { slices << [] }
   selected_ids.each.with_index do |id, index|
     slices[index % thread_count] << id
@@ -166,20 +169,13 @@ def validate(thread_count: 1, page_size: 100, strict: false, **kwargs)
 
   slices.each do |slice_ids|
     pids << Process.fork do
-
-      puts "Sequel.connect(#{ENV['APP_DATABASE_URL']} || #{ENV['DATABASE_URL']})"
-
-      db = Sequel.connect(ENV['APP_DATABASE_URL'] || ENV['DATABASE_URL'])
-
       data = {}
 
       slice_ids.each_slice(page_size) do |ids|
-        games = db[:games].eager(:user, :players, :actions).where(id: ids).all
-        games.each do |game|
-p          data[game.id] = run_game(game, strict: strict)
+        Game.eager(:user, :players, :actions).where(id: ids).all.each do |game|
+          data[game.id] = run_game(game, strict: strict)
         end
       end
-
 
       pid = Process.getpgid(Process.ppid())
       File.write("validate_#{pid}.json", JSON.pretty_generate(data))
