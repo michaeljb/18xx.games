@@ -13,8 +13,10 @@ def validate
   puts "#{groups.size} groups"
   DB.disconnect
 
+  pids = []
+
   groups.each do |group|
-    Process.fork do
+    pids << Process.fork do
       time = Time.now
       broken = []
       group.each_slice(10).each do |ids|
@@ -27,6 +29,12 @@ def validate
       end
       puts  "#{broken.size} / #{group.size} - #{Time.now - time}"
     end
-  end; nil
+  end
+
+  puts "pids = #{pids}"
+
+  pids.each { |pid| Process.waitpid(pid) }
+
+  puts "finished"
 
 end
