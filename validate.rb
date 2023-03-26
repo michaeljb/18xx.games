@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 # rubocop:disable all
 
-require 'process'
-
 require_relative 'models'
 
 Dir['./models/**/*.rb'].sort.each { |file| require file }
@@ -163,9 +161,13 @@ def validate(thread_count: 1, page_size: 100, strict: false, **kwargs)
     slices[index % thread_count] << id
   end
 
-  threads = []
+  pids = []
+
   slices.each do |slice_ids|
-    threads << Thread.new do
+    pids << Process.fork do
+
+      db = Sequel.connect(ENV['APP_DATABASE_URL'] || ENV['DATABASE_URL'])
+
       data = {}
 
       slice_ids.each_slice(page_size) do |ids|
@@ -175,11 +177,15 @@ def validate(thread_count: 1, page_size: 100, strict: false, **kwargs)
         end
       end
 
-      data
+
+      pid = Process.getpgid(Process.ppid())
+      File.write("validate_#{pid}.json", JSON.pretty_generate(data))
     end
   end
-  threads.each(&:join)
-  data = threads.map(&:value).inject(&:merge)
+
+  pids.each { |pid| Process.waitpid(pid) }
+
+  return
 
   total_games = selected_ids.size
   failed = data.count { |_id, g| g['exception'] }
