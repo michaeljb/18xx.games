@@ -2083,9 +2083,6 @@ module Engine
 
       def update_tile_lists(tile, old_tile)
         add_extra_tile(tile) if tile.unlimited
-
-        raise GameError, "Cannot lay tile #{tile.id}; it is already on hex #{tile.hex.id}" if tile.hex
-
         @tiles.delete(tile)
         @tiles << old_tile unless old_tile.preprinted
       end
@@ -2906,10 +2903,10 @@ module Engine
       end
 
       def ability_blocking_step
-        supported_steps = [Step::Tracker, Step::BuyTrain]
+        supported_steps = [Step::Tracker, Step::Token, Step::BuyTrain]
         @round.steps.find do |step|
-          # currently, abilities only care about Tracker and BuyTrain. The is_a?
-          # check can be expanded to include more classes/modules when needed
+          # Currently, abilities only care about Tracker, Token and BuyTrain steps
+          # The is_a? check can be expanded to include more classes/modules when needed
           supported_steps.any? { |s| step.is_a?(s) } && !step.passed? && step.active? && step.blocks?
         end
       end
