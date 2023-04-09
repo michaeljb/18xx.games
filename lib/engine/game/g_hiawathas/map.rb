@@ -14,14 +14,31 @@ module Engine
           end.join(';')
         end
 
-        def self.rotations(exits)
+        def self.rotations(exits, sort: true)
           (0..5).map do |tick|
-            rotated_exits = exits.map { |e| (e + tick) % 6 }  # .sort
+            rotated_exits = exits.map { |e| (e + tick) % 6 }
+            sort ? rotated_exits.sort : rotated_exits
           end.uniq
         end
 
         def self.lane_permutations(num_segments)
           [2, nil].repeated_permutation(num_segments).to_a[..-2].sort_by { |x| x.count(2) }
+        end
+
+        # returns list of possible unique single-lane track tiles
+        #
+        # n = number of track segments
+        def self.generate_exitses(n, valid_exits=[0,1,2,3,4,5])
+          exitses = []
+          combos = valid_exits.repeated_combination(n).to_a.reject { |c| c.uniq.size != c.size }
+
+          combos.each do |exits|
+            next if rotations(exits, sort: true).any? { |r| exitses.include?(r) }
+
+            exitses << exits
+          end
+
+          exitses
         end
 
         index = 0
@@ -93,11 +110,6 @@ module Engine
           add_tile("#{id}CC", code)
         end
 
-        # Chicago
-        BASE_TILES.each do |id, code|
-          code = "city=revenue:yellow_30|green_30|brown_60,slots:4;label=Chi;#{code}"
-          add_tile("#{id}Chi", code)
-        end
         # Green Bay
         BASE_TILES.each do |id, code|
           code = "city=revenue:yellow_20|green_40|brown_60,slots:4;label=GB;#{code}"
@@ -110,70 +122,62 @@ module Engine
         end
         # Twin Cities
         BASE_TILES.each do |id, code|
-          code = "city=revenue:yellow_30|green_40|brown_50,slots:4;label=TC;#{code}"
+          code = "city=revenue:yellow_30|green_40|brown_50,slots:2;label=TC;#{code}"
           code = "#{code};upgrade=cost:40,terrain:water"
           add_tile("#{id}TC", code, color='blue')
         end
 
-        puts "TILES.size = #{TILES.size}"
-
         LOCATION_NAMES = {
-          'F3' => 'Saijou',
-          'G4' => 'Niihama',
-          '7H' => 'Ikeda',
-          'A10' => 'Sukumo',
-          'J11' => 'Anan',
-          'G12' => 'Nahari',
-          'E2' => 'Matsuyama',
-          'I2' => 'Marugame',
-          'K8' => 'Tokushima',
-          'C10' => 'Kubokawa',
-          'J5' => 'Ritsurin Kouen',
-          'G10' => 'Nangoku',
-          'J9' => 'Komatsujima',
-          'I12' => 'Muki',
-          'B11' => 'Nakamura',
-          'I4' => 'Kotohira',
-          'C4' => 'Ohzu',
-          'K4' => 'Takamatsu',
-          'B7' => 'Uwajima',
-          'B3' => 'Yawatahama',
-          'G14' => 'Muroto',
-          'F1' => 'Imabari',
-          'J1' => 'Sakaide & Okayama',
-          'L7' => 'Naruto & Awaji',
-          'F9' => 'Kouchi',
+          'A2' => 'Seattle',
+          'B3' => 'Twin Cities',
+          'B5' => 'Minocqua',
+          'B9' => 'The Upper Peninsula',
+          'C2' => 'Madison',
+          'C6' => 'Wausau',
+          'C8' => 'Green Bay',
+          'C10' => 'Great Lakes',
+          'D3' => 'La Crosse',
+          'D9' => 'Milwaukee',
+          'E4' => 'Elkhorn',
+          'E6' => 'New Lisbon',
+          'F1' => 'Rockford',
+          'F9' => 'Kenosha',
+          'G6' => 'Elgin',
+          'H1' => 'Joliet',
+          'H9' => 'North Chicago',
+          'H11' => 'Chicago',
+          'I2' => 'Sioux Falls',
         }.freeze
 
         HEXES = {
           white: {
-            %w[D3 H3 J3 B5 C8 E8 I8 D9 I10] => '',
-            %w[F3 G4 H7 A10 J11 G12 E2 I2 K8 C10] => 'city=revenue:0',
-            ['J5'] => 'town=revenue:0',
-            %w[B11 G10 I12 J9] => 'town=revenue:0;icon=image:port',
-            ['K6'] => 'upgrade=cost:80,terrain:water',
-            %w[H5 I6] => 'upgrade=cost:80,terrain:water|mountain',
-            %w[E4 D5 F5 C6 E6 G6 D7 F7 A8 G8 B9 H9 H11 H13] => 'upgrade=cost:80,terrain:mountain',
-            ['I4'] => 'city=revenue:0;label=H;upgrade=cost:80',
+            %w[D1 D5 E2 E8 E10 F5 F7 G2 G8 G10 H3 H5 H7] => '',
+            %w[C2 F1 F9] => 'city=revenue:yellow_20|green_30|brown_40,slots:2',
+            %w[C8] => 'city=revenue:yellow_20|green_30|brown_40,slots:2;label=GB',
+            %w[C6 D3 H1] => 'city=revenue:yellow_20|green_30|brown_40',
+            %w[D9] => 'city=revenue:yellow_20|green_60|brown_40,slots:4;label=M',
+            %w[C4] => 'border=edge:2,type:impassable',
+            %w[E6] => 'city=revenue:yellow_20|green_30|brown_40,slots:2;border=edge:3,type:impassable',
+            %w[F3] => 'border=edge:5,type:impassable',
+            %w[H9] => 'city=revenue:yellow_20|green_60|brown_40,slots:4',
+          },
+          blue: {
+            ['B3'] => 'city=revenue:yellow_30|green_40|brown_50,slots:2;label=TC;upgrade=cost:40,terrain:water;border=edge:5,type:impassable',
+            %w[D7] => 'upgrade=cost:40,terrain:water;border=edge:0,type:impassable',
+            %w[G4] => 'upgrade=cost:40,terrain:water;border=edge:2,type:impassable',
           },
           yellow: {
-            ['C4'] => 'city=revenue:20;path=a:2,b:_0',
-            ['K4'] => 'city=revenue:30;path=a:0,b:_0;path=a:1,b:_0;path=a:2,b:_0;label=T',
-          },
-          gray: {
-            ['B7'] => 'city=revenue:40,slots:2;path=a:1,b:_0;path=a:3,b:_0;path=a:5,b:_0',
-            ['B3'] => 'town=revenue:20;path=a:0,b:_0;path=a:_0,b:5',
-            ['G14'] => 'town=revenue:20;path=a:3,b:_0;path=a:_0,b:4',
-            ['J7'] => 'path=a:1,b:5',
+            %w[E4] => 'city=revenue:green_40|brown_50,loc:2;city=revenue:green_40|brown_50,loc:5',
+            %w[G6] => 'city=revenue:green_40|brown_50,loc:0;city=revenue:green_40|brown_50,loc:3',
           },
           red: {
-            ['F1'] => 'offboard=revenue:yellow_30|brown_60|diesel_100;path=a:0,b:_0;path=a:1,b:_0',
-            ['J1'] => 'offboard=revenue:yellow_20|brown_40|diesel_80;path=a:0,b:_0;path=a:1,b:_0',
-            ['L7'] => 'offboard=revenue:yellow_20|brown_40|diesel_80;path=a:1,b:_0;path=a:2,b:_0',
-          },
-          green: {
-            ['F9'] => 'city=revenue:30,slots:2;path=a:2,b:_0;path=a:3,b:_0;'\
-                      'path=a:4,b:_0;path=a:5,b:_0;label=K;upgrade=cost:80,terrain:water',
+            ['A2'] => 'offboard=revenue:yellow_30|green_40|brown_50|;path=a:5,b:_0',
+            ['B5'] => 'offboard=revenue:yellow_20|green_20|brown_20;path=a:5,b:_0',
+            ['B9'] => 'offboard=revenue:yellow_20|green_30|brown_40;path=a:0,b:_0',
+            ['C10'] => 'offboard=revenue:yellow_20|green_40|brown_60;path=a:1,b:_0',
+            ['H11'] => 'offboard=revenue:yellow_30|green_30|brown_60;path=a:1,b:_0,groups:Chicago;border=edge:0',
+            ['I2'] => 'offboard=revenue:yellow_20|green_40|brown_60;path=a:2,b:_0',
+            ['I10'] => 'offboard=revenue:yellow_30|green_30|brown_60,groups:Chicago,hide:1;path=a:2,b:_0;border=edge:3',
           },
         }.freeze
       end
