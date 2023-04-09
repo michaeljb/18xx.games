@@ -6,32 +6,63 @@ module Engine
       module Map
         LAYOUT = :pointy
 
-        BASE_TILES = {
-          # one segment
-          'X1' => 'path=a:0,b:_0',
-          # two segments
-          'X2' => 'path=a:0,b:_0;path=a:1,b:_0',
-          'X3' => 'path=a:0,b:_0;path=a:2,b:_0',
-          'X4' => 'path=a:0,b:_0;path=a:3,b:_0',
-          # three segments
-          'X5' => 'path=a:0,b:_0;path=a:1,b:_0;path=a:2,b:_0',
-          'X6' => 'path=a:0,b:_0;path=a:2,b:_0;path=a:4,b:_0',
-          'X7' => 'path=a:0,b:_0;path=a:1,b:_0;path=a:3,b:_0',
-          'X8' => 'path=a:0,b:_0;path=a:5,b:_0;path=a:3,b:_0',
-          # four segments
-          'X9' => 'path=a:0,b:_0;path=a:1,b:_0;path=a:3,b:_0;path=a:4,b:_0',
-          'X10' => 'path=a:0,b:_0;path=a:1,b:_0;path=a:2,b:_0;path=a:3,b:_0',
-          'X11' => 'path=a:0,b:_0;path=a:2,b:_0;path=a:3,b:_0;path=a:4,b:_0',
-          # five segments
-          'X12' => 'path=a:0,b:_0;path=a:1,b:_0;path=a:2,b:_0;path=a:3,b:_0;path=a:4,b:_0',
-          # six segments
-          'X13' => 'path=a:0,b:_0;path=a:1,b:_0;path=a:2,b:_0;path=a:3,b:_0;path=a:4,b:_0;path=a:5,b:_0',
-        }.freeze
+        BASE_TILES = {}
+
+        def self.exits_to_paths_code(exits, lanes=[])
+          exits.zip(lanes).map do |exit, lane|
+            lane ? "path=a:#{exit},b:_0,lanes:#{lane}" : "path=a:#{exit},b:_0"
+          end.join(';')
+        end
+
+        def self.rotations(exits)
+          (0..5).map do |tick|
+            rotated_exits = exits.map { |e| (e + tick) % 6 }  # .sort
+          end.uniq
+        end
+
+        def self.lane_permutations(num_segments)
+          [2, nil].repeated_permutation(num_segments).to_a[..-2].sort_by { |x| x.count(2) }
+        end
+
+        index = 0
+        [
+          [[0]],
+          [[0, 1], [0, 2], [0, 3]],
+          [[0, 1, 2], [0, 2, 4], [0, 1, 3], [0, 3, 5]],
+          [[0, 1, 2, 3], [0, 1, 3, 4], [0, 2, 3, 4]],
+          [[0, 1, 2, 3, 4]],
+          [[0, 1, 2, 3, 4, 5]],
+        ].each.with_index do |exitses, idx|
+          num_segments = idx + 1
+
+          permutations = lane_permutations(num_segments)
+
+          exitses.each do |exits|
+            index += 1
+            BASE_TILES[index] = exits_to_paths_code(exits)
+
+            permuted = {}
+            lane_map = exits.zip
+
+            perm_index = 0
+
+            permutations.each.with_index do |perm|
+              next if rotations(exits).any? do |rotated_exits|
+                permuted.include?(rotated_exits.zip(perm).to_h)
+              end
+              permuted[exits.zip(perm).to_h] = 0
+
+              code = exits_to_paths_code(exits, lanes=perm)
+              perm_index += 1
+              BASE_TILES["#{index}.#{perm_index}"] = code
+            end
+          end
+        end
 
         TILES = {}
 
         def self.add_tile(id, code, color='white')
-          TILES[id] = {
+          TILES["X#{id}"] = {
             'code' => code,
             'color' => color,
             'count' => 'unlimited',
@@ -42,52 +73,49 @@ module Engine
           code = "junction;#{code}"
           add_tile(id, code)
         end
+
+        puts "TILES.size = #{TILES.size}"
+
         BASE_TILES.each do |id, code|
           code = "junction;#{code}"
-          code = "#{code};upgrade=cost:40,terrain:water" unless id == 'X12'
+          code = "#{code};upgrade=cost:40,terrain:water"
           add_tile("#{id}B", code, 'blue')
         end
 
         # 1-slot cities
         BASE_TILES.each do |id, code|
-          id = "#{id}C"
           code = "city=revenue:yellow_20|green_30|brown_40;#{code}"
-          add_tile(id, code)
+          add_tile("#{id}C", code)
         end
         # 2-slot cities
         BASE_TILES.each do |id, code|
-          id = "#{id}CC"
           code = "city=revenue:yellow_20|green_30|brown_40,slots:2;#{code}"
-          add_tile(id, code)
+          add_tile("#{id}CC", code)
         end
 
         # Chicago
         BASE_TILES.each do |id, code|
-          id = "#{id}Chi"
-          code = "city=revenue:yellow_30|green_30|brown_60,slots:4;label=C;#{code}"
-          add_tile(id, code)
+          code = "city=revenue:yellow_30|green_30|brown_60,slots:4;label=Chi;#{code}"
+          add_tile("#{id}Chi", code)
         end
         # Green Bay
         BASE_TILES.each do |id, code|
-          id = "#{id}GB"
           code = "city=revenue:yellow_20|green_40|brown_60,slots:4;label=GB;#{code}"
-          add_tile(id, code)
+          add_tile("#{id}GB", code)
         end
         # Milwaukee
         BASE_TILES.each do |id, code|
-          id = "#{id}M"
           code = "city=revenue:yellow_20|green_60|brown_40,slots:4;label=M;#{code}"
-          add_tile(id, code)
+          add_tile("#{id}M", code)
         end
         # Twin Cities
         BASE_TILES.each do |id, code|
-          next unless %w[X1 X3].include?(id)
-
-          id = "#{id}TC"
           code = "city=revenue:yellow_30|green_40|brown_50,slots:4;label=TC;#{code}"
-          code = "#{code};upgrade=cost:40,terrain:water" if id == 'X1TC'
-          add_tile(id, code, color='blue')
+          code = "#{code};upgrade=cost:40,terrain:water"
+          add_tile("#{id}TC", code, color='blue')
         end
+
+        puts "TILES.size = #{TILES.size}"
 
         LOCATION_NAMES = {
           'F3' => 'Saijou',
