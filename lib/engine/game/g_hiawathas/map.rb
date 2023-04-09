@@ -8,12 +8,25 @@ module Engine
 
         BASE_TILES = {}
 
+        # exits Array<Integer> - list of edges where track exits the tiles
+        # lanes Array<Integer|nil> - list of same size as `exits`, values of
+        #     `nil` or `2`, describing the `lane` argument that should be given
+        #     for the path at the same index in `exits`; for example,
+        #     `exits=[0,2], lanes=[2,nil]` will be a gentle curve with the
+        #     track connecting the center to edge 0 will have 2 lanes
+        # return String - code strings containing the paths for tile config definitions
         def self.exits_to_paths_code(exits, lanes=[])
           exits.zip(lanes).map do |exit, lane|
             lane ? "path=a:#{exit},b:_0,lanes:#{lane}" : "path=a:#{exit},b:_0"
           end.join(';')
         end
 
+        # exits Array<Integer> - list of edges where track exits the tiles
+        # sort Boolean - whether each rotated version of the exits should be
+        #     sorted before the uniqueness check, e.g., whether [0, 3] and
+        #     [3, 0] should be treated as the same
+        # return Array<Array<Integer>> - list of unique exit lists that can be
+        #     created by rotating the input exit list
         def self.rotations(exits, sort: true)
           (0..5).map do |tick|
             rotated_exits = exits.map { |e| (e + tick) % 6 }
@@ -21,6 +34,11 @@ module Engine
           end.uniq
         end
 
+        # num_segments Integer - the number of track segments (or paths) on the
+        #     track tile
+        # return Array<Integer|nil> - representation of all the possible ways
+        #     that double-lane paths can appear on the tile, ordered from 1
+        #     double-lane path to all the paths being double-laned
         def self.lane_permutations(num_segments)
           [2, nil].repeated_permutation(num_segments).to_a[..-2].sort_by { |x| x.count(2) }
         end
@@ -64,7 +82,7 @@ module Engine
             perm_index = 0
 
             permutations.each.with_index do |perm|
-              next if rotations(exits).any? do |rotated_exits|
+              next if rotations(exits, sort: false).any? do |rotated_exits|
                 permuted.include?(rotated_exits.zip(perm).to_h)
               end
               permuted[exits.zip(perm).to_h] = 0
