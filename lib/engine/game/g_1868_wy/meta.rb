@@ -46,7 +46,7 @@ module Engine
           {
             sym: :double_share_no_dividends,
             short_name: 'Ames Bros. No Dividends to UP',
-            desc: 'The Union Pacific Double Share does not pay dividends '\
+            desc: 'The Union Pacific 20% Share does not pay dividends '\
                   '(including CM payments) while it is owned by Union Pacific. '\
                   'It still capitalizes Union Pacific on the exchange of P11.',
           },
