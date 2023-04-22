@@ -48,8 +48,8 @@ module Engine
 
               lay_tile(action, spender: spender)
               @round.laid_hexes << action.hex
-              if upgraded_extra_track || spender.type == :minor
-                # Use the ability an extra time, upgrade counts as 2 tile lays. Or if its a minor, they ony get one use
+              if spender.type == :minor
+                # Minors only get one use
                 ability.use!
               else
                 @extra_laided_track = true
@@ -59,7 +59,7 @@ module Engine
             end
             @in_process = false
             @game.after_lay_tile(action.hex, old_tile, action.tile)
-            ability.use!
+            ability.use!(upgrade: action.tile.color != :yellow)
 
             if ability.type == :tile_lay && ability.count <= 0 && ability.closed_when_used_up
               @log << "#{ability.owner.name} closes"
