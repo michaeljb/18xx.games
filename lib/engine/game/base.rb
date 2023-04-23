@@ -806,6 +806,7 @@ module Engine
       def maybe_raise!
         if @exception
           exception = @exception
+          exception.broken_action = @broken_action
           @exception = nil
           @broken_action = nil
           raise exception

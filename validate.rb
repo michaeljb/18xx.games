@@ -38,6 +38,7 @@ def run_game(game, actions = nil, strict: false)
     data['finished']=false
     data['stack']=e.backtrace
     data['exception']=e
+    data['action']=e.broken_action.to_h
   end
   data['time'] = time
   data
