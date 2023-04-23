@@ -39,6 +39,9 @@ module Engine
                         @game.current_entity
                       end
             @in_process = true
+
+            minor_single_use = false
+
             if @game.company_ability_extra_track?(entity)
               upgraded_extra_track = upgraded_track?(action.hex.tile, action.tile, action.hex)
               if upgraded_extra_track && @extra_laided_track && abilities(action.entity).consume_tile_lay
@@ -49,8 +52,7 @@ module Engine
               lay_tile(action, spender: spender)
               @round.laid_hexes << action.hex
               if spender.type == :minor
-                # Minors only get one use
-                ability.use!
+                minor_single_use = true
               else
                 @extra_laided_track = true
               end
@@ -60,6 +62,7 @@ module Engine
             @in_process = false
             @game.after_lay_tile(action.hex, old_tile, action.tile)
             ability.use!(upgrade: %i[green brown gray].include?(action.tile.color))
+            ability.use! if minor_single_use
 
             if ability.type == :tile_lay && ability.count <= 0 && ability.closed_when_used_up
               @log << "#{ability.owner.name} closes"

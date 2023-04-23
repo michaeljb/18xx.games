@@ -35,7 +35,7 @@ module Engine
       end
 
       def use!(upgrade: false)
-        super()
+        super
 
         return unless @upgrade_count
         return unless @lay_count
