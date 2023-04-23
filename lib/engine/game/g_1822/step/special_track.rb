@@ -59,7 +59,7 @@ module Engine
             end
             @in_process = false
             @game.after_lay_tile(action.hex, old_tile, action.tile)
-            ability.use!(upgrade: action.tile.color != :yellow)
+            ability.use!(upgrade: %i[green brown gray].include?(action.tile.color))
 
             if ability.type == :tile_lay && ability.count <= 0 && ability.closed_when_used_up
               @log << "#{ability.owner.name} closes"
