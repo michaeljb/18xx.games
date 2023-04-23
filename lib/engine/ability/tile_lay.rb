@@ -35,26 +35,28 @@ module Engine
       end
 
       def use!(upgrade: false)
+        return unless @count.positive?
+
         super
 
         return unless @upgrade_count
         return unless @lay_count
 
         if upgrade
-          raise GameError, 'Cannot use this ability to upgrade a tile now' if @upgrade_count.zero?
+          raise GameError, 'Cannot use this ability to upgrade a tile now' unless @upgrade_count.positive?
 
           @lay_count = 0
           @upgrade_count -= 1
-          if @upgrade_count.zero?
+          unless @upgrade_count.positive?
             owner.remove_ability(self)
             @count = 0
           end
         else
-          raise GameError, 'Cannot use this ability to lay a tile now' if @lay_count.zero?
+          raise GameError, 'Cannot use this ability to lay a tile now' unless @lay_count.positive?
 
           @upgrade_count = 0
           @lay_count -= 1
-          if @lay_count.zero?
+          unless @lay_count.positive?
             owner.remove_ability(self)
             @count = 0
           end
