@@ -21,7 +21,7 @@ def run_game(game, actions = nil, strict: false)
   time = Time.now
   engine = Engine::Game.load(game, strict: strict)
   begin
-    engine.maybe_raise!    
+    engine.maybe_raise!
 
     time = Time.now - time
     $total_time += time
@@ -34,7 +34,7 @@ def run_game(game, actions = nil, strict: false)
     data['url']="https://18xx.games/game/#{game.id}?action=#{engine.last_processed_action}"
     data['last_action']=engine.last_processed_action
     data['finished']=false
-    #data['stack']=e.backtrace
+    data['stack']=e.backtrace
     data['exception']=e
   end
   data
