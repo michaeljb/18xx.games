@@ -11,7 +11,7 @@ module View
     include GameManager
 
     needs :route
-    # needs :fixture_tiles, default: {}, store: true
+    needs :fixture_tiles, default: {}, store: true
 
     ROUTE_FORMAT = %r{/tiles/([^/?]*)(?:/([^?]+))?}.freeze
 
@@ -107,19 +107,19 @@ module View
                   end
 
                   if fixture
-                    # if @connection
-                    #   @connection.get("/fixtures/#{title}/#{fixture}.json", '') do |data|
-                    #     kwargs = action ? {at_action: action} : {}
-                    #     game = Engine::Game.load(data, **kwargs)
+                    if @connection
+                      @connection.get("/fixtures/#{title}/#{fixture}.json", '') do |data|
+                        kwargs = action ? {at_action: action} : {}
+                        game = Engine::Game.load(data, **kwargs)
 
-                    #     hex_coordinates = hex_or_tile
-                    #     name = hex_coordinates
-                    #     tile = game.hex_by_id(hex_coordinates).tile
+                        hex_coordinates = hex_or_tile
+                        name = hex_coordinates
+                        tile = game.hex_by_id(hex_coordinates).tile
 
-                    #     # @fixture_tiles[tile.id] = tile
-                    #     # store(:fixture_tiles, @fixture_tiles, skip: false)
-                    #   end
-                    # end
+                        # @fixture_tiles[tile.id] = tile
+                        # store(:fixture_tiles, @fixture_tiles, skip: false)
+                      end
+                    end
 
                     # rendered_test_tiles.concat(
                     #   render_tile_blocks(
