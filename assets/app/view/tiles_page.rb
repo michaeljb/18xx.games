@@ -302,7 +302,7 @@ module View
                       location_name: tile.location_name,
                       location_on_plain: true,
                       scale: scale,
-                      rotations: @rotations,
+                      rotations: [tile.rotation],
                       hex_coordinates: hex_coordinates,
                       name_prefix: title,
                       top_text: "#{title}: #{hex_or_tile}",
