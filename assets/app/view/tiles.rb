@@ -15,6 +15,14 @@ module View
         padding: '0 0.7rem 0 0.2rem',
       },
     }.freeze
+    BOTTOM_LINE_PROPS = {
+      style: {
+        height: '0.9rem',
+        padding: '0 0.7rem 0 0.2rem',
+        position: 'absolute',
+        bottom: 0,
+      },
+    }.freeze
     TEXT_PROPS = {
       style: {
         float: 'left',
@@ -41,30 +49,39 @@ module View
       clickable: false,
       location_on_plain: false,
       name_prefix: nil,
-      extra_children: []
+      extra_children: [],
+      top_text: nil,
+      bottom_text: nil
     )
       block_props = {
         style: {
           width: "#{WIDTH * scale}px",
           height: "#{HEIGHT * scale}px",
+          position: 'relative',
         },
       }
 
       tile ||= Engine::Tile.for(name)
 
-      loc_name = location_name || tile.location_name if !(tile.cities + tile.towns + tile.offboards).empty? || location_on_plain
+      loc_name = location_name || tile.location_name #if !(tile.cities + tile.towns + tile.offboards).empty? || location_on_plain
 
       rotations = [0] if tile.preprinted || !rotations
 
       rotations.map do |rotation|
         tile.rotate!(rotation)
 
-        unless setting_for(@hide_tile_names)
+        if setting_for(@hide_tile_names)
+          text = nil
+        elsif top_text
+          text = top_text
+        else
           text = name_prefix ? "#{name_prefix}: " : ''
           text += tile.preprinted ? '' : '#'
           text += name
-          text += "-#{rotation}" unless rotations == [0]
         end
+
+        text += "-#{rotation}" if !setting_for(@hide_tile_names) && rotations != [0]
+
         count = tile.unlimited ? '∞' : num.to_s
 
         hex = Engine::Hex.new(hex_coordinates || 'A1',
@@ -91,6 +108,9 @@ module View
                 ),
               ]),
             ]),
+            h(:div, BOTTOM_LINE_PROPS, [
+              h(:div, TEXT_PROPS, bottom_text),
+            ])
           ])
       end
     end
