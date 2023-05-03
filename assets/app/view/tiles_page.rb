@@ -120,7 +120,7 @@ module View
       end
     end
 
-    def render_individual_tile_from_game(game, hex_or_tile_id, scale: 3.0, name_prefix: nil)
+    def render_individual_tile_from_game(game, hex_or_tile_id, scale: 3.0)
       id, rotation = hex_or_tile_id.split('-')
       rotations = rotation ? [rotation.to_i] : @rotations
 
@@ -143,7 +143,6 @@ module View
         scale: scale,
         rotations: rotations,
         hex_coordinates: hex_coordinates,
-        name_prefix: name_prefix,
       )
     end
 
@@ -332,7 +331,7 @@ module View
                   players = Array.new(game_class::PLAYER_RANGE.max) { |n| "Player #{n + 1}" }
                   game = game_class.new(players)
                   rendered_test_tiles.concat(
-                    render_individual_tile_from_game(game, hex_or_tile, scale: scale, name_prefix: game_class.title)
+                    render_individual_tile_from_game(game, hex_or_tile, scale: scale, top_text: "#{title}: hex_or_tile")
                   )
                 end
               else

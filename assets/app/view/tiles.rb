@@ -48,7 +48,6 @@ module View
       hex_coordinates: nil,
       clickable: false,
       location_on_plain: false,
-      name_prefix: nil,
       extra_children: [],
       top_text: nil,
       bottom_text: nil
@@ -75,8 +74,7 @@ module View
         elsif top_text
           text = top_text
         else
-          text = name_prefix ? "#{name_prefix}: " : ''
-          text += tile.preprinted ? '' : '#'
+          text = tile.preprinted ? '' : '#'
           text += name
         end
 
