@@ -280,9 +280,11 @@ module View
 
                 if fixture
                   if @fixture_data[fixture]
-                    key = [fixture, hex_or_tile]
+                    key = [fixture, action, hex_or_tile]
                     unless (tile = @fixture_tiles[key])
                       kwargs = action ? { at_action: action } : {}
+
+                      puts "loading game #{fixture} with kwargs=#{kwargs}..."
                       game = Engine::Game.load(@fixture_data[fixture], **kwargs)
                       hex_coordinates = hex_or_tile
                       tile = game.hex_by_id(hex_coordinates).tile
@@ -296,12 +298,13 @@ module View
                         hex_coordinates,
                         layout: game_class::LAYOUT,
                         tile: tile,
-                        location_name: tile.location_name || @location_name,
+                        location_name: tile.location_name,
+                        location_on_plain: true,
                         scale: scale,
                         rotations: @rotations,
                         hex_coordinates: hex_coordinates,
                         name_prefix: title,
-                        top_text: "#{title}: #{hex_coordinates}",
+                        top_text: "#{title}: #{hex_or_tile}",
                         fixture_id: fixture,
                         fixture_title: title,
                         action: action,
@@ -340,7 +343,7 @@ module View
               else
                 %i[flat pointy].map do |layout_|
                   rendered_test_tiles.concat(
-                    Array(render_tile_blocks(hex_or_tile, layout: layout_, scale: scale, location_name: @location_name,
+                    Array(render_tile_blocks(hex_or_tile, layout: layout_, scale: scale,
                                                           location_on_plain: true, rotations: @rotations))
                   )
                 end

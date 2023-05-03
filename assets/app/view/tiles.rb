@@ -19,8 +19,8 @@ module View
       style: {
         height: '0.9rem',
         padding: '0 0.7rem 0 0.2rem',
+        bottom: '3px',
         position: 'absolute',
-        bottom: 0,
       },
     }.freeze
     TEXT_PROPS = {
