@@ -2,12 +2,14 @@
 
 module Engine
   module TestTiles
-    # "interesting" tiles to display for manual visual testing
+    # "interesting" tiles to display for manual visual testing; each entry is an
+    # Array containing:
     # - tile / hex id
     # - game title (optional)
-    # - fixture (optional, requires game title)
-    # - action id (optional, requires fixture)
-    # -  array of tile names or hex ids
+    # - fixture (optional, requires game title; if not given, the starting state
+    #   of the hex/tile is used)
+    # - action id (optional, requires fixture; if not given, the fixture is
+    #   processed to its conclusion)
     TEST_TILES_HUMAN_READABLE = [
       ['45'],
 
@@ -16,6 +18,8 @@ module Engine
       %w[I12 1822PNW],
 
       ['L0', '1868 Wyoming'],
+      ['WRC', '1868 Wyoming'],
+      ['F12', '1868 Wyoming', 'hs_aulsilwv_5', 835],
       ['L0', '1868 Wyoming', 'hs_aulsilwv_5', 835],
       ['J12', '1868 Wyoming', 'hs_aulsilwv_5', 835],
       ['J12', '1868 Wyoming', 'hs_aulsilwv_5'],
@@ -23,7 +27,7 @@ module Engine
 
     # rearrange the above to a structure that can be more efficiently iterated
     # over--each fixture only needs to be fetched once, and only needs to be
-    # processed to each unique action once, etc
+    # processed to each unique action once
     #
     # defining with this structure directly is confusing to read; for generic
     # tiles, all of the keys in the nested Hash are `nil`
