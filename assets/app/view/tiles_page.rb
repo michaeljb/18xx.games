@@ -120,7 +120,7 @@ module View
       end
     end
 
-    def render_individual_tile_from_game(game, hex_or_tile_id, scale: 3.0)
+    def render_individual_tile_from_game(game, hex_or_tile_id, scale: 3.0, **kwargs)
       id, rotation = hex_or_tile_id.split('-')
       rotations = rotation ? [rotation.to_i] : @rotations
 
@@ -143,6 +143,7 @@ module View
         scale: scale,
         rotations: rotations,
         hex_coordinates: hex_coordinates,
+        **kwargs,
       )
     end
 
@@ -256,7 +257,6 @@ module View
     end
 
     def render_test_tiles
-
       # see /lib/engine/test_tiles.rb
       test_tiles = Engine::TestTiles::TEST_TILES
 
@@ -277,8 +277,6 @@ module View
             hex_or_tiles.each do |hex_or_tile|
               if title
                 game_class = load_game_class(title)
-
-                bottom_text = action ? "#{fixture} action=#{action}" : fixture
 
                 if fixture
                   if @fixture_data[fixture]
@@ -304,7 +302,9 @@ module View
                         hex_coordinates: hex_coordinates,
                         name_prefix: title,
                         top_text: "#{title}: #{hex_coordinates}",
-                        bottom_text: bottom_text,
+                        fixture_id: fixture,
+                        fixture_title: title,
+                        action: action,
                       )
                     )
 
@@ -319,10 +319,13 @@ module View
                         'blank',
                         layout: game_class::LAYOUT,
                         location_name: 'Loading...',
+                        location_on_plain: true,
                         scale: scale,
                         name_prefix: title,
                         top_text: "#{title}: #{hex_or_tile}",
-                        bottom_text: bottom_text,
+                        fixture_id: fixture,
+                        fixture_title: title,
+                        action: action,
                       )
                     )
                   end
@@ -331,14 +334,14 @@ module View
                   players = Array.new(game_class::PLAYER_RANGE.max) { |n| "Player #{n + 1}" }
                   game = game_class.new(players)
                   rendered_test_tiles.concat(
-                    render_individual_tile_from_game(game, hex_or_tile, scale: scale, top_text: "#{title}: hex_or_tile")
+                    render_individual_tile_from_game(game, hex_or_tile, scale: scale, top_text: "#{title}: #{hex_or_tile}")
                   )
                 end
               else
                 %i[flat pointy].map do |layout_|
                   rendered_test_tiles.concat(
                     Array(render_tile_blocks(hex_or_tile, layout: layout_, scale: scale, location_name: @location_name,
-                                             location_on_plain: true, rotations: @rotations))
+                                                          location_on_plain: true, rotations: @rotations))
                   )
                 end
               end

@@ -50,7 +50,9 @@ module View
       location_on_plain: false,
       extra_children: [],
       top_text: nil,
-      bottom_text: nil
+      fixture_id: nil,
+      fixture_title: nil,
+      action: nil
     )
       block_props = {
         style: {
@@ -62,7 +64,7 @@ module View
 
       tile ||= Engine::Tile.for(name)
 
-      loc_name = location_name || tile.location_name #if !(tile.cities + tile.towns + tile.offboards).empty? || location_on_plain
+      loc_name = location_name || tile.location_name if !(tile.cities + tile.towns + tile.offboards).empty? || location_on_plain
 
       rotations = [0] if tile.preprinted || !rotations
 
@@ -79,6 +81,16 @@ module View
         end
 
         text += "-#{rotation}" if !setting_for(@hide_tile_names) && rotations != [0]
+
+        bottom_text = ''
+        if fixture_id
+          bottom_text = fixture_id
+          href = "/fixture/#{fixture_title}/#{fixture_id}"
+          if action
+            bottom_text += " action=#{action}"
+            href += "?action=#{action}"
+          end
+        end
 
         count = tile.unlimited ? '∞' : num.to_s
 
@@ -107,8 +119,10 @@ module View
               ]),
             ]),
             h(:div, BOTTOM_LINE_PROPS, [
-              h(:div, TEXT_PROPS, bottom_text),
-            ])
+                h(:div, TEXT_PROPS, [
+                    h(:a, { attrs: { href: href } }, bottom_text),
+                  ]),
+            ]),
           ])
       end
     end
