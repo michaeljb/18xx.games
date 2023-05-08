@@ -61,6 +61,10 @@ module Engine
         }.reject { |_, v| v.nil? }
       end
 
+      def to_json
+        to_h.to_json
+      end
+
       def args_to_h
         {}
       end
