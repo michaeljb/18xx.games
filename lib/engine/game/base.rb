@@ -807,7 +807,6 @@ module Engine
         if @exception
           exception = @exception
           @exception = nil
-          @broken_action = nil
           raise exception
         end
 

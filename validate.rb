@@ -36,8 +36,9 @@ def run_game(game, actions = nil, strict: false)
     data['url']="https://18xx.games/game/#{game.id}?action=#{engine.last_processed_action}"
     data['last_action']=engine.last_processed_action
     data['finished']=false
-    #data['stack']=e.backtrace
     data['exception']=e
+    data['broken_action']=engine.broken_action.to_h
+    data['stack']=e.backtrace
   end
   data['time'] = time
   data
