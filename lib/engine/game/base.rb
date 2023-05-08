@@ -215,6 +215,7 @@ module Engine
       PHASES = [].freeze
 
       LOCATION_NAMES = {}.freeze
+      HEXES_HIDE_LOCATION_NAMES = {}.freeze
 
       TRACK_RESTRICTION = :semi_restrictive
 
@@ -2020,7 +2021,7 @@ module Engine
         nil
       end
 
-      def hex_blocked_by_ability?(_entity, ability, hex)
+      def hex_blocked_by_ability?(_entity, ability, hex, _tile = nil)
         ability.hexes.include?(hex.id)
       end
 
@@ -2264,16 +2265,16 @@ module Engine
       end
 
       def init_hexes(companies, corporations)
-        blockers = {}
+        blockers = Hash.new { |h, k| h[k] = [] }
         (companies + minors + corporations).each do |company|
           abilities(company, :blocks_hexes) do |ability|
             ability.hexes.each do |hex|
-              blockers[hex] = company
+              blockers[hex] << [company, ability.hidden?]
             end
           end
           abilities(company, :blocks_hexes_consent) do |ability|
             ability.hexes.each do |hex|
-              blockers[hex] = company
+              blockers[hex] << [company, ability.hidden?]
             end
           end
         end
@@ -2318,8 +2319,8 @@ module Engine
                   Tile.from_code(coord, color, tile_string, preprinted: true, index: index)
                 end
 
-              if (blocker = blockers[coord])
-                tile.add_blocker!(blocker)
+              blockers[coord].each do |blocker, hidden|
+                tile.add_blocker!(blocker, hidden: hidden)
               end
 
               tile.partitions.each do |partition|
@@ -2336,7 +2337,8 @@ module Engine
               # name the location (city/town)
               location_name = location_name(coord)
 
-              Hex.new(coord, layout: layout, axes: axes, tile: tile, location_name: location_name)
+              Hex.new(coord, layout: layout, axes: axes, tile: tile, location_name: location_name,
+                             hide_location_name: self.class::HEXES_HIDE_LOCATION_NAMES[coord])
             end
           end
         end.flatten.compact
