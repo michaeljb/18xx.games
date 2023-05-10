@@ -17,6 +17,8 @@ module Engine
       %w[O8 1822PNW],
       %w[I12 1822PNW],
 
+      ['C15', '1846'],
+
       ['L0', '1868 Wyoming'],
       ['WRC', '1868 Wyoming'],
       ['F12', '1868 Wyoming', 'hs_aulsilwv_5', 835],
