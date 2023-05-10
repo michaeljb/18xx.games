@@ -29,8 +29,8 @@ module Engine
     # over--each fixture only needs to be fetched once, and only needs to be
     # processed to each unique action once
     #
-    # defining with this structure directly is confusing to read; for generic
-    # tiles, all of the keys in the nested Hash are `nil`
+    # defining with this structure directly would confusing to read; for generic
+    # tiles, all of the keys in the nested Hash would end up as `nil`
     TEST_TILES =
       TEST_TILES_HUMAN_READABLE.each_with_object({}) do |(hex_or_tile, title, fixture, action), test_tiles|
         test_tiles[title] ||= {}
