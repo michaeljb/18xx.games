@@ -17,7 +17,16 @@ module Engine
       %w[O8 1822PNW],
       %w[I12 1822PNW],
 
+      # open: https://github.com/tobymao/18xx/issues/5981
+      ['H22', '1828.Games'],
+
+      # open: https://github.com/tobymao/18xx/issues/8178
+      ['H18', '1830', '26855', 385],
+
       ['C15', '1846'],
+
+      # open: https://github.com/tobymao/18xx/issues/5167
+      ['N11', '1856', 'hotseat005', 113],
 
       ['L0', '1868 Wyoming'],
       ['WRC', '1868 Wyoming'],
@@ -25,6 +34,27 @@ module Engine
       ['L0', '1868 Wyoming', 'hs_aulsilwv_5', 835],
       ['J12', '1868 Wyoming', 'hs_aulsilwv_5', 835],
       ['J12', '1868 Wyoming', 'hs_aulsilwv_5'],
+
+      # open: https://github.com/tobymao/18xx/issues/4992
+      ['I11', '1882', '5236', 303],
+
+      # open: https://github.com/tobymao/18xx/issues/6604
+      ['L41', '1888'],
+
+      # open: https://github.com/tobymao/18xx/issues/5153
+      ['IR7', '18Ireland'],
+      ['IR8', '18Ireland'],
+
+      # open: https://github.com/tobymao/18xx/issues/5673
+      ['D19', '18Mag', 'hs_tfagolvf_76622'],
+      ['I14', '18Mag', 'hs_tfagolvf_76622'],
+
+      # open: https://github.com/tobymao/18xx/issues/7765
+      ['470', '18MEX'],
+      ['475', '18MEX'],
+      ['479P', '18MEX'],
+      ['485P', '18MEX'],
+      ['486P', '18MEX'],
     ].freeze
 
     # rearrange the above to a structure that can be more efficiently iterated
