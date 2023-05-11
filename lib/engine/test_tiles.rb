@@ -2,8 +2,7 @@
 
 module Engine
   module TestTiles
-    # "interesting" tiles to display for manual visual testing; each entry is a
-    # Hash containing:
+    # each entry is a Hash containing:
     # - tile / hex id
     # - game title (optional)
     # - fixture (optional, requires game title; if not given, the starting state
@@ -31,10 +30,10 @@ module Engine
 
       {tile: 'L0', title: '1868 Wyoming'},
       {tile: 'WRC', title: '1868 Wyoming'},
-      {tile: 'F12', title: '1868 Wyoming', fixture: 'hs_aulsilwv_5', action: 835},
-      {tile: 'L0', title: '1868 Wyoming', fixture: 'hs_aulsilwv_5', action: 835},
-      {tile: 'J12', title: '1868 Wyoming', fixture: 'hs_aulsilwv_5', action: 835},
-      {tile: 'J12', title: '1868 Wyoming', fixture: 'hs_aulsilwv_5'},
+      {tile: 'F12', title: '1868 Wyoming', fixture: '1868WY_5', action: 835},
+      {tile: 'L0', title: '1868 Wyoming', fixture: '1868WY_5', action: 835},
+      {tile: 'J12', title: '1868 Wyoming', fixture: '1868WY_5', action: 835},
+      {tile: 'J12', title: '1868 Wyoming', fixture: '1868WY_5'},
 
       # open: https://github.com/tobymao/18xx/issues/4992
       {tile: 'I11', title: '1882', fixture: '5236', action: 303},
