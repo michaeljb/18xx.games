@@ -269,10 +269,10 @@ module View
         if title
           game_class = load_game_class(title)
         else
-          fixtures[nil][nil].each do |hex_or_tile|
+          fixtures[nil][nil].each do |hex_or_tile, opts|
             %i[flat pointy].map do |layout_|
               rendered_test_tiles.concat(
-                render_tile_blocks(hex_or_tile, layout: layout_, scale: scale, rotations: @rotations)
+                render_tile_blocks(hex_or_tile, layout: layout_, scale: scale, rotations: @rotations, **opts)
               )
             end
           end
@@ -285,10 +285,9 @@ module View
               actions.each do |action, hex_or_tiles|
                 kwargs = action ? { at_action: action } : {}
 
-                puts "loading game #{fixture} with kwargs=#{kwargs}..."
                 game = Engine::Game.load(@fixture_data[fixture], **kwargs)
 
-                hex_or_tiles.each do |hex_or_tile|
+                hex_or_tiles.each do |hex_or_tile, opts|
                   key = [fixture, action, hex_or_tile]
 
                   hex_coordinates = hex_or_tile
@@ -309,6 +308,7 @@ module View
                       fixture_id: fixture,
                       fixture_title: title,
                       action: action,
+                      **opts,
                     )
                   )
                 end
@@ -316,7 +316,6 @@ module View
 
             elsif @connection
               # load the fixture game data
-              puts "loading fixture #{fixture}..."
               @connection.get("/fixtures/#{title}/#{fixture}.json", '') do |data|
                 @fixture_data[fixture] = data
                 store(:fixture_data, @fixture_data, skip: false)
@@ -325,12 +324,12 @@ module View
               # render placeholder tiles which will be replaced once the
               # appropriate fixture is loaded and processed
               actions.each do |action, hex_or_tiles|
-                hex_or_tiles.each do |hex_or_tile|
+                hex_or_tiles.each do |hex_or_tile, opts|
                   rendered_test_tiles.concat(
                     render_tile_blocks(
                       'blank',
                       layout: game_class::LAYOUT,
-                      location_name: 'Loading...',
+                      location_name: 'Loading Fixture...',
                       location_on_plain: true,
                       scale: scale,
                       name_prefix: title,
@@ -338,6 +337,7 @@ module View
                       fixture_id: fixture,
                       fixture_title: title,
                       action: action,
+                      **opts
                     )
                   )
                 end
@@ -347,9 +347,9 @@ module View
           else
             players = Array.new(game_class::PLAYER_RANGE.max) { |n| "Player #{n + 1}" }
             game = game_class.new(players)
-            actions[nil].each do |hex_or_tile|
+            actions[nil].each do |hex_or_tile, opts|
               rendered_test_tiles.concat(
-                Array(render_individual_tile_from_game(game, hex_or_tile, scale: scale, top_text: "#{title}: #{hex_or_tile}"))
+                Array(render_individual_tile_from_game(game, hex_or_tile, scale: scale, top_text: "#{title}: #{hex_or_tile}", **opts))
               )
             end
           end

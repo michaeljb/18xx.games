@@ -4,8 +4,6 @@ require 'lib/storage'
 
 module Lib
   class Connection
-    attr_reader :root
-
     def initialize(root)
       @root = root
       start_message_bus
