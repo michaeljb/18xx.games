@@ -39,6 +39,13 @@ module Engine
             minor_single_use = false
 
             if @game.company_ability_extra_track?(entity)
+              # Extra Tile Lay abilities need to be used either entirely before
+              # or entirely after the Major's normal tile lays
+              # https://boardgamegeek.com/thread/2425653/article/34793831#34793831
+              if @round.num_laid_track == 1
+                @round.num_laid_track += 1
+              end
+
               upgraded_extra_track = upgraded_track?(action.hex.tile, action.tile, action.hex)
               if upgraded_extra_track && @extra_laided_track && abilities(action.entity).consume_tile_lay
                 raise GameError,
