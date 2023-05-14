@@ -39,13 +39,6 @@ module Engine
             minor_single_use = false
 
             if @game.company_ability_extra_track?(entity)
-              # Extra Tile Lay abilities need to be used either entirely before
-              # or entirely after the Major's normal tile lays
-              # https://boardgamegeek.com/thread/2425653/article/34793831#34793831
-              if @round.num_laid_track == 1
-                @round.num_laid_track += 1
-              end
-
               upgraded_extra_track = upgraded_track?(action.hex.tile, action.tile, action.hex)
               if upgraded_extra_track && @extra_laided_track && abilities(action.entity).consume_tile_lay
                 raise GameError,
@@ -72,7 +65,8 @@ module Engine
                 @log << "#{ability.owner.name} closes"
                 ability.owner.close!
               end
-              @company = (ability.must_lay_together && ability.count.positive?) ? action.entity : nil
+
+              handle_extra_tile_lay_company(ability, action.entity)
             end
 
             return unless ability.type == :teleport
@@ -217,6 +211,21 @@ module Engine
 
           def hex_neighbors(entity, hex)
             @game.graph_for_entity(entity).connected_hexes(entity)[hex]
+          end
+
+          # Extra Tile Lay abilities need to be used either entirely before
+          # or entirely after the Major's normal tile lays
+            # https://boardgamegeek.com/thread/2425653/article/34793831#34793831
+          def handle_extra_tile_lay_company(ability, entity)
+            @company =
+              if ability.must_lay_together
+                if @round.num_laid_track == 1
+                  @round.num_laid_track += 1
+                end
+                @ability.count.positive? ? entity : nil
+              else
+                nil
+              end
           end
         end
       end
