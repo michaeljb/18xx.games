@@ -78,7 +78,8 @@ module View
             end
           end
 
-          inputs << render_random_seed
+          # TODO: fix #7465, then this input can be rendered again
+          # inputs << render_random_seed
           inputs << render_optional if should_render_optional?
           inputs << render_game_info
         end
