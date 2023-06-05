@@ -17,7 +17,6 @@ module Engine
       route_timeout = opts[:route_timeout] || 10
       route_limit = opts[:route_limit] || 10_000
 
-      connections = {}
       trains = @game.route_trains(corporation).sort_by(&:price).reverse
 
       graph = @game.graph_for_entity(corporation)
@@ -40,149 +39,166 @@ module Engine
       skip_trains = static.flat_map(:train).to_a
       trains -= skip_trains
 
-      train_routes = Hash.new { |h, k| h[k] = [] }    # map of train to route list
-      hexside_bits = Hash.new { |h, k| h[k] = 0 }     # map of hexside_id to bit number
-      @next_hexside_bit = 0
-
-      nodes.each do |node|
-        if Time.now - now > path_timeout
-          puts 'Path timeout reached'
-          path_walk_timed_out = true
-          break
+      train_groups =
+        if (groups = @game.class::TRAIN_AUTOROUTE_GROUPS)
+          trains.group_by { |t| groups.index { |g| g.include?(t.name) } }.values
         else
-          puts "Path search: #{nodes.index(node)} / #{nodes.size} - paths starting from #{node.hex.name}"
+          [trains]
         end
 
-        walk_corporation = graph.no_blocking? ? nil : corporation
-        node.walk(corporation: walk_corporation, skip_paths: skip_paths) do |_, vp|
-          paths = vp.keys
-          chains = []
-          chain = []
-          left = nil
-          right = nil
-          last_left = nil
-          last_right = nil
+      all_max_routes = []
 
-          complete = lambda do
-            chains << { nodes: [left, right], paths: chain }
-            last_left = left
-            last_right = right
-            left, right = nil
+      train_groups.each do |trains|
+        connections = {}
+
+        train_routes = Hash.new { |h, k| h[k] = [] }    # map of train to route list
+        hexside_bits = Hash.new { |h, k| h[k] = 0 }     # map of hexside_id to bit number
+        @next_hexside_bit = 0
+
+        nodes.each do |node|
+          if Time.now - now > path_timeout
+            puts 'Path timeout reached'
+            path_walk_timed_out = true
+            break
+          else
+            puts "Path search: #{nodes.index(node)} / #{nodes.size} - paths starting from #{node.hex.name}"
+          end
+
+          walk_corporation = graph.no_blocking? ? nil : corporation
+          node.walk(corporation: walk_corporation, skip_paths: skip_paths) do |_, vp|
+            paths = vp.keys
+            chains = []
             chain = []
-          end
+            left = nil
+            right = nil
+            last_left = nil
+            last_right = nil
 
-          assign = lambda do |a, b|
-            if a && b
-              if a == last_left || b == last_right
-                left = b
-                right = a
-              else
-                left = a
-                right = b
-              end
-              complete.call
-            elsif !left
-              left = a || b
-            elsif !right
-              right = a || b
-              complete.call
+            complete = lambda do
+              chains << { nodes: [left, right], paths: chain }
+              last_left = left
+              last_right = right
+              left, right = nil
+              chain = []
             end
+
+            assign = lambda do |a, b|
+              if a && b
+                if a == last_left || b == last_right
+                  left = b
+                  right = a
+                else
+                  left = a
+                  right = b
+                end
+                complete.call
+              elsif !left
+                left = a || b
+              elsif !right
+                right = a || b
+                complete.call
+              end
+            end
+
+            paths.each do |path|
+              chain << path
+              a, b = path.nodes
+
+              assign.call(a, b) if a || b
+            end
+
+            # a 1-city Local train will have no chains but will have a left; route.revenue will reject if not valid for game
+            if chains.empty?
+              next unless left
+
+              chains << { nodes: [left, nil], paths: [] }
+            end
+
+            id = chains.flat_map { |c| c[:paths] }.sort!
+            next if connections[id]
+
+            connections[id] = chains.map do |c|
+              { left: c[:nodes][0], right: c[:nodes][1], chain: c }
+            end
+
+            connection = connections[id]
+
+            # each train has opportunity to vote to abort a branch of this node's path-walk tree
+            path_abort = trains.to_h { |train| [train, true] }
+
+            # build a test route for each train, use route.revenue to check for errors, keep the good ones
+            trains.each do |train|
+              route = Engine::Route.new(
+                @game,
+                @game.phase,
+                train,
+                connection_data: connection,
+                bitfield: bitfield_from_connection(connection, hexside_bits),
+              )
+              route.routes = [route]
+              route.revenue(suppress_check_other: true) # defer route-collection checks til later
+              train_routes[train] << route
+            rescue RouteTooLong
+              # ignore for this train, and abort walking this path if ignored for all trains
+              path_abort.delete(train)
+            rescue ReusesCity
+              path_abort.clear
+            rescue NoToken, RouteTooShort, GameError # rubocop:disable Lint/SuppressedException
+            end
+
+            next :abort if path_abort.empty?
           end
-
-          paths.each do |path|
-            chain << path
-            a, b = path.nodes
-
-            assign.call(a, b) if a || b
-          end
-
-          # a 1-city Local train will have no chains but will have a left; route.revenue will reject if not valid for game
-          if chains.empty?
-            next unless left
-
-            chains << { nodes: [left, nil], paths: [] }
-          end
-
-          id = chains.flat_map { |c| c[:paths] }.sort!
-          next if connections[id]
-
-          connections[id] = chains.map do |c|
-            { left: c[:nodes][0], right: c[:nodes][1], chain: c }
-          end
-
-          connection = connections[id]
-
-          # each train has opportunity to vote to abort a branch of this node's path-walk tree
-          path_abort = trains.to_h { |train| [train, true] }
-
-          # build a test route for each train, use route.revenue to check for errors, keep the good ones
-          trains.each  do |train|
-            route = Engine::Route.new(
-              @game,
-              @game.phase,
-              train,
-              connection_data: connection,
-              bitfield: bitfield_from_connection(connection, hexside_bits),
-            )
-            route.routes = [route]
-            route.revenue(suppress_check_other: true) # defer route-collection checks til later
-            train_routes[train] << route
-          rescue RouteTooLong
-            # ignore for this train, and abort walking this path if ignored for all trains
-            path_abort.delete(train)
-          rescue ReusesCity
-            path_abort.clear
-          rescue NoToken, RouteTooShort, GameError # rubocop:disable Lint/SuppressedException
-          end
-
-          next :abort if path_abort.empty?
         end
-      end
 
-      # Check that there are no duplicate hexside bits (algorithm error)
-      puts "Evaluated #{connections.size} paths, found #{@next_hexside_bit} unique hexsides, and found valid routes "\
-           "#{train_routes.map { |k, v| k.name + ':' + v.size.to_s }.join(', ')} in: #{Time.now - now}"
+        # Check that there are no duplicate hexside bits (algorithm error)
+        puts "Evaluated #{connections.size} paths, found #{@next_hexside_bit} unique hexsides, and found valid routes "\
+             "#{train_routes.map { |k, v| k.name + ':' + v.size.to_s }.join(', ')} in: #{Time.now - now}"
 
-      static.each do |route|
-        # recompute bitfields of passed-in routes since the bits may have changed across auto-router runs
-        route.bitfield = bitfield_from_connection(route.connection_data, hexside_bits)
-        train_routes[route.train] = [route] # force this train's route to be the passed-in one
-      end
-
-      train_routes.each do |train, routes|
-        train_routes[train] = routes.sort_by(&:revenue).reverse.take(route_limit)
-      end
-
-      sorted_routes = train_routes.map { |_train, routes| routes }
-
-      limit = sorted_routes.map(&:size).reduce(&:*)
-      puts "Finding route combos of best #{train_routes.map { |k, v| k.name + ':' + v.size.to_s }.join(', ')} "\
-           "routes with depth #{limit}"
-
-      now = Time.now
-      possibilities = js_evaluate_combos(sorted_routes, route_timeout)
-
-      if path_walk_timed_out
-        @flash&.call('Auto route path walk failed to complete (PATH TIMEOUT)')
-      elsif Time.now - now > route_timeout
-        @flash&.call('Auto route selection failed to complete (ROUTE TIMEOUT)')
-      end
-
-      # final sanity check on best combos: recompute each route.revenue in case it needs to reject a combo
-      max_routes = possibilities.max_by do |routes|
-        routes.each do |route|
-          route.clear_cache!(only_routes: true)
-          route.routes = routes
-          route.revenue
+        static.each do |route|
+          # recompute bitfields of passed-in routes since the bits may have changed across auto-router runs
+          route.bitfield = bitfield_from_connection(route.connection_data, hexside_bits)
+          train_routes[route.train] = [route] # force this train's route to be the passed-in one
         end
-        @game.routes_revenue(routes)
-      rescue GameError => e
-        # report error but still include combo with errored route in the result set
-        puts " Sanity check error, likely an auto_router bug: #{e}"
-        routes
-      end || []
 
-      max_routes.each { |route| route.routes = max_routes }
+        train_routes.each do |train, routes|
+          train_routes[train] = routes.sort_by(&:revenue).reverse.take(route_limit)
+        end
+
+        sorted_routes = train_routes.map { |_train, routes| routes }
+
+        limit = sorted_routes.map(&:size).reduce(&:*)
+        puts "Finding route combos of best #{train_routes.map { |k, v| k.name + ':' + v.size.to_s }.join(', ')} "\
+             "routes with depth #{limit}"
+
+        now = Time.now
+        possibilities = js_evaluate_combos(sorted_routes, route_timeout)
+
+        if path_walk_timed_out
+          @flash&.call('Auto route path walk failed to complete (PATH TIMEOUT)')
+        elsif Time.now - now > route_timeout
+          @flash&.call('Auto route selection failed to complete (ROUTE TIMEOUT)')
+        end
+
+        # final sanity check on best combos: recompute each route.revenue in case it needs to reject a combo
+        max_routes = possibilities.max_by do |routes|
+          routes.each do |route|
+            route.clear_cache!(only_routes: true)
+            route.routes = routes
+            route.revenue
+          end
+          @game.routes_revenue(routes)
+        rescue GameError => e
+          # report error but still include combo with errored route in the result set
+          puts " Sanity check error, likely an auto_router bug: #{e}"
+          routes
+        end || []
+
+        max_routes.each { |route| route.routes = max_routes }
+
+        all_max_routes.concat(max_routes)
+      end
+
+      all_max_routes
     end
 
     # inputs:
