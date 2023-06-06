@@ -149,6 +149,13 @@ module Engine
         train_routes[route.train] = [route] # force this train's route to be the passed-in one
       end
 
+      train_groups =
+        if (groups = @game.class::TRAIN_AUTOROUTE_GROUPS)
+          trains.group_by { |t| groups.index { |g| g.include?(t.name) } }.values
+        else
+          [trains]
+        end
+
       train_routes.each do |train, routes|
         train_routes[train] = routes.sort_by(&:revenue).reverse.take(route_limit)
       end
@@ -314,6 +321,8 @@ module Engine
         continue_looking = true
         // generate combos with remaining trains' routes
         for (let train=1; continue_looking && (train < js_sorted_routes.length); train++) {
+        console.log("combo train: "+ train);
+
           // Recompute limit, since by 3rd train it will start going down as invalid combos are excluded from the test set
           // revised limit = combos.length * remaining train route lengths
           limit = combos.length
