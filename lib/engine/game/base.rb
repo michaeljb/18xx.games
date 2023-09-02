@@ -619,10 +619,7 @@ module Engine
         return unless pin
 
         @log << '----'
-        @log << 'Your game was unable to be upgraded to the latest version of 18xx.games.'
-        @log << "It is pinned to version #{pin}."
-        @log << 'Please do not submit bug reports for pinned games. Pinned games cannot be debugged.'
-        @log << 'Please note, pinned games may be deleted after 7 days.' if self.class::DEV_STAGE == :beta
+        @log << "Your game is pinned to version #{pin}."
         @log << '----'
       end
 

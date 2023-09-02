@@ -183,42 +183,7 @@ module View
     end
 
     def render_notifications
-      unless @notifications
-        store(:notifications, setting_for(:notifications) || default_for(:notifications),
-              skip: true)
-      end
-
-      notification_options = NOTIFICATION_OPTIONS.flat_map do |option|
-        attrs = { value: option }
-        attrs[:selected] = option if @notifications == option
-
-        h(:option, { attrs: attrs }, option.to_s.capitalize)
-      end
-
-      notification_change = lambda do
-        store(:notifications, Native(@inputs[:notifications]).elm&.value)
-      end
-
-      children = [
-        h(:h3, 'Notifications'),
-        h(
-          :a,
-          {
-            props: { href: 'https://github.com/tobymao/18xx/wiki/Notifications' },
-            style: { marginRight: '1rem' },
-          },
-          'Learn about Notifications',
-        ),
-        render_input(
-                    'Turn/Message Notifications',
-                    id: :notifications,
-                    el: 'select',
-                    on: { input: notification_change },
-                    children: notification_options
-                  ),
-]
-      children.concat(webhook_settings) if @notifications == :webhook
-      h(:div, children)
+      h(:div)
     end
 
     def webhook_settings

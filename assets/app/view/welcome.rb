@@ -16,14 +16,16 @@ module View
 
     def render_notification
       message = <<~MESSAGE
-        <p><a href="https://github.com/tobymao/18xx/wiki/1868-Wyoming">1868 Wyoming</a> is in production.
-        <a href="https://github.com/tobymao/18xx/wiki/1822CA">1822CA</a> is in beta.
-        <a href="https://github.com/tobymao/18xx/wiki/1841">1841</a> is in beta.
-        <a href="https://github.com/tobymao/18xx/wiki/1847-AE">1847AE</a> is in beta.
-        <a href="https://github.com/tobymao/18xx/wiki/18ESP">18ESP</a> is in alpha.
-        </p>
+        <p>Michael Brandt's test server. Accounts here are separate from
+        18xx.games. No email server is set up, so arrange some other channel
+        (Discord, Slack, etc.) for turn notifications.</p>
 
-        <p>Report bugs and make feature requests <a href='https://github.com/tobymao/18xx/issues'>on GitHub</a>.</p>
+        <p>Please do not share this URL unless you're my point of contact for
+        testing an implementation while under development. Feel free to
+        playtest any of the games here. Send me feedback via <a
+        href="https://18xxgames.slack.com/" target="_blank">Slack</a>, <a
+        href="mailto:michaelbrandt5+18xx@gmail.com">email</a>, or commenting on
+        the GitHub issues:</p>
       MESSAGE
 
       props = {
@@ -41,14 +43,7 @@ module View
     end
 
     def render_introduction
-      message = <<~MESSAGE
-        <p>Check out the <a href='https://github.com/tobymao/18xx/wiki/FAQ'>FAQ</a>, <a href='https://github.com/tobymao/18xx/wiki/Power-User-Features'>keyboard shortcuts</a> and <a href='https://github.com/tobymao/18xx/wiki'>the Wiki</a></p>
-        <p>Find games in the chat or <a href='https://github.com/tobymao/18xx/wiki/18xx-Online-Communities%2C-Media%2C-and-Resources#community'>on (unofficial) Discord servers</a></p>
-        <p>Setup <a href='https://github.com/tobymao/18xx/wiki/Notifications'>turn notifications</a> via webhook to Slack, Discord, and Telegram</p>
-        <p>Ask questions in <code>#18xxgames</code> <a href='https://join.slack.com/t/18xxgames/shared_invite/zt-27imtsj2u-vussFAqtecmACsycjdsIhg'>on the 18XX Slack</a></p>
-        <p>Buy physical copies of 18XX games from publishers:</br> #{Lib::Publisher.link_list.join}.</p>
-        <p>Keep the servers running by becoming a member <a href='https://www.patreon.com/18xxgames'>on Patreon</a></p>
-      MESSAGE
+      message = ''
 
       props = {
         style: {

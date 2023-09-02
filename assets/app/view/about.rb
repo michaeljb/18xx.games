@@ -42,10 +42,6 @@ module View
         </p>
 
         <p>
-        <b>Email Addresses</b> are collected in order to send notifications. These notifications can be disabled in the #{@user ? "<a href=\"/profile/#{@user['id']}\">profile</a>" : 'profile'} page. Emails are not publicly available and not shared to any 3rd party except when email notifications are enabled. Emails are sent using the <a href='https://elasticemail.com'>Elastic Email</a> service.
-        </p>
-
-        <p>
         <b>IP Addresses</b> are collected when you use the site in order to prevent malicious behavior. These are not publicly available and not shared to any 3rd party.
         </p>
 

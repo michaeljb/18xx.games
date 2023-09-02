@@ -4,7 +4,7 @@ require 'message_bus'
 require 'redis'
 
 module Bus
-  URL = 'redis://redis:6379'.freeze
+  URL = 'redis://0.0.0.0:6379'
 
   USER_TS_PREFIX = 'user_ts'.freeze
   USER_TS = "#{USER_TS_PREFIX}:%d".freeze

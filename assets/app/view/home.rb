@@ -55,7 +55,7 @@ module View
       game_refresh
 
       acting = your_games.any? { |game| user_is_acting?(@user, game) }
-      `document.title = #{(acting ? '* ' : '') + '18xx.Games'}`
+      `document.title = #{(acting ? '* ' : '') + '18xx.michaeljb.dev'}`
       change_favicon(acting)
       change_tab_color(acting)
 
