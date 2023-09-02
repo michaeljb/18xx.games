@@ -37,7 +37,7 @@ class Assets
   end
 
   def game_builds
-    @game_builds ||= Dir['lib/engine/game/*/game.rb'].to_h do |dir|
+    @game_builds ||= Dir['lib/engine/game/g_1822*/game.rb'].to_h do |dir|
       game = dir.split('/')[-2]
       path = "#{@out_path}/#{game}.js"
       build = {
@@ -221,12 +221,12 @@ class Assets
   def pin(pin_path)
     @pin ||=
       begin
-        prealphas = Engine::GAME_META_BY_TITLE
+        non_pi_games = Engine::GAME_META_BY_TITLE
           .values
-          .select { |g| g::DEV_STAGE == :prealpha }
+          .reject { |g| g::GAME_TITLE == '1822CA ERS' || g::GAME_TITLE == '1822CA WRS' || g::GAME_TITLE == '1822CA'}
           .map { |g| "public/assets/#{g.fs_name}.js" }
 
-        source = (combine - prealphas).map { |file| File.read(file).to_s }.join
+        source = (combine - non_pi_games).map { |file| File.read(file).to_s }.join
         source = compress('pin', source)
         File.write(pin_path.gsub('.gz', ''), source)
         Zlib::GzipWriter.open(pin_path) { |gz| gz.write(source) }

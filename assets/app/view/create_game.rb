@@ -473,7 +473,7 @@ module View
     end
 
     def visible_games
-      @visible_games ||= (@production ? Engine::VISIBLE_GAMES : Engine::GAME_METAS).sort
+      [Engine::Game::G1822CA::Meta]
     end
 
     def selected_game

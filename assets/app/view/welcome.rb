@@ -26,6 +26,10 @@ module View
         href="https://18xxgames.slack.com/" target="_blank">Slack</a>, <a
         href="mailto:michaelbrandt5+18xx@gmail.com">email</a>, or commenting on
         the GitHub issues:</p>
+
+        <ul>
+          <li><a href="https://github.com/tobymao/18xx/issues/9376" target="_blank">1822CA</a></li>
+        </ul>
       MESSAGE
 
       props = {
