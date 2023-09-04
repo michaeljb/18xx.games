@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/michaeljb/snabberb.git
-  revision: 3d49c1e907c98a1859c757ab3c784378dd000ba5
+  revision: af8e8779549e99b77f70c87b0842171e1b35ecb1
   branch: 18xx
   specs:
     snabberb (1.5.4)
