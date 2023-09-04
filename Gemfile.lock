@@ -1,7 +1,7 @@
 GIT
   remote: https://github.com/michaeljb/snabberb.git
-  revision: 67e7dc3b14e6831ab4027337d323a6848a9f390e
-  tag: v1.5.4.1-18xx-opal-1.6
+  revision: 3d49c1e907c98a1859c757ab3c784378dd000ba5
+  branch: 18xx
   specs:
     snabberb (1.5.4)
       opal (>= 1.1)
@@ -137,7 +137,7 @@ DEPENDENCIES
   message_bus
   mini_racer
   newrelic_rpm
-  opal
+  opal (= 1.6.1)
   parallel_tests
   pry-byebug
   rake

@@ -11,7 +11,7 @@
     // Browser globals
     root.MessageBus = factory();
   }
-})(window, function () {
+})(this, function () {
   "use strict";
 
   // http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
