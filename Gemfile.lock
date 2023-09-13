@@ -1,3 +1,12 @@
+GIT
+  remote: https://github.com/michaeljb/opal.git
+  revision: 1ca0e4670249596f915a83bea0816ac544231aa3
+  branch: 18xx
+  specs:
+    opal (1.7.3)
+      ast (>= 2.3.0)
+      parser (~> 3.0, >= 3.0.3.2)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -32,9 +41,6 @@ GEM
     mini_racer (0.6.2)
       libv8-node (~> 16.10.0.0)
     newrelic_rpm (8.6.0)
-    opal (1.7.3)
-      ast (>= 2.3.0)
-      parser (~> 3.0, >= 3.0.3.2)
     parallel (1.22.1)
     parallel_tests (3.8.1)
       parallel
@@ -123,7 +129,7 @@ DEPENDENCIES
   message_bus
   mini_racer
   newrelic_rpm
-  opal
+  opal!
   parallel_tests
   pry-byebug
   rake
