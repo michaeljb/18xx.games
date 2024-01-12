@@ -37,7 +37,7 @@ class Assets
   end
 
   def game_builds
-    @game_builds ||= Dir['lib/engine/game/g_1822*/game.rb'].to_h do |dir|
+    @game_builds ||= Dir['lib/engine/game/g_1822*/game.rb', 'lib/engine/game/g_18_royal_gorge/game.rb'].to_h do |dir|
       game = dir.split('/')[-2]
       path = "#{@out_path}/#{game}.js"
       build = {
@@ -223,7 +223,7 @@ class Assets
       begin
         non_pi_games = Engine::GAME_META_BY_TITLE
           .values
-          .reject { |g| g::GAME_TITLE == '1822CA ERS' || g::GAME_TITLE == '1822CA WRS' || g::GAME_TITLE == '1822CA'}
+          .reject { |g| g::GAME_TITLE == '1822CA ERS' || g::GAME_TITLE == '1822CA WRS' || g::GAME_TITLE == '1822CA' || g::GAME_TITLE == '18RoyalGorge'}
           .map { |g| "public/assets/#{g.fs_name}.js" }
 
         source = (combine - non_pi_games).map { |file| File.read(file).to_s }.join

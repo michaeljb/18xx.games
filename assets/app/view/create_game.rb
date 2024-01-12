@@ -473,7 +473,7 @@ module View
     end
 
     def visible_games
-      [Engine::Game::G1822CA::Meta]
+      [Engine::Game::G1822CA::Meta, Engine::Game::G18RoyalGorge::Meta]
     end
 
     def selected_game

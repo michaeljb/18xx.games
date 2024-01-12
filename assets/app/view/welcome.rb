@@ -29,6 +29,7 @@ module View
 
         <ul>
           <li><a href="https://github.com/tobymao/18xx/issues/9376" target="_blank">1822CA</a></li>
+          <li><a href="https://github.com/tobymao/18xx/issues/10110" target="_blank">18RoyalGorge</a></li>
         </ul>
       MESSAGE
 
