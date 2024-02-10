@@ -177,6 +177,16 @@ module Engine
           @players.zip(@companies).each { |p, c| buy_company(p, c) }
         end
 
+
+        def stock_round
+          Round::Stock.new(self, [
+            Engine::Step::DiscardTrain,
+            Engine::Step::Exchange,
+            Engine::Step::SpecialTrack,
+            G1889::Step::BuySellParShares,
+          ])
+        end
+
         def operating_round(round_num)
           Round::Operating.new(self, [
             Engine::Step::Bankrupt,
