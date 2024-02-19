@@ -55,8 +55,12 @@ module Engine
         return if visited[self]
         return if visited_converging[self][from]
 
-        visited[self] = true
         visited_converging[self][from] = true
+        if converging_path
+          visited[self] = true if (paths - visited_converging[self].keys).empty?
+        else
+          visited[self] = true
+        end
 
         paths.each do |node_path|
           next if node_path.track == skip_track
@@ -94,8 +98,6 @@ module Engine
             end
           end
         end
-
-        visited.delete(self) if converging_path # && !(paths - visited_converging[self].keys).empty?
       end
     end
   end

@@ -151,8 +151,13 @@ module Engine
         return if @junction && @terminal
         return if visited_converging[self][from]
 
-        visited[self] = true
         visited_converging[self][from] = true
+        if converging
+          visited[self] = true if (ends - visited_converging[self].keys).empty?
+        else
+          visited[self] = true
+        end
+
         counter[@junction] += 1 if @junction
 
         yield self, visited, counter, converging
@@ -203,7 +208,6 @@ module Engine
           counter[edge_id] -= 1
         end
 
-        visited.delete(self) if converging # && !(ends - visited_converging[self].keys).empty?
         counter[@junction] -= 1 if @junction
       end
 
