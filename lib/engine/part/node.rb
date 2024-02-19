@@ -95,7 +95,7 @@ module Engine
           end
         end
 
-        visited.delete(self) if converging_path && !(paths - visited_converging[self].keys).empty?
+        visited.delete(self) if converging_path # && !(paths - visited_converging[self].keys).empty?
       end
     end
   end

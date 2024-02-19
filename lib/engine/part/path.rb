@@ -203,7 +203,7 @@ module Engine
           counter[edge_id] -= 1
         end
 
-        visited.delete(self) if converging && !(ends - visited_converging[self].keys).empty?
+        visited.delete(self) if converging # && !(ends - visited_converging[self].keys).empty?
         counter[@junction] -= 1 if @junction
       end
 
