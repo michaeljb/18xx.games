@@ -128,6 +128,10 @@ module Engine
       # counter: a hash tracking edges and junctions to avoid reuse
       # skip_track: If passed, don't walk on track of that type (ie: :broad track for 1873)
       # converging: When true, some predecessor path was part of a converging switch
+      # from: one of @a or @b; whichever one this path is being entered from
+      # visited_converging: track how this node was reached for proper deletion
+      #   key: a node or path that was walked with converging or converging_path = true
+      #   value: hashset of values that were `from` when the key was walked
       def walk(
         skip: nil,
         jskip: nil,
@@ -136,6 +140,8 @@ module Engine
         counter: Hash.new(0),
         skip_track: nil,
         converging: true,
+        from: nil,
+        visited_converging: Hash.new { |h, k| h[k] = {} },
         &block
       )
         return if visited[self] || skip_paths&.key?(self)
@@ -143,15 +149,26 @@ module Engine
         return if edges.sum { |edge| counter[edge.id] }.positive?
         return if track == skip_track
         return if @junction && @terminal
+        return if visited_converging[self][from]
 
         visited[self] = true
+        visited_converging[self][from] = true
         counter[@junction] += 1 if @junction
 
         yield self, visited, counter, converging
 
         if @junction && @junction != jskip
           @junction.paths.each do |jp|
-            jp.walk(jskip: @junction, visited: visited, skip_paths: skip_paths, counter: counter, converging: converging, &block)
+            jp.walk(
+              jskip: @junction,
+              visited: visited,
+              skip_paths: skip_paths,
+              counter: counter,
+              converging: converging,
+              from: @junction,
+              visited_converging: visited_converging,
+              &block
+            )
           end
         end
 
@@ -168,14 +185,25 @@ module Engine
             next unless lane_match?(@exit_lanes[edge], np.exit_lanes[np_edge])
             next if !@ignore_gauge_walk && !tracks_match?(np, dual_ok: true)
 
-            np.walk(skip: np_edge, visited: visited, skip_paths: skip_paths, counter: counter, skip_track: skip_track,
-                    converging: converging || @tile.converging_exit?(edge), &block)
+            np_from = np.ends.find { |e| e.edge? && e.num == np_edge }
+
+            np.walk(
+              skip: np_edge,
+              visited: visited,
+              skip_paths: skip_paths,
+              counter: counter,
+              skip_track: skip_track,
+              converging: converging || @tile.converging_exit?(edge),
+              from: np_from,
+              visited_converging: visited_converging,
+              &block
+            )
           end
 
           counter[edge_id] -= 1
         end
 
-        visited.delete(self) if converging
+        visited.delete(self) if converging && !(ends - visited_converging[self].keys).empty?
         counter[@junction] -= 1 if @junction
       end
 
