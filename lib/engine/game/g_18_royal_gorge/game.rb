@@ -65,11 +65,14 @@ module Engine
           'Silver' => 5,
         }.freeze
 
+        PRESIDENT_SALES_TO_MARKET = Set['CF&I', 'VGC'].freeze
+
         EVENTS_TEXT = Base::EVENTS_TEXT.merge(
           green_phase: ['Green Phase Begins'],
           brown_phase: ['Brown Phase Begins'],
           gray_phase: ['Gray Phase Begins'],
           treaty_of_boston: ['Treaty of Boston'],
+          close_gold_miner: ['Close Gold Miner (B4)'],
         )
 
         DEBT_PENALTY = {
@@ -169,7 +172,6 @@ module Engine
           @gold_corp = init_metal_corp(corporation_by_id('VGC'))
 
           init_available_steel
-          @steel_corp.cash = 50
 
           @gold_cubes = Hash.new(0)
           @gold_shipped = 0
@@ -246,6 +248,10 @@ module Engine
             status << "Debt-adjusted share price: #{format_currency(price_with_debt)}"
           end
 
+          if corporation == @gold_corp && (player = gold_miner&.owner)
+            status << "#{player.name} has 2 virtual shares (#{gold_miner.sym})"
+          end
+
           status unless status.empty?
         end
 
@@ -290,6 +296,13 @@ module Engine
 
           @available_par_groups << :par_2
           update_cache(:share_prices)
+        end
+
+        def event_close_gold_miner!
+          return unless gold_miner
+
+          @log << "-- Event: #{gold_miner.name} closes --"
+          gold_miner.close!
         end
 
         def event_st_cloud_moves!
@@ -495,6 +508,7 @@ module Engine
           @stock_market.set_par(corporation, price)
           bundle = ShareBundle.new(corporation.shares_of(corporation))
           @share_pool.transfer_shares(bundle, @share_pool)
+          corporation.cash = 50
           corporation
         end
 
@@ -547,7 +561,14 @@ module Engine
           per_share = revenue / 10
           payouts = {}
           @players.each do |payee|
-            amount = payee.num_shares_of(entity) * per_share
+            num_shares = payee.num_shares_of(entity)
+
+            if payee == gold_miner&.owner
+              entity.cash += per_share * 2
+              num_shares += 2
+            end
+
+            amount = num_shares * per_share
             payouts[payee] = amount if amount.positive?
             entity.spend(amount, payee, check_positive: false)
           end
@@ -665,13 +686,49 @@ module Engine
           {
             **image_text,
             props: {
-              style: { border: '1px solid', color: 'black', backgroundColor: bg_color, cursor: 'pointer', 'user-select': 'none' },
+              style: {
+                border: '1px solid',
+                color: 'black',
+                backgroundColor: bg_color,
+                cursor: 'pointer',
+                'user-select': 'none',
+                'text-align': 'center',
+              },
               on: { click: onclick },
             },
           }
         end
 
-        def map_legend(font_color, yellow, green, brown, gray, action_processor: nil)
+        def map_legends
+          %i[gold_legend steel_legend]
+        end
+
+        def gold_legend(_font_color, yellow, green, brown, _gray, red, action_processor: nil)
+          cell_style = {
+            border: '1px solid',
+            color: 'black',
+            'font-weight': 'bold',
+            'text-align': 'center',
+            'vertical-align': 'middle',
+            width: '28px',
+            height: '33px',
+          }
+
+          cells = [
+            { text: '50', props: { style: { **cell_style, backgroundColor: yellow } } },
+            { text: '90', props: { style: { **cell_style, backgroundColor: yellow } } },
+            { text: '140', props: { style: { **cell_style, backgroundColor: green } } },
+            { text: '200', props: { style: { **cell_style, backgroundColor: green } } },
+            { text: '270', props: { style: { **cell_style, backgroundColor: brown } } },
+            { text: '350', props: { style: { **cell_style, backgroundColor: red } } },
+          ]
+          cells.take(@gold_shipped).each do |gold_cell|
+            gold_cell.delete(:text)
+            gold_cell[:image] = '/icons/18_royal_gorge/gold_cube.svg'
+            gold_cell[:image_height] = '20px'
+            gold_cell[:props][:style][:'padding-top'] = '0.3rem'
+          end
+
           [
             # table-wide props
             {
@@ -681,7 +738,29 @@ module Engine
                 borderCollapse: 'collapse',
               },
             },
-            # header
+            [
+              { text: 'Gold Market', props: { attrs: { colspan: 10 } } },
+            ],
+            cells,
+          ]
+        end
+
+        def steel_legend(font_color, yellow, green, brown, gray, _red, action_processor: nil)
+          [
+            # table-wide props
+            {
+              style: {
+                margin: '0.5rem 0 0.5rem 0',
+                border: '1px solid',
+                borderCollapse: 'collapse',
+              },
+            },
+            [
+              {
+                text: 'Steel Market',
+                props: { style: { 'text-align': 'center', 'font-weight': 'bold' }, attrs: { colspan: 10 } },
+              },
+            ],
             [
               { text: "(#{format_currency(@steel_corp.cash)})", props: { style: { border: '1px solid' } } },
               { text: 'A', props: { style: { border: '1px solid', **legend_header_style('A', :yellow, yellow) } } },
@@ -694,7 +773,6 @@ module Engine
               { text: 'H', props: { style: { border: '1px solid', **legend_header_style('H', :brown, brown) } } },
               { text: 'I', props: { style: { border: '1px solid', **legend_header_style('I', :gray, gray) } } },
             ],
-            # body
             [
               {
                 text: format_currency(40),
@@ -830,6 +908,14 @@ module Engine
           @rio_grande ||= corporation_by_id('RG')
         end
 
+        def mint_worker
+          @mint_worker ||= company_by_id('B6')
+        end
+
+        def gold_miner
+          @gold_miner ||= company_by_id('B4')
+        end
+
         def sulphur_springs
           @sulphur_springs ||= company_by_id('B2')
         end
@@ -844,6 +930,10 @@ module Engine
 
         def gold_nugget
           @gold_nugget ||= company_by_id('G2')
+        end
+
+        def metals_investor
+          @metals_investor ||= company_by_id('G5')
         end
 
         def hanging_bridge_lease
@@ -913,6 +1003,10 @@ module Engine
 
           @log << '-- Event: Endgame triggered --'
           @endgame_triggered = true
+        end
+
+        def init_share_pool
+          SharePool.new(self, allow_president_sale: self.class::PRESIDENT_SALES_TO_MARKET, no_rebundle_president_buy: true)
         end
 
         def init_stock_market
@@ -997,6 +1091,12 @@ module Engine
           else
             super
           end
+        end
+
+        def num_certs(entity)
+          certs = super
+          certs -= 1 if entity == gold_miner&.owner
+          certs
         end
 
         def st_cloud_bonus?(route, stops)
