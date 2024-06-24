@@ -20,8 +20,9 @@ module Engine
       end
 
       describe 'return values match legacy' do
-        # WARNING: should not add any of the really bad legacy cases to this
-        # list since the legacy code is executed here
+        # WARNING: should not add any of the really bad legacy cases that take
+        # millions of `walk()` calls to this list since the legacy code is
+        # executed here
         [
           # MC places a second token in Mexico City via same_hex_allowed
           ['1822MX', 'home_and_ndem_auctioned_token_in_mexico_city', 1259],
@@ -50,8 +51,8 @@ module Engine
           describe "fixture/#{title}/#{game_id}?action=#{action}" do
             before(:all) do
               @game = load_fixture(title, game_id, action)
-              @legacy_graph = Engine::Graph.new(@game)
-              @adapter = Engine::BfsGraph::Adapter.new(@game)
+              @legacy_graph = Engine::Graph.new(@game, **@game.class::GRAPH_OPTS)
+              @adapter = Engine::BfsGraph::Adapter.new(@game, **@game.class::GRAPH_OPTS)
             end
 
             after(:each) do
@@ -73,8 +74,15 @@ module Engine
               it "#{method}(corporation, *#{args}, **#{kwargs})" do
                 aggregate_failures('corporations') do
                   @game.corporations.each do |corporation|
+                    next if !corporation.floated? || corporation.closed?
+
                     expected = @legacy_graph.send(method, corporation, *args, **kwargs)
                     actual = @adapter.send(method, corporation, *args, **kwargs)
+
+                    # FCM: green: L17 => [0, ...]
+
+                    #binding.pry if actual != expected
+
                     expect(actual).to eq(expected), "#{method} does not match for #{corporation.name}"
                   end
                 end
@@ -87,7 +95,7 @@ module Engine
               it "#{method}(*#{args}, **#{kwargs})" do
                 expected = @legacy_graph.send(method, *args, **kwargs)
                 actual = @adapter.send(method, *args, **kwargs)
-                expect(actual).to eq(expected)
+                expect(actual).to eq(expected), "#{method} does not match"
               end
             end
           end

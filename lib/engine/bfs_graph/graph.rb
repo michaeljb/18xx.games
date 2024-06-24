@@ -142,6 +142,8 @@ module Engine
               @layable_hexes[@game.hex_neighbor(edge.hex, edge.num)].add(inverted_edge)
 
               path.connected_paths(edge).each do |next_path|
+                next if !path.tracks_match?(next_path, dual_ok: true)
+
                 from_edge = next_path.edges.find { |e| e.num == inverted_edge }
                 enqueue(next_path, from: from_edge, node_chain: node_chain.clone)
               end
@@ -245,29 +247,34 @@ module Engine
         init_route_info!
         init_can_token!
 
-        # start with the corporation's placed tokens or special tokenless home location
-        starters =
-          if @home_as_token
-            Array(@corporation.coordinates).each_with_object([]) do |coord, obj|
-              @game.hex_by_id(coord).tile.city_towns.each do |city_town|
-                obj << {atom: city_town, from: :home }
-                # TODO: investigate 1858 and other home_as_token cases, might need to:
-                # - if no city_towns, enqueue preprinted paths
-                # - if no city_towns or paths, add hex to @layable_hexes
-              end
-            end
-          else
-            @corporation.tokens.each_with_object([]) do |token, obj|
-              obj << {atom: token.city, from: token} if token.city
+        # start with the corporation's placed tokens
+        @corporation.tokens.each do |token|
+          next unless token.city
+
+          enqueue(token.city, from: token)
+
+          # TODO: move this to Adapter - legacy behavior: seems like this
+          # shouldn't be a thing, it adds hex edges that aren't actually
+          # connected to the token via a path to the city
+          hex = token.city.hex
+          hex.neighbors.each { |edge, _| @layable_hexes[hex].add(edge) }
+        end
+
+        if @home_as_token
+          Array(@corporation.coordinates).each do |coord|
+            hex = @game.hex_by_id(coord)
+            hex.tile.city_towns.each do |city_town|
+              enqueue(city_town, from: :home)
+
+              # TODO: move this to Adapter - legacy behavior: seems like this
+              # shouldn't be a thing, it adds hex edges that aren't actually
+              # connected to any paths
+              hex.neighbors.each { |edge, _| @layable_hexes[hex].add(edge) }
+
+              # TODO: investigate 1858 and other home_as_token cases, might need to:
+              # - if no city_towns, enqueue preprinted paths
             end
           end
-        starters.each do |starter|
-          enqueue(starter[:atom], from: starter[:from])
-
-          # support bad legacy behavior: adding all edges (even pathless ones)
-          # to values in @layable_hexes (called `@connected_hexes` in Engine::Graph)
-          hex = starter[:atom].hex
-          hex.neighbors.each { |edge, _| @layable_hexes[hex].add(edge) }
         end
       end
 
