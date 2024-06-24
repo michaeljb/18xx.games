@@ -23,6 +23,7 @@ module View
       needs :routes, default: [], store: true
       needs :historical_laid_hexes, default: nil, store: true
       needs :historical_routes, default: [], store: true
+      needs :graph, default: nil, store: true
       needs :map_zoom, default: nil, store: true
 
       EDGE_LENGTH = 50
@@ -66,18 +67,19 @@ module View
         routes = @historical_routes if routes.none?
 
         @hexes.map! do |hex|
-          clickable = @show_starting_map ? false : step&.available_hex(entity_or_entities, hex)
+          clickable = (@graph || @show_starting_map) ? false : step&.available_hex(entity_or_entities, hex)
           opacity = clickable ? 1.0 : 0.5
           h(
             Hex,
             hex: hex,
-            opacity: @show_starting_map ? 1.0 : (@opacity || opacity),
+            opacity: (@graph || @show_starting_map) ? 1.0 : (@opacity || opacity),
             entity: current_entity,
             clickable: clickable,
             actions: actions,
-            routes: routes,
+            routes: @graph ? [] : routes,
             start_pos: @start_pos,
-            highlight: laid_hexes.include?(hex),
+            highlight: @graph ? false : laid_hexes.include?(hex),
+            graph: @graph,
           )
         end
         @hexes.compact!

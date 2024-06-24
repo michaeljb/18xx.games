@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'lib/settings'
+require_relative 'graph_controls'
 
 module View
   module Game
@@ -9,6 +10,7 @@ module View
       needs :show_starting_map, default: false, store: true
       needs :historical_routes, default: [], store: true
       needs :historical_laid_hexes, default: nil, store: true
+      needs :graph, default: nil, store: true
       needs :game, default: nil, store: true
 
       def render
@@ -19,6 +21,7 @@ module View
           render_controls('Hex Coordinates', :show_coords),
           starting_map_controls,
           route_controls,
+          h(GraphControls),
         ].compact
 
         h('div#map_controls', children)

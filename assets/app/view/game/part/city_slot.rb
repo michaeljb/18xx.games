@@ -27,6 +27,7 @@ module View
         needs :game, default: nil, store: true
         needs :city_render_location, default: nil
         needs :selected_token, default: nil, store: true
+        needs :graph, default: nil, store: true
 
         RESERVATION_FONT_SIZE = {
           1 => 22,
@@ -60,6 +61,20 @@ module View
             radius -= 4
           end
 
+          children = []
+
+          if @graph
+            if @graph.include?(@city)
+              graph_color = route_prop(@graph.viz_color_index(@city), :color)
+              highlight_attrs = {
+                r: @radius + 5,
+                fill: graph_color,
+                stroke: graph_color,
+              }
+              children << h(:circle, attrs: highlight_attrs)
+            end
+          end
+
           token_attrs = {
             r: @radius,
             fill: color,
@@ -76,7 +91,7 @@ module View
             token_attrs[:'stroke-dasharray'] = '4'
           end
 
-          children = [h(:circle, attrs: token_attrs)]
+          children << h(:circle, attrs: token_attrs)
           children << reservation if @reservation && !@token
           children << render_boom if @city&.boom
           children << render_slot_icon if @city&.slot_icons&.[](@slot_index)

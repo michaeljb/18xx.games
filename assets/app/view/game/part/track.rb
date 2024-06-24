@@ -93,13 +93,19 @@ module View
         needs :tile
         needs :region_use
         needs :routes
+        needs :graph, default: nil, store: true
 
         def render
           # each route has an "entry" in this array; each "entry" is an array of
           # the paths on that route that are also on this tile
           #
           # Array<Array<Path>>
-          @routes_paths = @routes.map { |route| route.paths_for(@tile.paths) }
+          @routes_paths =
+            if @graph
+              @graph.viz_paths_for_display
+            else
+              @routes.map { |route| route.paths_for(@tile.paths) }
+            end
 
           paths_and_stubs = @tile.paths + @tile.stubs + @tile.future_paths
           path_indexes = paths_and_stubs.to_h { |p| [p, indexes_for(p)] }

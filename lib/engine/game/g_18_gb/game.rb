@@ -3,6 +3,7 @@
 require_relative '../base'
 require_relative '../cities_plus_towns_route_distance_str'
 require_relative '../trainless_shares_half_value'
+require_relative '../../bfs_graph/adapter'
 require_relative 'meta'
 require_relative 'entities'
 require_relative 'map'
@@ -63,6 +64,8 @@ module Engine
         SELL_AFTER = :any_time
 
         TRACK_RESTRICTION = :restrictive
+
+        GRAPH_CLASS = Engine::BfsGraph::Adapter
 
         EBUY_OTHER_VALUE = false
 

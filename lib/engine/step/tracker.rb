@@ -248,11 +248,11 @@ module Engine
         spender.spend(cost, @game.bank) if cost.positive?
 
         @log << "#{spender.name}"\
-                "#{spender == entity || !entity.company? ? '' : " (#{entities.map(&:sym).join('+')})"}"\
-                "#{cost.zero? ? '' : " spends #{@game.format_currency(cost)} and"}"\
+                "#{spender == entity || !entity.company? ? '' : %( (#{entities.map(&:sym).join('+')}))}"\
+                "#{cost.zero? ? '' : %( spends #{@game.format_currency(cost)} and)}"\
                 " lays tile ##{tile.name}"\
                 " with rotation #{rotation} on #{hex.name}"\
-                "#{tile.location_name.to_s.empty? ? '' : " (#{tile.location_name})"}"
+                "#{tile.location_name.to_s.empty? ? '' : %( (#{tile.location_name}))}"
       end
 
       def update_token!(action, entity, tile, old_tile)
@@ -319,7 +319,8 @@ module Engine
       end
 
       def check_track_restrictions!(entity, old_tile, new_tile)
-        return if @game.loading || !entity.operator?
+        #return if @game.loading || !entity.operator?
+        return unless entity.operator?
 
         graph = @game.graph_for_entity(entity)
 
@@ -356,6 +357,15 @@ module Engine
         else
           raise
         end
+      end
+
+      # returns hash
+      # - keys: paths on old tile, and :new
+      # - values: path on new tile matching the old one, or array of new paths
+      def path_map_for(old_tile, new_tile)
+        return {new: new_tile.paths} if old_tile.paths.empty?
+
+        old_tile.paths
       end
 
       def potential_tile_colors(_entity, _hex)

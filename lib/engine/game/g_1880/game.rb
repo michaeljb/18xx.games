@@ -775,13 +775,13 @@ module Engine
           description
         end
 
-        def check_for_foreign_investor_connection(fi)
+        def check_for_foreign_investor_connection(fi, graph=nil)
           return false unless fi&.shares&.first
 
           corporation = fi.shares.first.corporation
           fi_home_token = fi.tokens.first.hex
 
-          graph = Graph.new(self, no_blocking: true)
+          graph ||= Graph.new(self, no_blocking: true)
           graph.reachable_hexes(corporation).include?(fi_home_token)
         end
 

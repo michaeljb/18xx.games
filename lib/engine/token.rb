@@ -99,5 +99,9 @@ module Engine
         "<#{self.class.name}: corp:#{corporation.name}, price:#{@price}>"
       end
     end
+
+    def to_s
+      inspect
+    end
   end
 end

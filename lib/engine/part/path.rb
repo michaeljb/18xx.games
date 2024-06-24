@@ -192,6 +192,17 @@ module Engine
         counter[@junction] -= 1 if @junction
       end
 
+      def connected_paths(edge)
+        edge_num = edge.num
+        return [] unless (neighbor = hex.neighbors[edge_num])
+
+        np_edge = hex.invert(edge_num)
+        neighbor.paths[np_edge].select do |np|
+          lane_match?(@exit_lanes[edge_num], np.exit_lanes[np_edge])
+          # next if !@ignore_gauge_walk && !tracks_match?(np, dual_ok: true)
+        end
+      end
+
       # return true if facing exits on adjacent tiles match up taking lanes into account
       def lane_match?(lanes0, lanes1)
         return false unless lanes0

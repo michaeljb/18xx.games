@@ -930,5 +930,50 @@ module Engine
         end
       end
     end
+
+    describe '18GB' do
+      describe 151_565 do
+        it 'computes the graph reasonably' do
+          # 0
+          # 372 - 37 (BFS: 41)
+          # 418 - 281 (BFS: 160)
+          # 465 - 492 (BFS: 210)
+          # 511 - 590 (BFS: 240)
+          # 534 - 445 (BFS: 228)
+          # 535 - 445
+          # 536 - 775
+          # 537 - 2711
+          # 540 - 2711
+          # 546 - 2745 (BFS: 234)
+          # 549 - 2761
+          # 552 - 2814
+          # 558 - 2814 (BFS: 279)
+          # 604 - 22298
+          # 627 - 109_822
+          # 639 - 109_822
+          # 645 - 196_238
+          # 649 - 196_238
+          # 650 - 1_659_446  # tile upgrade in Derby, opening up connections through a new city
+          # 651 - 1_659_446
+          # 697 - 1_708_646
+          # 708 - 3_488_868
+          # 714 - 5_862_969 # tile upgrade in Manchester, opening up connections
+          #       through a new city, but doesn't even expand graph; BFS goes from 371
+          #       to 377
+          # 720 - 5_862_969
+          # 744 - 5_862_969
+
+          game = game_at_action(game_file, 793)
+
+          lnwr = game.corporation_by_id('LNWR')
+
+          game.graph.compute(lnwr, routes_only: false, one_token: false)
+
+          count = game.graph.walk_calls(lnwr)[:not_skipped]
+
+          puts "count=#{count}"
+        end
+      end
+    end
   end
 end

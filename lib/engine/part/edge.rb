@@ -30,6 +30,10 @@ module Engine
         edge.lanes = @lanes
         edge
       end
+
+      def inspect
+        "<#{self.class.name}: hex: #{hex&.name}, num: #{num}>"
+      end
     end
   end
 end

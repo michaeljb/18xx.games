@@ -17,6 +17,7 @@ module View
         needs :tile
         needs :city
         needs :show_revenue
+        needs :graph, default: nil, store: true
 
         # key is how many city slots are part of the city; value is the offset for
         # the first city slot
@@ -325,6 +326,7 @@ module View
                             reservation: @city.reservations[slot_index],
                             tile: @tile,
                             city_render_location: render_location,
+                            graph: @graph,
                             region_use: @region_use),
               ]),
             ])

@@ -479,8 +479,8 @@ module Engine
           @adelaide ||= hex_by_id('G6')
         end
 
-        def check_for_sydney_adelaide_connection
-          graph = Graph.new(self, home_as_token: true, no_blocking: true)
+        def check_for_sydney_adelaide_connection(graph = nil)
+          graph ||= Graph.new(self, home_as_token: true, no_blocking: true)
           graph.compute(dummy_corp)
           graph.reachable_hexes(dummy_corp).include?(sydney)
         end

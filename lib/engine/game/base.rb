@@ -15,6 +15,8 @@ else
 end
 
 require_relative '../bank'
+require_relative '../bfs_graph/adapter'
+require_relative '../bfs_graph/graph'
 require_relative '../company'
 require_relative '../corporation'
 require_relative '../depot'
@@ -238,6 +240,7 @@ module Engine
       TRAIN_CLASS = Train
       DEPOT_CLASS = Depot
       PLAYER_CLASS = Player
+      GRAPH_CLASS = Engine::Graph
 
       MINORS = [].freeze
 
@@ -2353,10 +2356,21 @@ module Engine
         true
       end
 
+      # BFS is used by View::Game::GraphControls even if GRAPH_CLASS is still
+      # Engine::Graph
+      def bfs_graphs
+        @bfs_graphs ||=
+          if @graph.is_a?(Engine::BfsGraph::Adapter)
+            @graph.corp_graphs
+          else
+            Hash.new { |h,k| h[k] = Engine::BfsGraph::Graph.new(self, k) }
+          end
+      end
+
       private
 
       def init_graph
-        Graph.new(self)
+        self.class::GRAPH_CLASS.new(self)
       end
 
       def init_bank

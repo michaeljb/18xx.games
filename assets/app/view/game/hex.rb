@@ -40,6 +40,7 @@ module View
       needs :entity, default: nil
       needs :unavailable, default: nil
       needs :routes, default: []
+      needs :graph, default: nil, store: true
       needs :start_pos, default: [1, 1]
       needs :highlight, default: false
 
@@ -94,6 +95,7 @@ module View
             tile: @tile,
             show_coords: setting_for(:show_coords, @game) && (@role == :map),
             routes: @routes,
+            graph: @graph,
             game: @game
           )
         end
