@@ -102,7 +102,15 @@ module Engine
 
         # enqueue next atoms to visit
         case atom
-        when Engine::Part::Node, Engine::Part::Junction
+        when Engine::Part::Junction
+          junction = atom
+          # enqueue next paths, avoid backtracking
+          next_paths = junction.paths - [props[:from]]
+          next_paths.each do |next_path|
+            enqueue(next_path, from: junction, node_chain: node_chain.clone)
+          end
+
+        when Engine::Part::Node
           node = atom
           @visited_nodes.add(node)
           @last_processed_is_node = true
@@ -111,7 +119,7 @@ module Engine
           if @no_blocking || !node.blocks?(@corporation)
             # prevent looping back to this node
             next_node_chain = node_chain.clone
-            next_node_chain.add(node) unless node.is_a?(Engine::Part::Junction)
+            next_node_chain.add(node)
             # enqueue next paths, avoid backtracking
             next_paths = node.paths - [props[:from]]
             next_paths.each do |next_path|
