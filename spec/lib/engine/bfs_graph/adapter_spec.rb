@@ -19,7 +19,7 @@ module Engine
         expect(bfs_interface - bfs_excluded).to eq(legacy_interface)
       end
 
-      describe 'matches legacy' do
+      describe 'return values match legacy' do
         # WARNING: should not add any of the really bad legacy cases to this
         # list since the legacy code is executed here
         [
@@ -37,7 +37,7 @@ module Engine
           ['1867', '21268', 518], # token is placed on the next action
           ['1867', '21268', 660], # a token placement is skipped due to insufficient funds
 
-          ['1882', 'hs_sfemknko_1719112244', 33],
+          ['1882', 'hs_sfemknko_1719112244', 33], # has variety of route_info
 
           # LAIR uses a cheater token
           ['18 Los Angeles', '19984', 145],
@@ -45,6 +45,8 @@ module Engine
 
         ].each do |title, game_id, action|
 
+          # append this describe string to "localhost:9292/" to load up the
+          # fixture in your browser
           describe "fixture/#{title}/#{game_id}?action=#{action}" do
             before(:all) do
               @game = load_fixture(title, game_id, action)
