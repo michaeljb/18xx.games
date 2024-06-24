@@ -91,7 +91,10 @@ module Engine
           node.tokenable?(corporation, free: true)
         end
 
+        cities = cities.sort_by(&:hex)
+
         @tokenable_cities[corporation] = cities unless cities.empty?
+
         cities
       end
 

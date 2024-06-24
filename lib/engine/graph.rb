@@ -90,7 +90,8 @@ module Engine
         cities << node if node.tokenable?(corporation, free: true)
       end
 
-      @tokenable_cities[corporation] = cities if cities.any?
+      cities = cities.uniq.sort_by(&:hex)
+      @tokenable_cities[corporation] = cities unless cities.empty?
       cities
     end
 
@@ -313,7 +314,7 @@ module Engine
         @connected_paths_by_token[corporation][one_token] = paths
       else
         @routes[corporation] = routes
-        @connected_hexes[corporation] = hexes
+        @connected_hexes[corporation] = hexes.transform_values(&:sort)
         @connected_nodes[corporation] = nodes
         @connected_paths[corporation] = paths
         @reachable_hexes[corporation] = paths.to_h { |path, _| [path.hex, true] }

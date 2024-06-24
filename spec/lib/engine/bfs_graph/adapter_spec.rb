@@ -19,144 +19,108 @@ module Engine
         expect(bfs_interface - bfs_excluded).to eq(legacy_interface)
       end
 
-      describe '#route_info' do
+      describe 'matches legacy' do
+        # WARNING: should not add any of the really bad legacy cases to this
+        # list since the legacy code is executed here
         [
-          ['1846', '10264', 603],
-          ['1882', 'hs_sfemknko_1719112244', 33],
-        ].each do |title, game_id, action|
-          it "matches legacy for each corporation in #{title}/#{game_id} at action #{action}" do
-            game = load_fixture(title, game_id, action)
-
-            legacy_graph = Engine::Graph.new(game)
-            adapter = Engine::BfsGraph::Adapter.new(game)
-
-            game.corporations.each do |corporation|
-              expected = legacy_graph.route_info(corporation)
-              actual = adapter.route_info(corporation)
-              expect(actual).to eq(expected)
-            end
-          end
-        end
-      end
-
-      describe '#clear' do
-        xit 'is implemented' do
-        end
-      end
-
-      describe '#clear_graph_for' do
-        xit 'is implemented' do
-        end
-      end
-
-      describe '#can_token?' do
-        [
-          ['1861', '29683', 460],
-          ['1867', '21268', 518],
-          ['1867', '21268', 660], # a token placement is skipped due to insufficient funds
-
-          # token is placed on the next action; B&O only tokenable via an
-          # ability
-          ['1846', '10264', 50],
-
           # MC places a second token in Mexico City via same_hex_allowed
           ['1822MX', 'home_and_ndem_auctioned_token_in_mexico_city', 1259],
           ['1822MX', 'home_and_ndem_auctioned_token_in_mexico_city', 1260],
+
+          ['1846', '10264', 50], # token is placed on action 51; B&O only tokenable via an ability
+          ['1846', '10264', 147],
+          ['1846', '10264', 563],
+          ['1846', '10264', 603],
+
+          # 1861 and 1867 are the only actual clients of tokenable_cities
+          ['1861', '29683', 460], # token is placed on the next action
+          ['1867', '21268', 518], # token is placed on the next action
+          ['1867', '21268', 660], # a token placement is skipped due to insufficient funds
+
+          ['1882', 'hs_sfemknko_1719112244', 33],
 
           # LAIR uses a cheater token
           ['18 Los Angeles', '19984', 145],
           ['18 Los Angeles', '19984', 146],
 
         ].each do |title, game_id, action|
-          it "matches legacy for each corporation in #{title}/#{game_id} at action #{action} with default args" do
-            game = load_fixture(title, game_id, action)
 
-            legacy_graph = Engine::Graph.new(game)
-            adapter = Engine::BfsGraph::Adapter.new(game)
-
-            game.corporations.each do |corporation|
-              expected = legacy_graph.can_token?(corporation)
-              actual = adapter.can_token?(corporation)
-              expect(actual).to eq(expected)
+          describe "fixture/#{title}/#{game_id}?action=#{action}" do
+            before(:all) do
+              @game = load_fixture(title, game_id, action)
+              @legacy_graph = Engine::Graph.new(@game)
+              @adapter = Engine::BfsGraph::Adapter.new(@game)
             end
-          end
 
-          it "matches legacy for each corporation in #{title}/#{game_id} at action #{action} with cheater tokens" do
-            game = load_fixture(title, game_id, action)
-
-            legacy_graph = Engine::Graph.new(game)
-            adapter = Engine::BfsGraph::Adapter.new(game)
-
-            game.corporations.each do |corporation|
-              expected = legacy_graph.can_token?(corporation, cheater: true)
-              actual = adapter.can_token?(corporation, cheater: true)
-              expect(actual).to eq(expected)
+            after(:each) do
+              @legacy_graph.clear_graph_for_all
+              @adapter.clear_graph_for_all
             end
-          end
 
-          it "matches legacy for each corporation in #{title}/#{game_id} at action #{action} with same_hex_allowed" do
-            game = load_fixture(title, game_id, action)
-
-            legacy_graph = Engine::Graph.new(game)
-            adapter = Engine::BfsGraph::Adapter.new(game)
-
-            game.corporations.each do |corporation|
-              expected = legacy_graph.can_token?(corporation, same_hex_allowed: true)
-              actual = adapter.can_token?(corporation, same_hex_allowed: true)
-              expect(actual).to eq(expected)
+            [
+              [:route_info, [], {}],
+              [:can_token?, [], {}],
+              [:can_token?, [], {cheater: true}],
+              [:can_token?, [], {same_hex_allowed: true}],
+              [:tokenable_cities, [], {}],
+              [:connected_hexes, [], {}],
+              [:connected_nodes, [], {}],
+              [:connected_paths, [], {}],
+              [:reachable_hexes, [], {}],
+            ].each do |method, args, kwargs|
+              it "#{method}(corporation, *#{args}, **#{kwargs})" do
+                aggregate_failures('corporations') do
+                  @game.corporations.each do |corporation|
+                    expected = @legacy_graph.send(method, corporation, *args, **kwargs)
+                    actual = @adapter.send(method, corporation, *args, **kwargs)
+                    expect(actual).to eq(expected), "#{method} does not match for #{corporation.name}"
+                  end
+                end
+              end
             end
-          end
-        end
-      end
 
-      describe '#tokenable_cities' do
-        [
-          ['1861', '29683', 460], # token is placed on the next action
-          ['1867', '21268', 518], # token is placed on the next action
-          ['1867', '21268', 660], # a token placement is skipped due to insufficient funds
-        ].each do |title, game_id, action|
-          it "matches legacy for each corporation in #{title}/#{game_id} at action #{action}" do
-            game = load_fixture(title, game_id, action)
-
-            legacy_graph = Engine::Graph.new(game)
-            adapter = Engine::BfsGraph::Adapter.new(game)
-
-            game.corporations.each do |corporation|
-              expected = legacy_graph.tokenable_cities(corporation).uniq.sort_by(&:hex)
-              actual = adapter.tokenable_cities(corporation).sort_by(&:hex)
-              expect(actual).to eq(expected)
+            [
+              [:no_blocking?, [], {}],
+            ].each do |method, args, kwargs|
+              it "#{method}(*#{args}, **#{kwargs})" do
+                expected = @legacy_graph.send(method, *args, **kwargs)
+                actual = @adapter.send(method, *args, **kwargs)
+                expect(actual).to eq(expected)
+              end
             end
           end
         end
       end
 
-      describe '#no_blocking?' do
-        it "matches legacy for `G1848::Game#check_for_sydney_adelaide_connection` when false" do
-          game = load_fixture('1848', '1848_hotseat_game', 336)
+      describe 'with no_blocking' do
+        describe 'with home_as_token' do
+          it "matches legacy for `G1848::Game#check_for_sydney_adelaide_connection` when false" do
+            game = load_fixture('1848', '1848_hotseat_game', 336)
 
-          legacy_graph = Engine::Graph.new(game, home_as_token: true, no_blocking: true)
-          expect(legacy_graph.no_blocking?).to be(true)
-          adapter = Engine::BfsGraph::Adapter.new(game, home_as_token: true, no_blocking: true)
-          expect(adapter.no_blocking?).to be(true)
+            legacy_graph = Engine::Graph.new(game, home_as_token: true, no_blocking: true)
+            expect(legacy_graph.no_blocking?).to be(true)
+            adapter = Engine::BfsGraph::Adapter.new(game, home_as_token: true, no_blocking: true)
+            expect(adapter.no_blocking?).to be(true)
 
-          expected = game.check_for_sydney_adelaide_connection(legacy_graph)
-          actual = game.check_for_sydney_adelaide_connection(adapter)
-          expect(actual).to eq(expected)
-          expect(actual).to eq(false)
-        end
+            expected = game.check_for_sydney_adelaide_connection(legacy_graph)
+            actual = game.check_for_sydney_adelaide_connection(adapter)
+            expect(actual).to eq(expected)
+            expect(actual).to eq(false)
+          end
 
-        it "matches legacy for `G1848::Game#check_for_sydney_adelaide_connection` when true" do
-          game = load_fixture('1848', '1848_hotseat_game', 337)
+          it "matches legacy for `G1848::Game#check_for_sydney_adelaide_connection` when true" do
+            game = load_fixture('1848', '1848_hotseat_game', 337)
 
-          legacy_graph = Engine::Graph.new(game, home_as_token: true, no_blocking: true)
-          expect(legacy_graph.no_blocking?).to be(true)
-          adapter = Engine::BfsGraph::Adapter.new(game, home_as_token: true, no_blocking: true)
-          expect(adapter.no_blocking?).to be(true)
+            legacy_graph = Engine::Graph.new(game, home_as_token: true, no_blocking: true)
+            expect(legacy_graph.no_blocking?).to be(true)
+            adapter = Engine::BfsGraph::Adapter.new(game, home_as_token: true, no_blocking: true)
+            expect(adapter.no_blocking?).to be(true)
 
-          expected = game.check_for_sydney_adelaide_connection(legacy_graph)
-          actual = game.check_for_sydney_adelaide_connection(adapter)
-          expect(actual).to eq(expected)
-          expect(actual).to eq(true)
+            expected = game.check_for_sydney_adelaide_connection(legacy_graph)
+            actual = game.check_for_sydney_adelaide_connection(adapter)
+            expect(actual).to eq(expected)
+            expect(actual).to eq(true)
+          end
         end
 
         it "matches legacy for `G1880::Game#check_for_foreign_investor_connection` when false" do
@@ -192,49 +156,7 @@ module Engine
         end
       end
 
-      describe '#connected_hexes' do
-        [
-          ['1846', '10264', 147],
-          ['1846', '10264', 563],
-        ].each do |title, game_id, action|
-          it "matches legacy for each corporation in #{title}/#{game_id} at action #{action}" do
-            game = load_fixture(title, game_id, action)
-
-            legacy_graph = Engine::Graph.new(game)
-            adapter = Engine::BfsGraph::Adapter.new(game)
-
-            game.corporations.each do |corporation|
-              expected = legacy_graph.connected_hexes(corporation).transform_values(&:sort)
-              actual = adapter.connected_hexes(corporation)
-
-              expect(actual).to eq(expected)
-            end
-          end
-        end
-      end
-
-      describe '#connected_nodes' do
-        [
-          ['1846', '10264', 147],
-          ['1846', '10264', 563],
-        ].each do |title, game_id, action|
-          it "matches legacy for each corporation in #{title}/#{game_id} at action #{action}" do
-            game = load_fixture(title, game_id, action)
-
-            legacy_graph = Engine::Graph.new(game)
-            adapter = Engine::BfsGraph::Adapter.new(game)
-
-            game.corporations.each do |corporation|
-              expected = legacy_graph.connected_nodes(corporation)
-              actual = adapter.connected_nodes(corporation)
-
-              expect(actual).to eq(expected)
-            end
-          end
-        end
-      end
-
-      describe '#connected_paths' do
+      describe '#compute' do
         xit 'is implemented' do
         end
       end
@@ -259,11 +181,6 @@ module Engine
         end
       end
 
-      describe '#reachable_hexes' do
-        xit 'is implemented' do
-        end
-      end
-
       describe '#home_hexes' do
         xit 'is implemented' do
         end
@@ -273,12 +190,6 @@ module Engine
         xit 'is implemented' do
         end
       end
-
-      describe '#compute' do
-        xit 'is implemented' do
-        end
-      end
-
     end
   end
 end
