@@ -125,7 +125,7 @@ module Engine
         graph = @corp_graphs[corporation]
 
         advance_to_end!(graph, 'reachable_hexes')
-        graph.visited_hexes.to_a
+        graph.visited_hexes.to_h { |h| [h, true] }
       end
 
       # 1841 uses by_token stuff
