@@ -1,6 +1,30 @@
+# extra calls
+
+
+`can_token?`
+
+* token steps
+    * 1849
+    * 1858
+    * 1862
+    * 1867
+    * 18Ardennes
+    * 18Mag
+    * 18ZOO
+
+* same_hex_allowed
+    * 1822CA
+    * 18Ardennes
+    * 18India
+    * System18
+
+
+
 # games using special Graph opts
 
-`home_as_token`
+## `initialize` opts
+
+### `home_as_token`
 
 * 1822MX - `init_graph`
 * 1846 for Little Miami private company
@@ -13,7 +37,7 @@
     * `minors_connected_to_albany`
 
 
-`no_blocking`
+### `no_blocking`
 
 * 1846 for Little Miami private company
 * 1848 - `check_for_sydney_adelaide_connection`
@@ -26,7 +50,7 @@
 * 18USA - `@jump_graph`
 
 
-`skip_track`
+### `skip_track`
 
 * 1840 - broad/narrow
 * 1858 - broad/metre
@@ -35,12 +59,21 @@
 * 18Norway - `@ferry_graph`, broad/narrow
 
 
-`check_tokens`
+### `check_tokens`
 
 * 1841 - `init_graph`, `@region_graph`
 * 1873 - `@diesel_graph`
 * 21Moon - `init_graph`, `@lb_graph`, `@sp_graph`
 
-`check_regions`
+### `check_regions`
 
 * 1841 - `@region_graph`
+
+
+## `can_token?` opts
+
+### `cheater`
+
+### `same_hex_allowed`
+
+### `tokens`

@@ -13,10 +13,14 @@ module Engine
       # rough check to make sure the Adapter is actually adapting everything it
       # needs to; finer details like method arguments are not enforced
       it 'implements the public interface of Engine::Graph' do
-        legacy_interface = Engine::Graph.public_instance_methods(false).sort
         bfs_interface = described_class.public_instance_methods(false).sort
         bfs_excluded = [:corp_graphs]
-        expect(bfs_interface - bfs_excluded).to eq(legacy_interface)
+
+        legacy_interface = Engine::Graph.public_instance_methods(false).sort
+        # nothing external calls these, they could be private
+        legacy_excluded = [:home_hexes, :home_hex_nodes]
+
+        expect(bfs_interface - bfs_excluded).to eq(legacy_interface - legacy_excluded)
       end
 
       describe 'return values match legacy' do

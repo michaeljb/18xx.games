@@ -23,6 +23,8 @@ module Engine
         @can_token = {}
         @tokenable_cities = {}
         @no_blocking = opts[:no_blocking] || false
+
+        @opts = opts
       end
 
       def clear
@@ -105,16 +107,23 @@ module Engine
       # can lay/upgrade track on these
       def connected_hexes(corporation)
         graph = @corp_graphs[corporation]
-
         advance_to_end!(graph, 'connected_hexes')
-        graph.layable_hexes.transform_values(&:sort)
+
+        layable_hexes = graph.layable_hexes
+        home_hexes(corporation).each { |h, e| layable_hexes[h].merge(e) } if @opts[:home_as_token]
+
+        layable_hexes.transform_values(&:sort)
       end
 
       def connected_nodes(corporation)
         graph = @corp_graphs[corporation]
-
         advance_to_end!(graph, 'connected_nodes')
-        graph.visited_nodes.union(nodes_connected_via_ability(corporation)).to_h { |n| [n, true] }
+
+        visited_nodes = graph.visited_nodes
+        visited_nodes.merge(nodes_connected_via_ability(corporation))
+        visited_nodes.merge(home_hex_nodes(corporation)) if @opts[:home_as_token]
+
+        visited_nodes.to_h { |n| [n, true] }
       end
 
       def connected_paths(corporation)
@@ -142,14 +151,6 @@ module Engine
         raise NotImplementedError
       end
       def compute_by_token(corporation)
-        raise NotImplementedError
-      end
-
-      def home_hexes(corporation)
-        raise NotImplementedError
-      end
-
-      def home_hex_nodes(corporation)
         raise NotImplementedError
       end
 
@@ -256,6 +257,29 @@ module Engine
         end
 
         nodes
+      end
+
+      # Engine:Graph#home_hexes adds all edges, even those without connecting
+      # paths, to the home hexes' connections
+      def home_hexes(corporation)
+        Array(corporation.coordinates).to_h do |coord, home_hexes|
+          hex = @game.hex_by_id(coord)
+          [hex, Set.new(hex.neighbors.keys)]
+        end
+      end
+
+      def home_hex_nodes(corporation)
+        Array(corporation.coordinates).each_with_object(Set.new) do |coord, nodes|
+          hex = @game.hex_by_id(coord)
+          if corporation.city
+            Array(corporation.city).each do |city_index|
+              city = hex.tile.cities[city_index]
+              nodes.add(city) if city
+            end
+          else
+            nodes.merge(hex.tile.city_towns)
+          end
+        end
       end
     end
   end
