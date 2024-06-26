@@ -288,7 +288,7 @@ module Engine
       end
     end
 
-    private
+    #private
 
     # Called from #compute when @home_is_token is true.
     # Returns a hash whose keys are the Engine::Hex objects for each hex in the

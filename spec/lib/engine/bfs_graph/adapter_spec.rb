@@ -17,7 +17,7 @@ module Engine
         bfs_excluded = [:corp_graphs]
 
         legacy_interface = Engine::Graph.public_instance_methods(false).sort
-        # nothing external calls these, they could be private
+        # nothing external calls these, so they're private in the adapter
         legacy_excluded = [:home_hexes, :home_hex_nodes]
 
         expect(bfs_interface - bfs_excluded).to eq(legacy_interface - legacy_excluded)
@@ -82,8 +82,6 @@ module Engine
 
                     expected = @legacy_graph.send(method, corporation, *args, **kwargs)
                     actual = @adapter.send(method, corporation, *args, **kwargs)
-
-                    # FCM: green: L17 => [0, ...]
 
                     #binding.pry if actual != expected
 

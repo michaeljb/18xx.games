@@ -110,6 +110,7 @@ module Engine
         advance_to_end!(graph, 'connected_hexes')
 
         layable_hexes = graph.layable_hexes
+        tokened_hexes(corporation).each { |h, e| layable_hexes[h].merge(e) }
         home_hexes(corporation).each { |h, e| layable_hexes[h].merge(e) } if @opts[:home_as_token]
 
         layable_hexes.transform_values(&:sort)
@@ -130,14 +131,11 @@ module Engine
         graph = @corp_graphs[corporation]
 
         advance_to_end!(graph, 'connected_paths')
-        graph.visited_paths.to_h { |n| [n, true] }
+        graph.visited_paths.reject { |p| p.terminal? && p.junction }.to_h { |n| [n, true] }
       end
 
       def reachable_hexes(corporation)
-        graph = @corp_graphs[corporation]
-
-        advance_to_end!(graph, 'reachable_hexes')
-        graph.visited_hexes.to_h { |h| [h, true] }
+        connected_paths(corporation).to_h { |p| [p.hex, true] }
       end
 
       # 1841 uses by_token stuff
@@ -177,7 +175,7 @@ module Engine
         }
       end
 
-      private
+      #private
 
       # log how many new advance! calls were made, if any, when executing the
       # given block
@@ -279,6 +277,20 @@ module Engine
           else
             nodes.merge(hex.tile.city_towns)
           end
+        end
+      end
+
+      # TODO: incorporate legacy logic that uses
+      # - @game.city_tokened_by?
+      # - @game.for_graph_city_tokened_by?
+      # - @opts[:check_tokens]
+      # - @game.skip_token?
+      def tokened_hexes(corporation)
+        corporation.tokens.each_with_object({}) do |token, tokened_hexes|
+          next unless token.city
+
+          hex = token.city.hex
+          tokened_hexes[hex] = Set.new(hex.neighbors.keys)
         end
       end
     end

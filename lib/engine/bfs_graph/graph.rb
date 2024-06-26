@@ -104,10 +104,13 @@ module Engine
         case atom
         when Engine::Part::Junction
           junction = atom
-          # enqueue next paths, avoid backtracking
-          next_paths = junction.paths - [props[:from]]
-          next_paths.each do |next_path|
-            enqueue(next_path, from: junction, node_chain: node_chain.clone)
+
+          unless is_terminal_path?(props[:from])
+            # enqueue next paths, avoid backtracking
+            next_paths = junction.paths - [props[:from]]
+            next_paths.each do |next_path|
+              enqueue(next_path, from: junction, node_chain: node_chain.clone)
+            end
           end
 
         when Engine::Part::Node
@@ -115,14 +118,16 @@ module Engine
           @visited_nodes.add(node)
           @last_processed_is_node = true
           update_route_info!(node)
-          # stop if tokened out
-          if @no_blocking || !node.blocks?(@corporation)
+
+          if !is_terminal_path?(props[:from]) && (@no_blocking || !node.blocks?(@corporation))
             # prevent looping back to this node
             next_node_chain = node_chain.clone
             next_node_chain.add(node)
             # enqueue next paths, avoid backtracking
             next_paths = node.paths - [props[:from]]
             next_paths.each do |next_path|
+              next if next_path.terminal? && !node.tokened_by?(corporation)
+
               enqueue(next_path, from: node, node_chain: next_node_chain)
             end
           end
@@ -138,8 +143,10 @@ module Engine
 
               inverted_edge = edge.hex.invert(edge.num)
 
-              @layable_hexes[edge.hex].add(edge.num)
-              @layable_hexes[@game.hex_neighbor(edge.hex, edge.num)].add(inverted_edge)
+              if !(path.terminal? && !props[:from].is_a?(Engine::Part::City))
+                @layable_hexes[edge.hex].add(edge.num)
+                @layable_hexes[@game.hex_neighbor(edge.hex, edge.num)].add(inverted_edge)
+              end
 
               path.connected_paths(edge).each do |next_path|
                 next if !path.tracks_match?(next_path, dual_ok: true)
@@ -149,7 +156,7 @@ module Engine
               end
             when Engine::Part::Node, Engine::Part::Junction
               next_node = path_end
-              enqueue(next_node, from: path, node_chain: node_chain.clone) unless node_chain.include?(next_node)
+              enqueue(next_node, from: path, node_chain: node_chain.clone) if !node_chain.include?(next_node)
             end
           end
         end
@@ -192,6 +199,10 @@ module Engine
 
       def last_processed_is_node?
         @last_processed_is_node
+      end
+
+      def inspect
+        "<#{self.class.name}: #{@corporation&.name}>"
       end
 
       private
@@ -252,27 +263,21 @@ module Engine
           next unless token.city
 
           enqueue(token.city, from: token)
-
-          # TODO: move this to Adapter - legacy behavior: seems like this
-          # shouldn't be a thing, it adds hex edges that aren't actually
-          # connected to the token via a path to the city
-          hex = token.city.hex
-          hex.neighbors.each { |edge, _| @layable_hexes[hex].add(edge) }
         end
 
-        if @home_as_token
+        if @home_as_token && !@corporation.tokens[0].city
           Array(@corporation.coordinates).each do |coord|
             hex = @game.hex_by_id(coord)
-            hex.tile.city_towns.each do |city_town|
-              enqueue(city_town, from: :home)
 
-              # TODO: move this to Adapter - legacy behavior: seems like this
-              # shouldn't be a thing, it adds hex edges that aren't actually
-              # connected to any paths
-              hex.neighbors.each { |edge, _| @layable_hexes[hex].add(edge) }
+            if @corporation.city
+              enqueue(hex.tile.cities[@corporation.city], from: :home)
+            else
+              hex.tile.city_towns.each do |city_town|
+                enqueue(city_town, from: :home)
 
-              # TODO: investigate 1858 and other home_as_token cases, might need to:
-              # - if no city_towns, enqueue preprinted paths
+                # TODO: investigate 1858 and other home_as_token cases, might need to:
+                # - if no city_towns, enqueue preprinted paths
+              end
             end
           end
         end
@@ -322,6 +327,10 @@ module Engine
 
       def init_can_token!
         @can_token = {}
+      end
+
+      def is_terminal_path?(atom)
+        atom.is_a?(Engine::Part::Path) && atom.terminal?
       end
     end
   end
