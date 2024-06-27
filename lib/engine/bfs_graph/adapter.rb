@@ -92,7 +92,7 @@ module Engine
         cities = graph.visited_nodes.select do |node|
           node.tokenable?(corporation, free: true)
         end
-
+        cities.concat(nodes_connected_via_ability(corporation).to_a)
         cities = cities.sort_by(&:hex)
 
         @tokenable_cities[corporation] = cities unless cities.empty?
