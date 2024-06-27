@@ -83,7 +83,6 @@ module Engine
         return self if finished?
 
         @advance_cache.clear
-        @advanced += 1
 
         # get item from queue
         q_item = dequeue
@@ -97,15 +96,15 @@ module Engine
         # check for reasons to reject this node from the graph (count the rejects?)
         # - overlapping path
         # - invalid path (ie wrong way on a terminal path)
-        #if (edge = path_revisiting_edge(atom, props[:from]))
-#
-          #@visited_edges[edge]
-#
-          #skip!
-          #return self
-        #end
+        # if (edge = path_revisiting_edge(atom, props[:from]))
 
-        # note tokened/home nodes for efficient skipping
+        #   @visited_edges[edge]
+
+        #   skip!
+        #   return self
+        # end
+
+        # note tokened/home nodes to easily keep them from being re-processed
         @tokened.add(atom) if props[:from].is_a?(Engine::Token) || props[:from] == :home_as_token
 
         # add atom to graph
@@ -136,17 +135,14 @@ module Engine
           if !is_terminal_path?(props[:from]) && (@no_blocking || !node.blocks?(@corporation))
 
             # enqueue next paths
-            node.paths.each.with_index do |next_path, index|
+            node.paths.each do |next_path|
               # avoid backtracking
               next if next_path == props[:from]
               # some games have special offboard cities where tokened companies
               # pass through but others cannot
               next if next_path.terminal? && !node.tokened_by?(corporation)
 
-              next_dc_nodes = dc_nodes.clone
-              next_dc_nodes[node].add(next_path)
-
-              enqueue(next_path, from: node, dc_nodes: next_dc_nodes)
+              enqueue(next_path, from: node, dc_nodes: {node => next_path.exits})
             end
           end
 
@@ -175,14 +171,21 @@ module Engine
                 from_edge = next_path.edges.find { |e| e.num == inverted_edge }
                 enqueue(next_path, from: from_edge, dc_nodes: dc_nodes.clone)
               end
-            when Engine::Part::Node, Engine::Part::Junction
+            when Engine::Part::Node
               next_node = path_end
-              enqueue(next_node, from: path, dc_nodes: dc_nodes.clone) if !dc_nodes.include?(next_node)
+              # TODO? move tokened without loop check to top of advance!
+              # generally simpler enqueuing but rejecting atoms during
+              # processing might make sense
+              enqueue(next_node, from: path, dc_nodes: dc_nodes.clone) if find_tokened_without_loop(next_node, dc_nodes)
+            when Engine::Part::Junction
+              next_node = path_end
+              enqueue(next_node, from: path, dc_nodes: dc_nodes.clone)
             end
           end
         end
 
         @last_processed = atom
+        @advanced += 1
 
         # skip any skippable items from the front of the queue at the end of
         # processing instead of the beginning so that in between calls to
@@ -226,7 +229,7 @@ module Engine
         "<#{self.class.name}: #{@corporation&.name}>"
       end
 
-      private
+      #private
 
       def init!
         # key: Engine::Part::Node or Engine::Part::Path
@@ -368,6 +371,36 @@ module Engine
       # value: set of exits
       def new_dc_nodes
         Hash.new { |h_, k_| h_[k_] = Set.new}
+      end
+
+      # DFS to trace a route back through connected cities to find a tokened
+      # node, returning nil if one cannot be found
+      def find_tokened_without_loop(target, dc_nodes, checked: Set.new)
+        return unless target.is_a?(Engine::Part::Node)
+        return if @tokened.include?(target)
+
+        found_node = nil
+
+        dc_nodes.any? do |dc_node, _edges|
+          # TODO: check each edge correctly, might need to use incoming and
+          # outgoing edges? then include the edge with the node inside of
+          # `checked`
+          next if checked.include?(dc_node)
+          checked.add(dc_node)
+
+          # found a loop
+          next if dc_node == target
+
+          # found the token, we're done!
+          if @tokened.include?(dc_node)
+            found_node = dc_node
+            next true
+          end
+
+          found_node = find_tokened_without_loop(target, @visited[dc_node][:dc_nodes], checked: checked)
+        end
+
+        found_node
       end
     end
   end
