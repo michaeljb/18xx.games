@@ -293,10 +293,10 @@ module Engine
             hex = @game.hex_by_id(coord)
 
             if @corporation.city
-              enqueue(hex.tile.cities[@corporation.city], from: :home)
+              enqueue(hex.tile.cities[@corporation.city], from: :home_as_token)
             else
               hex.tile.city_towns.each do |city_town|
-                enqueue(city_town, from: :home)
+                enqueue(city_town, from: :home_as_token)
 
                 # TODO: investigate 1858 and other home_as_token cases, might need to:
                 # - if no city_towns, enqueue preprinted paths
