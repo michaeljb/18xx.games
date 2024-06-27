@@ -77,8 +77,8 @@ module Engine
         end
       end
 
-      # process one item off the queue--add the atom to @visited and enqueue the
-      # next items
+      # process one item off the queue--either reject the atom, or add it to
+      # @visited and enqueue the next items
       def advance!
         return self if finished?
 
@@ -89,14 +89,28 @@ module Engine
         q_item = dequeue
         atom = q_item[:atom]
         props = q_item[:props]
-        node_chain = props[:node_chain] || Set.new
+
+        # "directly connected" nodes, i.e., cities or towns with a direct
+        # pathway (chain of Engine::Part::Path instances) to this atom
+        dc_nodes = props[:dc_nodes] || new_dc_nodes
+
+        # check for reasons to reject this node from the graph (count the rejects?)
+        # - overlapping path
+        # - invalid path (ie wrong way on a terminal path)
+        #if (edge = path_revisiting_edge(atom, props[:from]))
+#
+          #@visited_edges[edge]
+#
+          #skip!
+          #return self
+        #end
 
         # note tokened/home nodes for efficient skipping
         @tokened.add(atom) if props[:from].is_a?(Engine::Token) || props[:from] == :home_as_token
 
         # add atom to graph
         @visited[atom][:from].add(props[:from])
-        @visited[atom][:node_chains] << node_chain
+        dc_nodes.each { |dc_node, exits| @visited[atom][:dc_nodes][dc_node].merge(exits) }
         @visited_hexes.add(atom.hex)
         @layable_hexes[atom.hex]
 
@@ -109,7 +123,7 @@ module Engine
             # enqueue next paths, avoid backtracking
             next_paths = junction.paths - [props[:from]]
             next_paths.each do |next_path|
-              enqueue(next_path, from: junction, node_chain: node_chain.clone)
+              enqueue(next_path, from: junction, dc_nodes: dc_nodes.clone)
             end
           end
 
@@ -120,15 +134,19 @@ module Engine
           update_route_info!(node)
 
           if !is_terminal_path?(props[:from]) && (@no_blocking || !node.blocks?(@corporation))
-            # prevent looping back to this node
-            next_node_chain = node_chain.clone
-            next_node_chain.add(node)
-            # enqueue next paths, avoid backtracking
-            next_paths = node.paths - [props[:from]]
-            next_paths.each do |next_path|
+
+            # enqueue next paths
+            node.paths.each.with_index do |next_path, index|
+              # avoid backtracking
+              next if next_path == props[:from]
+              # some games have special offboard cities where tokened companies
+              # pass through but others cannot
               next if next_path.terminal? && !node.tokened_by?(corporation)
 
-              enqueue(next_path, from: node, node_chain: next_node_chain)
+              next_dc_nodes = dc_nodes.clone
+              next_dc_nodes[node].add(next_path)
+
+              enqueue(next_path, from: node, dc_nodes: next_dc_nodes)
             end
           end
 
@@ -136,10 +154,13 @@ module Engine
           path = atom
           @visited_paths.add(path)
           @last_processed_is_node = false
-          ([path.a, path.b] - [props[:from]]).each do |path_end|
+          [path.a, path.b].each do |path_end|
+            next if path_end == props[:from]
+
             case path_end
             when Engine::Part::Edge
               edge = path_end
+              @visited_edges[edge][:dc_nodes].merge(dc_nodes)
 
               inverted_edge = edge.hex.invert(edge.num)
 
@@ -152,11 +173,11 @@ module Engine
                 next if !path.tracks_match?(next_path, dual_ok: true)
 
                 from_edge = next_path.edges.find { |e| e.num == inverted_edge }
-                enqueue(next_path, from: from_edge, node_chain: node_chain.clone)
+                enqueue(next_path, from: from_edge, dc_nodes: dc_nodes.clone)
               end
             when Engine::Part::Node, Engine::Part::Junction
               next_node = path_end
-              enqueue(next_node, from: path, node_chain: node_chain.clone) if !node_chain.include?(next_node)
+              enqueue(next_node, from: path, dc_nodes: dc_nodes.clone) if !dc_nodes.include?(next_node)
             end
           end
         end
@@ -218,7 +239,9 @@ module Engine
         #       (eventual TODO: make node chain an ordered set? could be useful
         #       for more quickly computing connectivity if this is converted to a
         #       general graph)
-        @visited = Hash.new { |h, k| h[k] = {from: Set.new, node_chains: []} }
+        @visited = Hash.new { |h, k| h[k] = {from: Set.new, dc_nodes: new_dc_nodes } }
+
+        @visited_edges = Hash.new { |h, k| h[k] = { dc_nodes: Set.new } }
 
         @visited_hexes = Set.new
         @visited_nodes = Set.new
@@ -331,6 +354,20 @@ module Engine
 
       def is_terminal_path?(atom)
         atom.is_a?(Engine::Part::Path) && atom.terminal?
+      end
+
+      def path_revisiting_edge(path, from)
+        return unless path.is_a?(Engine::Part::Path)
+
+        next_edge = [path.a, path.b].find { |path_end| path_end != from }
+
+        return next_edge if @visited_edges.include?(next_edge)
+      end
+
+      # key: node
+      # value: set of exits
+      def new_dc_nodes
+        Hash.new { |h_, k_| h_[k_] = Set.new}
       end
     end
   end

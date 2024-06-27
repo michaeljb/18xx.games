@@ -175,7 +175,7 @@ module Engine
         }
       end
 
-      #private
+      private
 
       # log how many new advance! calls were made, if any, when executing the
       # given block
