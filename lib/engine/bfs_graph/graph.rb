@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative '../part/node'
+require_relative 'edge'
 require_relative 'fifo_queue'
 
 module Engine
@@ -71,7 +72,9 @@ module Engine
         props = q_item[:props]
 
         if @tokened.include?(atom) ||
-           (@visited.include?(atom) && @visited[atom][:from].include?(props[:from]))
+           (@visited.include?(atom) &&
+            @visited[atom][:from].include?(props[:from]) &&
+            props[:dc_nodes].each { |dc_node, exits| exits < @visited[atom][:dc_nodes][dc_node] })
           dequeue
           skip!
         end
@@ -142,7 +145,7 @@ module Engine
               # pass through but others cannot
               next if next_path.terminal? && !node.tokened_by?(corporation)
 
-              enqueue(next_path, from: node, dc_nodes: {node => next_path.exits})
+              enqueue(next_path, from: node, dc_nodes: {node => Set.new(next_path.exits)})
             end
           end
 
@@ -155,20 +158,18 @@ module Engine
 
             case path_end
             when Engine::Part::Edge
-              edge = path_end
+              edge = edge_wrapper(path_end)
               @visited_edges[edge][:dc_nodes].merge(dc_nodes)
-
-              inverted_edge = edge.hex.invert(edge.num)
 
               if !(path.terminal? && !props[:from].is_a?(Engine::Part::City))
                 @layable_hexes[edge.hex].add(edge.num)
-                @layable_hexes[@game.hex_neighbor(edge.hex, edge.num)].add(inverted_edge)
+                @layable_hexes[@game.hex_neighbor(edge.hex, edge.num)].add(edge.inverted)
               end
 
               path.connected_paths(edge).each do |next_path|
                 next if !path.tracks_match?(next_path, dual_ok: true)
 
-                from_edge = next_path.edges.find { |e| e.num == inverted_edge }
+                from_edge = next_path.edges.find { |e| e.num == edge.inverted }
                 enqueue(next_path, from: from_edge, dc_nodes: dc_nodes.clone)
               end
             when Engine::Part::Node
@@ -229,6 +230,10 @@ module Engine
         "<#{self.class.name}: #{@corporation&.name}>"
       end
 
+      def edge_wrapper(edge)
+        @edge_wrappers[edge.id] ||= BfsGraph::Edge.new(edge)
+      end
+
       #private
 
       def init!
@@ -244,6 +249,7 @@ module Engine
         #       general graph)
         @visited = Hash.new { |h, k| h[k] = {from: Set.new, dc_nodes: new_dc_nodes } }
 
+        @edge_wrappers ||= {}
         @visited_edges = Hash.new { |h, k| h[k] = { dc_nodes: Set.new } }
 
         @visited_hexes = Set.new
@@ -363,8 +369,9 @@ module Engine
         return unless path.is_a?(Engine::Part::Path)
 
         next_edge = [path.a, path.b].find { |path_end| path_end != from }
+        edge = edge_wrapper(next_edge)
 
-        return next_edge if @visited_edges.include?(next_edge)
+        return edge if @visited_edges.include?(edge)
       end
 
       # key: node
