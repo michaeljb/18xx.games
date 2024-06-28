@@ -204,6 +204,10 @@ module Engine
           @tokens.map! { |t| t == token ? nil : t }
         end
       end
+
+      def inspect
+        "<#{self.class.name}: hex:#{hex&.name} index:#{index}>"
+      end
     end
   end
 end

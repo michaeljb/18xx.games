@@ -78,6 +78,10 @@ module Engine
       def to_s
         @array.to_s
       end
+
+      def inspect
+        "<#{self.class.name}>"
+      end
     end
   end
 end
