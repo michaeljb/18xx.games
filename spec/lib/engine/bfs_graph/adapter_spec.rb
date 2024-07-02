@@ -37,6 +37,9 @@ module Engine
           ['1846', '10264', 563],
           ['1846', '10264', 603],
 
+          # slow one
+          # ['18GB', '151565', 650], # this passes
+
           # 1861 and 1867 are the only actual clients of tokenable_cities
           ['1861', '29683', 460], # token is placed on the next action
           ['1867', '21268', 518], # token is placed on the next action
