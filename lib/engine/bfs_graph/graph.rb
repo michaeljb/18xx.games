@@ -36,6 +36,7 @@ module Engine
         return 2 if @visited.include?(atom) && enqueued?(atom)
         return 0 if @visited.include?(atom)
         return 1 if enqueued?(atom)
+        return 9 if @overlapping_paths.include?(atom)
 
         nil
       end
@@ -95,6 +96,14 @@ module Engine
         # "directly connected" nodes, i.e., cities or towns with a direct
         # pathway (chain of Engine::Part::Path instances) to this atom
         dc_nodes = props[:dc_nodes] || new_dc_nodes
+
+        if path_overlaps?(atom, props[:from])
+          @overlapping_paths[atom][:from].add(props[:from])
+          dc_nodes.each { |dc_node, exits| @overlapping_paths[atom][:dc_nodes][dc_node].merge(exits) }
+          @advanced += 1
+          skip!
+          return self
+        end
 
         # check for reasons to reject this node from the graph (count the rejects?)
         # - overlapping path
@@ -248,6 +257,8 @@ module Engine
         #       for more quickly computing connectivity if this is converted to a
         #       general graph)
         @visited = Hash.new { |h, k| h[k] = {from: Set.new, dc_nodes: new_dc_nodes } }
+
+        @overlapping_paths = Hash.new { |h, k| h[k] = {from: Set.new, dc_nodes: new_dc_nodes } }
 
         @edge_wrappers ||= {}
         @visited_edges = Hash.new { |h, k| h[k] = { dc_nodes: Set.new } }
@@ -408,6 +419,19 @@ module Engine
         end
 
         found_node
+      end
+
+      def path_overlaps?(atom, from)
+        return false unless (path = atom).path?
+        return false if @visited.include?(path)
+
+        [path.a, path.b].any? do |path_end|
+          next if path_end == from
+          next unless path_end.edge?
+
+          edge = edge_wrapper(path_end)
+          @visited_edges.include?(edge)
+        end
       end
     end
   end
