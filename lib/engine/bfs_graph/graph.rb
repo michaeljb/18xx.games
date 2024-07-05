@@ -308,7 +308,7 @@ module Engine
           enqueue(token.city, from: token)
         end
 
-        if @home_as_token && !@corporation.tokens[0].city
+        if @home_as_token && !@corporation.tokens[0]&.city
           Array(@corporation.coordinates).each do |coord|
             hex = @game.hex_by_id(coord)
 
