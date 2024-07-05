@@ -105,6 +105,94 @@ module Engine
         end
       end
 
+      describe 'return values match legacy in 1858' do
+        [
+          ['147489', 86], # start of OR 1.1
+          ['147489', 118], # OR 1.2
+          ['147489', 170], # OR 2.1
+          ['147489', 198], # OR 2.2
+          ['147489', 237], # OR 3.1
+          ['147489', 283], # OR 3.2
+          ['147489', 355], # OR 4.1
+          ['147489', 429], # OR 4.2
+          ['147489', 545], # OR 5.1
+          ['147489', 628], # OR 5.2
+          ['147489', 720], # OR 6.1
+          ['147489', 787], # OR 6.2
+          ['147489', 879], # OR 7.1
+          ['147489', 928], # OR 7.2
+          ['147489', 965], # game end
+        ].each do |game_id, action|
+          describe "fixture/1858/#{game_id}?action=#{action}" do
+            before(:all) do
+              @game = load_fixture('1858', game_id, action)
+              @legacy_graph_base = Engine::Graph.new(@game, **@game.class::GRAPH_OPTS)
+              @legacy_graph_broad = Engine::Graph.new(@game, skip_track: :narrow, **@game.class::GRAPH_OPTS)
+              @legacy_graph_metre = Engine::Graph.new(@game, skip_track: :broad, **@game.class::GRAPH_OPTS)
+
+              @adapter_base = Engine::BfsGraph::Adapter.new(@game, **@game.class::GRAPH_OPTS)
+              @adapter_broad = Engine::BfsGraph::Adapter.new(@game, skip_track: :narrow, **@game.class::GRAPH_OPTS)
+              @adapter_metre = Engine::BfsGraph::Adapter.new(@game, skip_track: :broad, **@game.class::GRAPH_OPTS)
+            end
+
+            after(:each) do
+              @legacy_graph_base.clear_graph_for_all
+              @legacy_graph_broad.clear_graph_for_all
+              @legacy_graph_metre.clear_graph_for_all
+
+              @adapter_base.clear_graph_for_all
+              @adapter_broad.clear_graph_for_all
+              @adapter_metre.clear_graph_for_all
+            end
+
+            %w[base broad metre].each do |graph_desc|
+              [
+                [:route_info, [], {}],
+                [:can_token?, [], {}],
+                [:can_token?, [], {cheater: true}],
+                [:can_token?, [], {same_hex_allowed: true}],
+                [:tokenable_cities, [], {}],
+                [:connected_hexes, [], {}],
+                [:connected_nodes, [], {}],
+                [:connected_paths, [], {}],
+                [:reachable_hexes, [], {}],
+              ].each do |method, args, kwargs|
+                it "#{graph_desc} graph #{method}(corporation, *#{args}, **#{kwargs})" do
+                  legacy_graph = instance_variable_get(:"@legacy_graph_#{graph_desc}")
+                  adapter = instance_variable_get(:"@adapter_#{graph_desc}")
+
+                  aggregate_failures('corporations') do
+                    @game.corporations.each do |corporation|
+                      next if !corporation.floated? || corporation.closed?
+
+                      expected = legacy_graph.send(method, corporation, *args, **kwargs)
+                      actual = adapter.send(method, corporation, *args, **kwargs)
+
+                      binding.pry if actual != expected
+
+                      expect(actual).to eq(expected), "#{graph_desc} graph #{method} does not match for #{corporation.name}"
+                    end
+                  end
+                end
+              end
+
+              [
+                [:no_blocking?, [], {}],
+              ].each do |method, args, kwargs|
+                it "#{graph_desc} graph #{method}(*#{args}, **#{kwargs})" do
+                  legacy_graph = instance_variable_get(:"@legacy_graph_#{graph_desc}")
+                  adapter = instance_variable_get(:"@adapter_#{graph_desc}")
+
+                  expected = legacy_graph.send(method, *args, **kwargs)
+                  actual = adapter.send(method, *args, **kwargs)
+                  expect(actual).to eq(expected), "#{graph_desc} graph #{method} does not match"
+                end
+              end
+            end
+          end
+        end
+      end
+
       describe 'with no_blocking' do
         describe 'with home_as_token' do
           it "matches legacy for `G1848::Game#check_for_sydney_adelaide_connection` when false" do

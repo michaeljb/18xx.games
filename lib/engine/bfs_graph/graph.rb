@@ -26,10 +26,10 @@ module Engine
 
         @home_as_token = opts[:home_as_token] || false
         @no_blocking = opts[:no_blocking] || false
+        @skip_track = opts[:skip_track]
 
         # all the opts from the existing Graph
         # TODO: use these in the computation logic
-        @skip_track = opts[:skip_track]
         @check_tokens = opts[:check_tokens]
         @check_regions = opts[:check_regions]
 
@@ -66,23 +66,27 @@ module Engine
         @queue.empty? && @overlapping_paths.empty?
       end
 
-      # clear atoms from the front of the queue that were already visited via
-      # token, or via the same way they're being visited now
+      # clear atoms from the front of the queue that should be skipped
       def skip!
         return if finished?
         return unless (q_item = @queue.peek)
 
-        @skipped += 1
-
         atom = q_item[:atom]
         props = q_item[:props]
 
-        if @tokened.include?(atom) ||
-           @skip_paths.include?(atom) ||
-           (@visited.include?(atom) &&
+        #tokened = -> { @tokened.include?(atom) }
+        skip_paths = -> { @skip_paths.include?(atom) }
+        skip_track = -> { atom.path? && @skip_track == atom.track }
+        already_visited = -> do
+          @visited.include?(atom) &&
             @visited[atom][:from].include?(props[:from]) &&
-            props[:dc_nodes].each { |dc_node, exits| exits < @visited[atom][:dc_nodes][dc_node] })
+            props[:dc_nodes].each { |dc_node, exits| exits < @visited[atom][:dc_nodes][dc_node] }
+        end
+
+        if [skip_paths, skip_track, already_visited].any?(&:call)
           dequeue
+          @skipped += 1
+
           skip!
         end
       end
@@ -110,7 +114,6 @@ module Engine
 
             if found
               enqueue(path, skip_overlap_check: true, overlap: :skip, **props)
-              #binding.pry
             end
           end
 
@@ -155,14 +158,17 @@ module Engine
         #   return self
         # end
 
-        # note tokened/home nodes to easily keep them from being re-processed
-        @tokened.add(atom) if props[:from].is_a?(Engine::Token) || props[:from] == :home_as_token
+        is_starter = props[:from].is_a?(Engine::Token) || props[:from] == :home_as_token
 
-        # add atom to graph
-        @visited[atom][:from].add(props[:from])
-        dc_nodes.each { |dc_node, exits| @visited[atom][:dc_nodes][dc_node].merge(exits) }
-        @visited_hexes.add(atom.hex)
-        @layable_hexes[atom.hex]
+        no_loop = is_starter || atom.path? || !!(find_tokened_without_loop(atom, dc_nodes))
+
+        if no_loop
+          # add atom to graph
+          @visited[atom][:from].add(props[:from])
+          dc_nodes.each { |dc_node, exits| @visited[atom][:dc_nodes][dc_node].merge(exits) }
+          @visited_hexes.add(atom.hex)
+          @layable_hexes[atom.hex]
+        end
 
         # enqueue next atoms to visit
         case atom
@@ -181,9 +187,12 @@ module Engine
           node = atom
           @visited_nodes.add(node)
           @last_processed_is_node = true
-          update_route_info!(node)
+          update_route_info!(node, dc_nodes)
 
-          if !is_terminal_path?(props[:from]) && (@no_blocking || !node.blocks?(@corporation))
+          if no_loop &&
+             !@tokened.include?(node) &&
+             !is_terminal_path?(props[:from]) &&
+             (@no_blocking || !node.blocks?(@corporation))
 
             # enqueue next paths
             node.paths.each do |next_path|
@@ -223,16 +232,16 @@ module Engine
               end
             when Engine::Part::Node
               next_node = path_end
-              # TODO? move tokened without loop check to top of advance!
-              # generally simpler enqueuing but rejecting atoms during
-              # processing might make sense
-              enqueue(next_node, from: path, dc_nodes: dc_nodes.clone) if find_tokened_without_loop(next_node, dc_nodes)
+              enqueue(next_node, from: path, dc_nodes: dc_nodes.clone)
             when Engine::Part::Junction
               next_node = path_end
               enqueue(next_node, from: path, dc_nodes: dc_nodes.clone)
             end
           end
         end
+
+        # note tokened/home nodes to easily keep them from being re-processed
+        @tokened.add(atom) if is_starter
 
         @last_processed = atom
         @advanced += 1
@@ -393,20 +402,16 @@ module Engine
         @visited.include?(atom) || enqueued?(atom)
       end
 
-      # check requirements for a runnable route, or a legal route that
-      # necessitates owning a train
-      def update_route_info!(node)
-        return if @route_info[:route_train_purchase]
+      def update_route_info!(node, dc_nodes)
+        @route_info[:route_available] ||=
+          (connected_to_mandatory?(dc_nodes) && (node.route == :mandatory || node.route == :optional))
 
-        @_node_count ||= Hash.new(0)
-        @_node_count[node.route] += 1
+        @route_info[:route_train_purchase] ||=
+          (connected_to_mandatory?(dc_nodes) && node.route == :mandatory)
+      end
 
-        if @_node_count[:mandatory] > 1
-          @route_info[:route_available] = true
-          @route_info[:route_train_purchase] = true
-        elsif @_node_count[:mandatory] == 1 && @_node_count[:optional].positive?
-          @route_info[:route_available] = true
-        end
+      def connected_to_mandatory?(dc_nodes)
+        dc_nodes.any? { |dc_node, _| dc_node.route == :mandatory }
       end
 
       def init_route_info!
