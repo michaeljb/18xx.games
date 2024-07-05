@@ -161,6 +161,7 @@ module Engine
               visited: visited,
               skip_paths: skip_paths,
               counter: counter,
+              skip_track: skip_track,
               converging: converging,
               walk_calls: walk_calls,
               &block
