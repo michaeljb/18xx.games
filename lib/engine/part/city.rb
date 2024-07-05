@@ -82,6 +82,11 @@ module Engine
 
       def tokenable?(corporation, free: false, tokens: corporation.tokens_by_type, cheater: false,
                      extra_slot: false, spender: nil, same_hex_allowed: false)
+        if tokened_by?(corporation)
+          @error = :existing_token
+          return false
+        end
+
         tokens = Array(tokens)
         @error = :generic
         if !extra_slot && tokens.empty?
@@ -98,7 +103,7 @@ module Engine
             @error = :no_money
             next false
           end
-          if !same_hex_allowed && @tile.cities.any? { |c| c.tokened_by?(t.corporation) }
+          if !same_hex_allowed && (@tile.cities - [self]).any? { |c| c.tokened_by?(t.corporation) }
             @error = :existing_token
             next false
           end
