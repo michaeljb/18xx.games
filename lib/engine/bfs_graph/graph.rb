@@ -372,9 +372,6 @@ module Engine
             else
               hex.tile.city_towns.each do |city_town|
                 enqueue(city_town, from: :home_as_token)
-
-                # TODO: investigate 1858 and other home_as_token cases, might need to:
-                # - if no city_towns, enqueue preprinted paths
               end
             end
           end
