@@ -9,15 +9,20 @@ module Engine
     class Graph
       attr_reader :advanced, :route_info, :skipped, :last_processed,
                   :layable_hexes, :visited_hexes, :visited_nodes, :visited_paths,
-                  :corporation
+                  :corporation, :visited
 
       def initialize(game, corporation, visualize: true, **opts)
         @game = game
         @corporation = corporation
+        @opts = opts
 
         # visualization uses a little more memory and cycles to color each path
         # and node based on whether it's been processed/enqueued/etc
         @visualize = visualize
+
+        @overlap = opts[:overlap] || :defer
+        @skip_paths = opts[:skip_paths] || Set.new
+        @edge_wrappers = opts[:edge_wrappers]
 
         @home_as_token = opts[:home_as_token] || false
         @no_blocking = opts[:no_blocking] || false
@@ -38,7 +43,7 @@ module Engine
         return 1 if enqueued?(atom)
         return 9 if @overlapping_paths.include?(atom)
 
-        nil
+        12
       end
 
       # returns an array of arrays
@@ -58,21 +63,22 @@ module Engine
       end
 
       def finished?
-        @queue.empty?
+        @queue.empty? && @overlapping_paths.empty?
       end
 
       # clear atoms from the front of the queue that were already visited via
       # token, or via the same way they're being visited now
       def skip!
         return if finished?
+        return unless (q_item = @queue.peek)
 
         @skipped += 1
 
-        q_item = @queue.peek
         atom = q_item[:atom]
         props = q_item[:props]
 
         if @tokened.include?(atom) ||
+           @skip_paths.include?(atom) ||
            (@visited.include?(atom) &&
             @visited[atom][:from].include?(props[:from]) &&
             props[:dc_nodes].each { |dc_node, exits| exits < @visited[atom][:dc_nodes][dc_node] })
@@ -86,6 +92,33 @@ module Engine
       def advance!
         return self if finished?
 
+        if @queue.empty? && !@overlapping_paths.empty?
+          # for each overlapping path that was deferred, create a graph that
+          # skips the paths it overlaps with (and skips the other deferred
+          # paths), and advance until it is finished or the path in question is
+          # succesfully added
+          @overlapping_paths.each do |path, props|
+            edge = [path.a, path.b].find { |path_end| edge_wrapper(path_end) != props[:from] }
+            opts = @opts.clone
+            opts[:skip_paths] = @overlapping_paths.keys + path.hex.paths[edge.num] - [path]
+            skip_graph = self.class.new(@game, @corporation, visualize: false, **opts)
+            skip_graph.advance! until skip_graph.finished? ||
+                                      (found = (skip_graph.visited.include?(path) &&
+                                                skip_graph.visited[path][:from].include?(props[:from])))
+
+            @skip_graphs_advanced += skip_graph.advanced
+
+            if found
+              enqueue(path, skip_overlap_check: true, overlap: :skip, **props)
+              #binding.pry
+            end
+          end
+
+          @overlapping_paths.clear
+          @advanced += 1
+          return self
+        end
+
         @advance_cache.clear
 
         # get item from queue
@@ -97,9 +130,15 @@ module Engine
         # pathway (chain of Engine::Part::Path instances) to this atom
         dc_nodes = props[:dc_nodes] || new_dc_nodes
 
-        if path_overlaps?(atom, props[:from])
-          @overlapping_paths[atom][:from].add(props[:from])
-          dc_nodes.each { |dc_node, exits| @overlapping_paths[atom][:dc_nodes][dc_node].merge(exits) }
+        if !props[:skip_overlap_check] && path_overlaps?(atom, props[:from])
+          case @overlap
+          when :defer
+            @overlapping_paths[atom][:from] = props[:from]
+            dc_nodes.each { |dc_node, exits| @overlapping_paths[atom][:dc_nodes][dc_node].merge(exits) }
+          when :skip
+
+          end
+
           @advanced += 1
           skip!
           return self
@@ -163,23 +202,24 @@ module Engine
           @visited_paths.add(path)
           @last_processed_is_node = false
           [path.a, path.b].each do |path_end|
-            next if path_end == props[:from]
+            next if props[:from] == (path_end.edge? ? edge_wrapper(path_end) : path_end)
 
             case path_end
             when Engine::Part::Edge
               edge = edge_wrapper(path_end)
+              hex = path_end.hex
               @visited_edges[edge][:dc_nodes].merge(dc_nodes)
 
               if !(path.terminal? && !props[:from].is_a?(Engine::Part::City))
-                @layable_hexes[edge.hex].add(edge.num)
-                @layable_hexes[@game.hex_neighbor(edge.hex, edge.num)].add(edge.inverted)
+                @layable_hexes[hex].add(edge[1])
+                @layable_hexes[@game.hex_neighbor(hex, edge[1])].add(inverted(edge[1]))
               end
 
-              path.connected_paths(edge).each do |next_path|
+              path.connected_paths(path_end).each do |next_path|
                 next if !path.tracks_match?(next_path, dual_ok: true)
 
-                from_edge = next_path.edges.find { |e| e.num == edge.inverted }
-                enqueue(next_path, from: from_edge, dc_nodes: dc_nodes.clone)
+                from_edge = next_path.edges.find { |e| e.num == inverted(edge[1]) }
+                enqueue(next_path, from: edge_wrapper(from_edge), dc_nodes: dc_nodes.clone)
               end
             when Engine::Part::Node
               next_node = path_end
@@ -240,7 +280,11 @@ module Engine
       end
 
       def edge_wrapper(edge)
-        @edge_wrappers[edge.id] ||= BfsGraph::Edge.new(edge)
+        @edge_wrappers[[edge.hex.id, edge.num]] ||= [edge.hex.id, edge.num] # BfsGraph::Edge.new(edge)
+      end
+
+      def inverted(edge_num)
+        (edge_num + 3) % 6
       end
 
       #private
@@ -258,7 +302,7 @@ module Engine
         #       general graph)
         @visited = Hash.new { |h, k| h[k] = {from: Set.new, dc_nodes: new_dc_nodes } }
 
-        @overlapping_paths = Hash.new { |h, k| h[k] = {from: Set.new, dc_nodes: new_dc_nodes } }
+        @overlapping_paths = Hash.new { |h, k| h[k] = {from: nil, dc_nodes: new_dc_nodes } }
 
         @edge_wrappers ||= {}
         @visited_edges = Hash.new { |h, k| h[k] = { dc_nodes: Set.new } }
@@ -290,6 +334,8 @@ module Engine
         # track how many steps have been processed in the graph; useful for
         # undoing
         @advanced = 0
+
+        @skip_graphs_advanced = 0
 
         # track how many items were enqueued but were skipped at the end of an
         # advance! call as they were already processed
@@ -426,10 +472,9 @@ module Engine
         return false if @visited.include?(path)
 
         [path.a, path.b].any? do |path_end|
-          next if path_end == from
           next unless path_end.edge?
+          next if (edge = edge_wrapper(path_end)) == from
 
-          edge = edge_wrapper(path_end)
           @visited_edges.include?(edge)
         end
       end
