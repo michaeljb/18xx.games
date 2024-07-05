@@ -168,8 +168,6 @@ module Engine
                       expected = legacy_graph.send(method, corporation, *args, **kwargs)
                       actual = adapter.send(method, corporation, *args, **kwargs)
 
-                      binding.pry if actual != expected
-
                       expect(actual).to eq(expected), "#{graph_desc} graph #{method} does not match for #{corporation.name}"
                     end
                   end

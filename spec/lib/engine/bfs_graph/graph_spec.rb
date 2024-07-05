@@ -52,7 +52,6 @@ module Engine
         edge = graph.edge_wrapper(game.hex_by_id('F14').tile.edges.find { |e| e.num.zero? })
         expect(visited_edges.include?(edge)).to eq(true)
 
-        binding.pry
         expect(true).to eq(false)
       end
     end
