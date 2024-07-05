@@ -45,7 +45,7 @@ module Engine
         graph = @corp_graphs[corporation]
 
         advance_for_route_info!(graph)
-        graph.route_info
+        graph.route_info.reject { |_k, v| v == false }
       end
 
       def can_token?(corporation, cheater: false, same_hex_allowed: false, tokens: corporation.tokens_by_type)
