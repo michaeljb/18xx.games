@@ -31,9 +31,9 @@ module Engine
         expect(path.hex.id).to eq('F14')
         expect(path.exits).to eq([0, 5])
 
-        expect(from.edge?).to be(true)
-        expect(from.hex.id).to eq('F14')
-        expect(from.num).to eq(5)
+        hex_id, edge_num = from
+        expect(hex_id).to eq('F14')
+        expect(edge_num).to eq(5)
 
         peterborough = game.hex_by_id('G15').tile.cities[0]
         east_toronto = game.hex_by_id('F16').tile.cities[1]
