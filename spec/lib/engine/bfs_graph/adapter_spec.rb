@@ -45,7 +45,7 @@ module Engine
                 252, # start of phase 3
                 326, # start of phase 4
                 546, # start of phase 5
-                939, # end of game
+                939, # end of game; IFAI's E9 token graph has interesting overlapping_paths
               ],
             },
             graph_opts: [
@@ -74,15 +74,14 @@ module Engine
           '1858' => {
             fixtures: {
               '147489' => [
-                86, # start of OR 1.1
-                118, # OR 1.2
+                118, # OR 1.2; caught lots of failures with initial impl here
                 153, # SR 2
                 156, # A floats, must choose home token
                 157, # A chooses home token
-                170, # OR 2.1
+                170, # OR 2.1; caught lots of failures with initial impl here
                 198, # OR 2.2
                 237, # OR 3.1
-                283, # OR 3.2
+                283, # OR 3.2; caught lots of failures with initial impl here
                 355, # OR 4.1
                 429, # OR 4.2
                 545, # OR 5.1
