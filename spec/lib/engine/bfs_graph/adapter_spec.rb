@@ -202,7 +202,7 @@ module Engine
                           :connected_nodes_by_token,
                           :connected_paths_by_token,
                         ].each do |method|
-                          it "#{method}(corporation, token)" do
+                          it "#{method}(corporation, token/city)" do
                             aggregate_failures('corporations') do
                               @game.corporations.each do |corporation|
                                 next if !corporation.floated? || corporation.closed?
