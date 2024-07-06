@@ -23,167 +23,172 @@ module Engine
         expect(bfs_interface - bfs_excluded).to eq(legacy_interface - legacy_excluded)
       end
 
-      describe 'return values match legacy' do
-        # WARNING: should not add any of the really bad legacy cases that take
-        # millions of `walk()` calls to this list since the legacy code is
-        # executed here
-        [
-          # MC places a second token in Mexico City via same_hex_allowed
-          ['1822MX', 'home_and_ndem_auctioned_token_in_mexico_city', 1259],
-          ['1822MX', 'home_and_ndem_auctioned_token_in_mexico_city', 1260],
+      # [
+      #   :connected_hexes_by_token,
+      #   :connected_nodes_by_token,
+      #   :connected_paths_by_token,
+      # ]
 
-          ['1846', '10264', 50], # token is placed on action 51; B&O only tokenable via an ability
-          ['1846', '10264', 147],
-          ['1846', '10264', 563],
-          ['1846', '10264', 603],
+      describe 'return values match legacy' do
+        {
+          # TODO
+          # '1841' => {
+          #   fixtures: {
+          #     '132002' => [1259, 1260],
+          #   },
+          #   graph_opts: [
+          #     { check_tokens: true },
+          #     { check_tokens: true, check_regions: true },
+          #   ],
+          # },
+
+          '1822MX' => {
+            fixtures: {
+              # MC places a second token in Mexico City via same_hex_allowed
+              'home_and_ndem_auctioned_token_in_mexico_city': [1259, 1260],
+            },
+            graph_opts: [
+              {home_as_token: true},
+            ]
+          },
+
+          '1846' => {
+            fixtures: {
+              # token is placed on action 51; B&O only tokenable via an ability
+              '10264': [50, 51, 147, 563, 603],
+            },
+          },
+
+          '1858' => {
+            fixtures: {
+              '147489' => [
+                86, # start of OR 1.1
+                118, # OR 1.2
+                153, # SR 2
+                156, # A floats, must choose home token
+                157, # A chooses home token
+                170, # OR 2.1
+                198, # OR 2.2
+                237, # OR 3.1
+                283, # OR 3.2
+                355, # OR 4.1
+                429, # OR 4.2
+                545, # OR 5.1
+                628, # OR 5.2
+                720, # OR 6.1
+                787, # OR 6.2
+                879, # OR 7.1
+                928, # OR 7.2
+                965, # game end
+              ],
+            },
+            graph_opts: [
+              {},
+              { skip_track: :narrow },
+              { skip_track: :broad },
+            ],
+          },
+
+          # 1861 and 1867 are the only actual clients of tokenable_cities
+          '1861' => {
+            fixtures: {
+              # token is placed on 461
+              '29683': [460, 461],
+            },
+          },
+          '1867' => {
+            fixtures: {
+              '21268': [660],
+            },
+          },
+
+          '1882' => {
+            fixtures: {
+              # has variety of route_info
+              'hs_sfemknko_1719112244': [33],
+            },
+          },
+
+          '18 Los Angeles' => {
+            fixtures: {
+              # LAIR uses a cheater token
+              '19984': [145, 146],
+            },
+            graph_opts: [
+            ]
+          },
 
           # slow one
           # ['18GB', '151565', 650], # this passes
 
-          # 1861 and 1867 are the only actual clients of tokenable_cities
-          ['1861', '29683', 460], # token is placed on the next action
-          ['1867', '21268', 518], # token is placed on the next action
-          ['1867', '21268', 660], # a token placement is skipped due to insufficient funds
+        }.each do |title, opts|
 
-          ['1882', 'hs_sfemknko_1719112244', 33], # has variety of route_info
-
-          # LAIR uses a cheater token
-          ['18 Los Angeles', '19984', 145],
-          ['18 Los Angeles', '19984', 146],
-
-        ].each do |title, game_id, action|
-
-          # append this describe string to "localhost:9292/" to load up the
-          # fixture in your browser
-          describe "fixture/#{title}/#{game_id}?action=#{action}" do
-            before(:all) do
-              @game = load_fixture(title, game_id, action)
-              @legacy_graph = Engine::Graph.new(@game, **@game.class::GRAPH_OPTS)
-              @adapter = Engine::BfsGraph::Adapter.new(@game, **@game.class::GRAPH_OPTS)
-            end
-
-            after(:each) do
-              @legacy_graph.clear_graph_for_all
-              @adapter.clear_graph_for_all
-            end
-
-            [
-              [:route_info, [], {}],
-              [:can_token?, [], {}],
-              [:can_token?, [], {cheater: true}],
-              [:can_token?, [], {same_hex_allowed: true}],
-              [:tokenable_cities, [], {}],
-              [:connected_hexes, [], {}],
-              [:connected_nodes, [], {}],
-              [:connected_paths, [], {}],
-              [:reachable_hexes, [], {}],
-            ].each do |method, args, kwargs|
-              it "#{method}(corporation, *#{args}, **#{kwargs})" do
-                aggregate_failures('corporations') do
-                  @game.corporations.each do |corporation|
-                    next if !corporation.floated? || corporation.closed?
-
-                    expected = @legacy_graph.send(method, corporation, *args, **kwargs)
-                    actual = @adapter.send(method, corporation, *args, **kwargs)
-
-                    expect(actual).to eq(expected), "#{method} does not match for #{corporation.name}"
-                  end
+          describe title do
+            opts[:fixtures].each do |game_id, actions|
+              describe "fixture=#{game_id}" do
+                before(:all) do
+                  @game = load_fixture(title, game_id, 0)
                 end
-              end
-            end
 
-            [
-              [:no_blocking?, [], {}],
-            ].each do |method, args, kwargs|
-              it "#{method}(*#{args}, **#{kwargs})" do
-                expected = @legacy_graph.send(method, *args, **kwargs)
-                actual = @adapter.send(method, *args, **kwargs)
-                expect(actual).to eq(expected), "#{method} does not match"
-              end
-            end
-          end
-        end
-      end
+                actions.each do |action|
+                  describe "action=#{action}" do
+                    before(:each) do
+                      @game.process_to_action(action)
+                    end
 
-      describe 'return values match legacy in 1858' do
-        [
-          ['147489', 86], # start of OR 1.1
-          ['147489', 118], # OR 1.2
-          ['147489', 170], # OR 2.1
-          ['147489', 198], # OR 2.2
-          ['147489', 237], # OR 3.1
-          ['147489', 283], # OR 3.2
-          ['147489', 355], # OR 4.1
-          ['147489', 429], # OR 4.2
-          ['147489', 545], # OR 5.1
-          ['147489', 628], # OR 5.2
-          ['147489', 720], # OR 6.1
-          ['147489', 787], # OR 6.2
-          ['147489', 879], # OR 7.1
-          ['147489', 928], # OR 7.2
-          ['147489', 965], # game end
-        ].each do |game_id, action|
-          describe "fixture/1858/#{game_id}?action=#{action}" do
-            before(:all) do
-              @game = load_fixture('1858', game_id, action)
-              @legacy_graph_base = Engine::Graph.new(@game, **@game.class::GRAPH_OPTS)
-              @legacy_graph_broad = Engine::Graph.new(@game, skip_track: :narrow, **@game.class::GRAPH_OPTS)
-              @legacy_graph_metre = Engine::Graph.new(@game, skip_track: :broad, **@game.class::GRAPH_OPTS)
+                    (opts[:graph_opts] || [{}]).each do |graph_opts|
+                      describe "graph_opts=#{graph_opts}" do
+                        before(:all) do
+                          @legacy_graph = Engine::Graph.new(@game, **graph_opts)
+                          @adapter = Engine::BfsGraph::Adapter.new(@game, **graph_opts)
+                        end
+                        before(:each) do
+                          @legacy_graph.clear_graph_for_all
+                          @adapter.clear_graph_for_all
+                        end
 
-              @adapter_base = Engine::BfsGraph::Adapter.new(@game, **@game.class::GRAPH_OPTS)
-              @adapter_broad = Engine::BfsGraph::Adapter.new(@game, skip_track: :narrow, **@game.class::GRAPH_OPTS)
-              @adapter_metre = Engine::BfsGraph::Adapter.new(@game, skip_track: :broad, **@game.class::GRAPH_OPTS)
-            end
+                        [
+                          [:route_info, {}],
+                          [:can_token?, {}],
+                          [:can_token?, {cheater: true}],
+                          [:can_token?, {same_hex_allowed: true}],
+                          [:tokenable_cities, {}],
+                          [:connected_hexes, {}],
+                          [:connected_nodes, {}],
+                          [:connected_paths, {}],
+                          [:reachable_hexes, {}],
+                        ].each do |method, kwargs|
+                          it "#{method}(corporation, **#{kwargs})" do
+                            aggregate_failures('corporations') do
+                              @game.corporations.each do |corporation|
+                                next if !corporation.floated? || corporation.closed?
 
-            after(:each) do
-              @legacy_graph_base.clear_graph_for_all
-              @legacy_graph_broad.clear_graph_for_all
-              @legacy_graph_metre.clear_graph_for_all
+                                expected = @legacy_graph.send(method, corporation, **kwargs)
+                                actual = @adapter.send(method, corporation, **kwargs)
 
-              @adapter_base.clear_graph_for_all
-              @adapter_broad.clear_graph_for_all
-              @adapter_metre.clear_graph_for_all
-            end
+                                desc = "#{method} does not match for #{corporation.name} at "\
+                                       "fixture/#{title}/#{game_id}?action=#{action}"
+                                expect(actual).to eq(expected), desc
+                              end
+                            end
+                          end
+                        end
 
-            %w[base broad metre].each do |graph_desc|
-              [
-                [:route_info, [], {}],
-                [:can_token?, [], {}],
-                [:can_token?, [], {cheater: true}],
-                [:can_token?, [], {same_hex_allowed: true}],
-                [:tokenable_cities, [], {}],
-                [:connected_hexes, [], {}],
-                [:connected_nodes, [], {}],
-                [:connected_paths, [], {}],
-                [:reachable_hexes, [], {}],
-              ].each do |method, args, kwargs|
-                it "#{graph_desc} graph #{method}(corporation, *#{args}, **#{kwargs})" do
-                  legacy_graph = instance_variable_get(:"@legacy_graph_#{graph_desc}")
-                  adapter = instance_variable_get(:"@adapter_#{graph_desc}")
+                        [
+                          :no_blocking?,
+                        ].each do |method|
+                          it method do
+                            expected = @legacy_graph.send(method)
+                            actual = @adapter.send(method)
 
-                  aggregate_failures('corporations') do
-                    @game.corporations.each do |corporation|
-                      next if !corporation.floated? || corporation.closed?
-
-                      expected = legacy_graph.send(method, corporation, *args, **kwargs)
-                      actual = adapter.send(method, corporation, *args, **kwargs)
-
-                      expect(actual).to eq(expected), "#{graph_desc} graph #{method} does not match for #{corporation.name}"
+                            desc = "#{method} does not match at "\
+                                   "fixture/#{title}/#{game_id}?action=#{action}"
+                            expect(actual).to eq(expected), desc
+                          end
+                        end
+                      end
                     end
                   end
-                end
-              end
-
-              [
-                [:no_blocking?, [], {}],
-              ].each do |method, args, kwargs|
-                it "#{graph_desc} graph #{method}(*#{args}, **#{kwargs})" do
-                  legacy_graph = instance_variable_get(:"@legacy_graph_#{graph_desc}")
-                  adapter = instance_variable_get(:"@adapter_#{graph_desc}")
-
-                  expected = legacy_graph.send(method, *args, **kwargs)
-                  actual = adapter.send(method, *args, **kwargs)
-                  expect(actual).to eq(expected), "#{graph_desc} graph #{method} does not match"
                 end
               end
             end
