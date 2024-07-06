@@ -114,8 +114,6 @@ module Engine
               # LAIR uses a cheater token
               '19984': [145, 146],
             },
-            graph_opts: [
-            ]
           },
 
           # slow one
