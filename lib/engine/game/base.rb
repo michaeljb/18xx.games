@@ -241,7 +241,6 @@ module Engine
       DEPOT_CLASS = Depot
       PLAYER_CLASS = Player
       GRAPH_CLASS = Engine::Graph
-      GRAPH_OPTS = {}.freeze
 
       MINORS = [].freeze
 
@@ -2371,7 +2370,7 @@ module Engine
       private
 
       def init_graph
-        self.class::GRAPH_CLASS.new(self, **self.class::GRAPH_OPTS)
+        self.class::GRAPH_CLASS.new(self)
       end
 
       def init_bank
