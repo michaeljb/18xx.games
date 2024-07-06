@@ -23,24 +23,22 @@ module Engine
         expect(bfs_interface - bfs_excluded).to eq(legacy_interface - legacy_excluded)
       end
 
-      # [
-      #   :connected_hexes_by_token,
-      #   :connected_nodes_by_token,
-      #   :connected_paths_by_token,
-      # ]
-
       describe 'return values match legacy' do
         {
-          # TODO
-          # '1841' => {
-          #   fixtures: {
-          #     '132002' => [1259, 1260],
-          #   },
-          #   graph_opts: [
-          #     { check_tokens: true },
-          #     { check_tokens: true, check_regions: true },
-          #   ],
-          # },
+          '1841' => {
+            fixtures: {
+              '132002' => [
+                252, # start of phase 3
+                326, # start of phase 4
+                546, # start of phase 5
+                939, # end of game
+              ],
+            },
+            graph_opts: [
+              { check_tokens: true },
+              { check_tokens: true, check_regions: true },
+            ],
+          },
 
           '1822MX' => {
             fixtures: {
@@ -182,6 +180,32 @@ module Engine
                             desc = "#{method} does not match at "\
                                    "fixture/#{title}/#{game_id}?action=#{action}"
                             expect(actual).to eq(expected), desc
+                          end
+                        end
+
+                        [
+                          :connected_hexes_by_token,
+                          :connected_nodes_by_token,
+                          :connected_paths_by_token,
+                        ].each do |method|
+                          it "#{method}(corporation, token)" do
+                            aggregate_failures('corporations') do
+                              @game.corporations.each do |corporation|
+                                next if !corporation.floated? || corporation.closed?
+
+                                corporation.tokens.each do |token|
+                                  next unless token.used
+
+                                  expected = @legacy_graph.send(method, corporation, token)
+                                  actual = @adapter.send(method, corporation, token)
+
+                                  desc = "#{method} does not match for #{corporation.name}, "\
+                                         "token in #{token.city.hex.id} city ##{token.city.index} "\
+                                         "at fixture/#{title}/#{game_id}?action=#{action}"
+                                  expect(actual).to eq(expected), desc
+                                end
+                              end
+                            end
                           end
                         end
                       end
