@@ -158,16 +158,30 @@ module Engine
         connected_paths(corporation).to_h { |p| [p.hex, true] }
       end
 
-      # 1841 uses by_token stuff
-      def connected_hexes_by_token(corporation, token)
+      # 1841 uses by_token stuff, but the token arg in the by_token methods are
+      # actually all cities
+      def connected_hexes_by_token(corporation, city)
+        token = token_by_city(corporation, city)
         graph = @by_token_graphs[corporation][token]
-        connected_hexes_by_graph(graph, corporation)
+
+        advance_to_end!(graph, 'connected_hexes')
+        layable_hexes = graph.layable_hexes
+
+        tokened_hexes(corporation).each do |hex, exits|
+          next unless hex == city.hex
+
+          layable_hexes[hex].merge(exits)
+        end
+
+        layable_hexes.transform_values(&:sort)
       end
-      def connected_nodes_by_token(corporation, token)
+      def connected_nodes_by_token(corporation, city)
+        token = token_by_city(corporation, city)
         graph = @by_token_graphs[corporation][token]
         connected_nodes_by_graph(graph, corporation)
       end
-      def connected_paths_by_token(corporation, token)
+      def connected_paths_by_token(corporation, city)
+        token = token_by_city(corporation, city)
         graph = @by_token_graphs[corporation][token]
         connected_paths_by_graph(graph, corporation)
       end
@@ -186,8 +200,9 @@ module Engine
 
       def compute(corporation, routes_only: false, one_token: nil)
         graph =
-          if one_token # one_token is a Engine::Part::City
-            token = (one_token.tokens + one_token.extra_tokens).find { |t| t.corporation == corporation }
+          if one_token # one_token is actually a Engine::Part::City
+            token = token_by_city(corporation, one_token)
+
             @by_token_graphs[corporation][token]
           else
             @corp_graphs[corporation]
@@ -333,6 +348,10 @@ module Engine
           hex = token.city.hex
           tokened_hexes[hex] = Set.new(hex.neighbors.keys)
         end
+      end
+
+      def token_by_city(corporation, city)
+        (city.tokens + city.extra_tokens).find { |t| t&.corporation == corporation }
       end
     end
   end
