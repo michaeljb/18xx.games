@@ -7,6 +7,20 @@ def load_fixture(game_title, game_id, action_id = nil)
   Engine::Game.load(game_file, at_action: action_id).maybe_raise!
 end
 
+def sanitize(data)
+  case data
+  when Hash
+    case data.values[0]
+    when Array
+      data.transform_values(&:sort)
+    else
+      data
+    end
+  else
+    data
+  end
+end
+
 module Engine
   module BfsGraph
     describe Adapter do
@@ -196,8 +210,11 @@ module Engine
                                 corporation.tokens.each do |token|
                                   next unless token.used
 
-                                  expected = @legacy_graph.send(method, corporation, token)
-                                  actual = @adapter.send(method, corporation, token)
+                                  expected = sanitize(
+                                    @legacy_graph.send(method, corporation, token.city))
+
+                                  actual = sanitize(
+                                    @adapter.send(method, corporation, token.city))
 
                                   desc = "#{method} does not match for #{corporation.name}, "\
                                          "token in #{token.city.hex.id} city ##{token.city.index} "\
