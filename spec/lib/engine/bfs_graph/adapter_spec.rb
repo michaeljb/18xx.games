@@ -163,7 +163,7 @@ module Engine
                                 actual = @adapter.send(method, corporation, **kwargs)
 
                                 desc = "#{method} does not match for #{corporation.name} at "\
-                                       "fixture/#{title}/#{game_id}?action=#{action}"
+                                       "fixture/#{title}/#{game_id}?action=#{action}&graph"
                                 expect(actual).to eq(expected), desc
                               end
                             end
@@ -178,7 +178,7 @@ module Engine
                             actual = @adapter.send(method)
 
                             desc = "#{method} does not match at "\
-                                   "fixture/#{title}/#{game_id}?action=#{action}"
+                                   "fixture/#{title}/#{game_id}?action=#{action}&graph"
                             expect(actual).to eq(expected), desc
                           end
                         end
@@ -201,7 +201,7 @@ module Engine
 
                                   desc = "#{method} does not match for #{corporation.name}, "\
                                          "token in #{token.city.hex.id} city ##{token.city.index} "\
-                                         "at fixture/#{title}/#{game_id}?action=#{action}"
+                                         "at fixture/#{title}/#{game_id}?action=#{action}&graph"
                                   expect(actual).to eq(expected), desc
                                 end
                               end
