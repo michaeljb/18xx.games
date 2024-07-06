@@ -48,6 +48,7 @@ module Engine
 
         @can_token.delete(corporation)
         @tokenable_cities.delete(corporation)
+        @by_token_graphs[corporation].clear
       end
 
       def route_info(corporation)
