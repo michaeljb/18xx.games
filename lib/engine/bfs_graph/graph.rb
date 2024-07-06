@@ -22,7 +22,6 @@ module Engine
 
         @overlap = opts[:overlap] || :defer
         @skip_paths = opts[:skip_paths] || Set.new
-        @edge_wrappers = opts[:edge_wrappers]
 
         @home_as_token = opts[:home_as_token] || false
         @no_blocking = opts[:no_blocking] || false
@@ -313,7 +312,7 @@ module Engine
 
         @overlapping_paths = Hash.new { |h, k| h[k] = {from: nil, dc_nodes: new_dc_nodes } }
 
-        @edge_wrappers ||= {}
+        @edge_wrappers = {}
         @visited_edges = Hash.new { |h, k| h[k] = { dc_nodes: Set.new } }
 
         @visited_hexes = Set.new
@@ -353,8 +352,13 @@ module Engine
         # avoid recomputing some state between `advance!` calls
         @advance_cache = {}
 
-        init_route_info!
-        init_can_token!
+        @route_info = {}
+
+
+        # TODO: refactor starters and reset!; if reset! is called for a
+        # corporation with no tokens down, but later on their token is placed
+        # and then the graph is evaluated, their queue is empty because of the
+        # current implementation which initializes their queue in reset!
 
         # start with the corporation's placed tokens
         @corporation.tokens.each do |token|
@@ -409,15 +413,6 @@ module Engine
 
       def connected_to_mandatory?(dc_nodes)
         dc_nodes.any? { |dc_node, _| dc_node.route == :mandatory }
-      end
-
-      def init_route_info!
-        @route_info = {}
-        @_node_count = nil
-      end
-
-      def init_can_token!
-        @can_token = {}
       end
 
       def is_terminal_path?(atom)
