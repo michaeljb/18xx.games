@@ -18,11 +18,20 @@ module Engine
       def initialize(game, **opts)
         @game = game
 
+        # corp -> Graph
         @corp_graphs = Hash.new { |h,k| h[k] = Engine::BfsGraph::Graph.new(@game, k, **opts) }
+
+        # corp -> token -> Graph
+        @by_token_graphs = Hash.new do |graphs_by_token, corporation|
+          graphs_by_token[corporation] = Hash.new do |graphs, token|
+            graphs[token] = Engine::BfsGraph::Graph.new(@game, corporation, by_token: token, **opts)
+          end
+        end
 
         @can_token = {}
         @tokenable_cities = {}
         @no_blocking = opts[:no_blocking] || false
+        @check_tokens = opts[:check_tokens] || false
 
         @opts = opts
       end
@@ -107,6 +116,10 @@ module Engine
       # can lay/upgrade track on these
       def connected_hexes(corporation)
         graph = @corp_graphs[corporation]
+        connected_hexes_by_graph(graph, corporation)
+      end
+
+      def connected_hexes_by_graph(graph, corporation)
         advance_to_end!(graph, 'connected_hexes')
 
         layable_hexes = graph.layable_hexes
@@ -118,6 +131,10 @@ module Engine
 
       def connected_nodes(corporation)
         graph = @corp_graphs[corporation]
+        connected_nodes_by_graph(graph, corporation)
+      end
+
+      def connected_nodes_by_graph(graph, corporation)
         advance_to_end!(graph, 'connected_nodes')
 
         visited_nodes = graph.visited_nodes
@@ -129,7 +146,10 @@ module Engine
 
       def connected_paths(corporation)
         graph = @corp_graphs[corporation]
+        connected_paths_by_graph(graph, corporation)
+      end
 
+      def connected_paths_by_graph(graph, corporation)
         advance_to_end!(graph, 'connected_paths')
         graph.visited_paths.reject { |p| p.terminal? && p.junction }.to_h { |n| [n, true] }
       end
@@ -140,21 +160,42 @@ module Engine
 
       # 1841 uses by_token stuff
       def connected_hexes_by_token(corporation, token)
-        raise NotImplementedError
+        graph = @by_token_graphs[corporation][token]
+        connected_hexes_by_graph(graph, corporation)
       end
       def connected_nodes_by_token(corporation, token)
-        raise NotImplementedError
+        graph = @by_token_graphs[corporation][token]
+        connected_nodes_by_graph(graph, corporation)
       end
       def connected_paths_by_token(corporation, token)
-        raise NotImplementedError
+        graph = @by_token_graphs[corporation][token]
+        connected_paths_by_graph(graph, corporation)
       end
       def compute_by_token(corporation)
-        raise NotImplementedError
+        # TODO: find cities where @game.city_tokened_by? returns true but does
+        # not appear in corporation.tokens loop
+
+        coporation.tokens.each do |token|
+          next unless token.used
+          next if @check_tokens && @game.skip_token?(self, corporation, token.city)
+
+          graph = @by_token_graphs[corporation][token]
+          compute_by_graph(graph, corporation, one_token: token.city)
+        end
       end
 
       def compute(corporation, routes_only: false, one_token: nil)
-        graph = @corp_graphs[corporation]
+        graph =
+          if one_token # one_token is a Engine::Part::City
+            token = (one_token.tokens + one_token.extra_tokens).find { |t| t.corporation == corporation }
+            @by_token_graphs[corporation][token]
+          else
+            @corp_graphs[corporation]
+          end
+        compute_by_graph(graph, corporation, routes_only: routes_only)
+      end
 
+      def compute_by_graph(graph, corporation, routes_only: false)
         if routes_only
           advance_for_route_info!(graph)
         else

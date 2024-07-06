@@ -27,6 +27,8 @@ module Engine
         @no_blocking = opts[:no_blocking] || false
         @skip_track = opts[:skip_track]
 
+        @by_token = opts[:by_token]
+
         # all the opts from the existing Graph
         # TODO: use these in the computation logic
         @check_tokens = opts[:check_tokens]
@@ -363,6 +365,7 @@ module Engine
         # start with the corporation's placed tokens
         @corporation.tokens.each do |token|
           next unless token.city
+          next if @by_token && @by_token.city != token.city
 
           enqueue(token.city, from: token)
         end
@@ -371,10 +374,12 @@ module Engine
           Array(@corporation.coordinates).each do |coord|
             hex = @game.hex_by_id(coord)
 
-            if @corporation.city
+            if @corporation.city && (!@by_token || @by_token.city == @corporation.city)
               enqueue(hex.tile.cities[@corporation.city], from: :home_as_token)
             else
               hex.tile.city_towns.each do |city_town|
+                next if @by_token && @by_token.city != city_town
+
                 enqueue(city_town, from: :home_as_token)
               end
             end
