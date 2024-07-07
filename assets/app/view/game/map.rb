@@ -23,7 +23,7 @@ module View
       needs :routes, default: [], store: true
       needs :historical_laid_hexes, default: nil, store: true
       needs :historical_routes, default: [], store: true
-      needs :graph, default: nil, store: true
+      needs :graph_viz_colors, default: nil, store: true
       needs :map_zoom, default: nil, store: true
 
       EDGE_LENGTH = 50
@@ -66,22 +66,35 @@ module View
         routes = @routes
         routes = @historical_routes if routes.none?
 
-        @hexes.map! do |hex|
-          clickable = (@graph || @show_starting_map) ? false : step&.available_hex(entity_or_entities, hex)
-          opacity = clickable ? 1.0 : 0.5
-          h(
-            Hex,
-            hex: hex,
-            opacity: (@graph || @show_starting_map) ? 1.0 : (@opacity || opacity),
-            entity: current_entity,
-            clickable: clickable,
-            actions: actions,
-            routes: @graph ? [] : routes,
-            start_pos: @start_pos,
-            highlight: @graph ? false : laid_hexes.include?(hex),
-            graph: @graph,
-          )
-        end
+        hex_view =
+          if @graph_viz_colors
+            lambda do |hex|
+              h(
+                Hex,
+                hex: hex,
+                opacity: @graph_viz_colors.include?(hex) ? 1.0 : 0.5,
+                start_pos: @start_pos,
+                graph_viz_colors: @graph_viz_colors,
+              )
+            end
+          else
+            lambda do |hex|
+              clickable = @show_starting_map ? false : step&.available_hex(entity_or_entities, hex)
+              opacity = clickable ? 1.0 : 0.5
+              h(
+                Hex,
+                hex: hex,
+                opacity: @show_starting_map ? 1.0 : (@opacity || opacity),
+                start_pos: @start_pos,
+                entity: current_entity,
+                clickable: clickable,
+                actions: actions,
+                routes: routes,
+                highlight: laid_hexes.include?(hex),
+              )
+            end
+          end
+        @hexes.map!(&hex_view)
         @hexes.compact!
 
         children = [render_map, h(MapZoom, map_zoom: map_zoom)]

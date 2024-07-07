@@ -1,30 +1,38 @@
 # frozen_string_literal: true
 
+require 'lib/settings'
+
 module View
   module Game
     module Part
       class Junction < Snabberb::Component
-        needs :color, default: 'black'
+        include Lib::Settings
 
-        # only render junctions when visualizing a Graph
+        needs :graph_viz_colors, default: nil, store: true
+        needs :junction, default: nil
+
+        # easy/lazy mode: just scale down the existing hexagon shape
+        SCALE = 0.1
+        STROKE_WIDTH = 2
+        ATTRS = {
+          points: Lib::Hex::POINTS,
+          transform: "scale(#{SCALE})",
+          stroke: 'white',
+          'stroke-width': STROKE_WIDTH.to_f / SCALE,
+        }.freeze
+
         def render
-          # easy/lazy mode: just take the existing hex and scale it down
-          scale = 0.1
+          # junctions are only rendered when they are enqueued for processing
+          # visualizing a Graph
+         return '' unless (color_index = @graph_viz_colors&.[](@junction))
 
-          stroke_width = 2
-          scaled_stroke_width = stroke_width.to_f / scale
-
-          polygon_props = {
-            attrs: {
-              points: Lib::Hex::POINTS,
-              transform: "scale(#{scale})",
-              fill: @color,
-              stroke: 'white',
-              'stroke-width': scaled_stroke_width,
-            }
-          }
-
-          h(:polygon, polygon_props)
+          h(:polygon,
+            {
+              attrs: {
+                fill: route_prop(color_index, :color),
+                **ATTRS,
+              }
+            })
         end
       end
     end

@@ -13,7 +13,7 @@ module View
         needs :tile
         needs :region_use
         needs :routes
-        needs :graph, default: nil, store: true
+        needs :graph_viz_colors, default: nil, store: true
         needs :show_revenue
 
         def render
@@ -32,8 +32,8 @@ module View
         end
 
         def value_for(town, prop)
-          if @graph
-            index = @graph.include?(town) ? @graph.viz_color_index(town) : nil
+          if @graph_viz_colors
+            index = @graph_viz_colors[town]
           else
             @routes_paths = @routes.map { |route| route.paths_for(@tile.paths) }
 

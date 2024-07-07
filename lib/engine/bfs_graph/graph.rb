@@ -9,7 +9,7 @@ module Engine
     class Graph
       attr_reader :advanced, :route_info, :skipped, :last_processed,
                   :layable_hexes, :visited_hexes, :visited_nodes, :visited_paths,
-                  :corporation, :visited
+                  :corporation, :visited, :queue, :overlapping_paths
 
       def initialize(game, corporation, visualize: true, **opts)
         @game = game
@@ -35,32 +35,6 @@ module Engine
         @check_regions = opts[:check_regions]
 
         init!
-      end
-
-      def viz_color_index(atom)
-        return 3 if @queue.peek&.[](:atom) == atom
-        return 2 if @visited.include?(atom) && enqueued?(atom)
-        return 0 if @visited.include?(atom)
-        return 1 if enqueued?(atom)
-        return 9 if @overlapping_paths.include?(atom)
-
-        12
-      end
-
-      # returns an array of arrays
-      # - index in outer array correlates to color that will be used to display
-      #   the paths in the inner array
-      def viz_paths_for_display
-        return [] unless @visualize
-        return [] if @visualize_paths.empty?
-
-        @advance_cache[:viz_paths_for_display] ||=
-          begin
-            by_color = @visualize_paths.group_by { |p| viz_color_index(p) }
-            by_color.each_with_object(Array.new(by_color.keys.max) { [] }) do |(color, paths), obj|
-              obj[color] = paths
-            end
-          end
       end
 
       def finished?
@@ -298,6 +272,10 @@ module Engine
 
       def inverted(edge_num)
         (edge_num + 3) % 6
+      end
+
+      def peek
+        @queue.peek&.[](:atom)
       end
 
       #private

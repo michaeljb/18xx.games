@@ -156,7 +156,7 @@ module Engine
       end
 
       def reachable_hexes(corporation, advance_to_end: true)
-        connected_paths(corporation, advance_to_end: advance_to_end).to_h { |p| [p.hex, true] }
+        connected_paths(corporation, advance_to_end: advance_to_end).to_h { |p, _| [p.hex, true] }
       end
 
       # 1841 uses by_token stuff, but the token arg in the by_token methods are

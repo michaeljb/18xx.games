@@ -93,20 +93,9 @@ module View
         needs :tile
         needs :region_use
         needs :routes
-        needs :graph, default: nil, store: true
+        needs :graph_viz_colors, default: nil, store: true
 
         def render
-          # each route has an "entry" in this array; each "entry" is an array of
-          # the paths on that route that are also on this tile
-          #
-          # Array<Array<Path>>
-          @routes_paths =
-            if @graph
-              @graph.viz_paths_for_display
-            else
-              @routes.map { |route| route.paths_for(@tile.paths) }
-            end
-
           paths_and_stubs = @tile.paths + @tile.stubs + @tile.future_paths
           path_indexes = paths_and_stubs.to_h { |p| [p, indexes_for(p)] }
 
@@ -164,10 +153,21 @@ module View
         private
 
         def indexes_for(path)
-          indexes = @routes_paths
-            .map.with_index
-            .select { |route_paths, _index| route_paths.any? { |p| path == p } }
-            .flat_map { |_, index| index }
+          indexes =
+            if @graph_viz_colors
+              [@graph_viz_colors[path]]
+            else
+              # each route has an "entry" in this array; each "entry" is an array of
+              # the paths on that route that are also on this tile
+              #
+              # Array<Array<Path>>
+              @routes_paths = @routes.map { |route| route.paths_for(@tile.paths) }
+
+              @routes_paths
+                .map.with_index
+                .select { |route_paths, _index| route_paths.any? { |p| path == p } }
+                .flat_map { |_, index| index }
+            end
 
           indexes.empty? ? [nil] : indexes
         end

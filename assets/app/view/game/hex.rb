@@ -40,9 +40,9 @@ module View
       needs :entity, default: nil
       needs :unavailable, default: nil
       needs :routes, default: []
-      needs :graph, default: nil, store: true
       needs :start_pos, default: [1, 1]
       needs :highlight, default: false
+      needs :graph_viz_colors, default: nil, store: true
 
       def render
         return '' if @hex.empty
@@ -56,7 +56,16 @@ module View
           end
 
         children = hex_outline
-        if (color = @tile&.frame&.color)
+
+        if (graph_color = @graph_viz_colors&.[](@hex))
+          color = route_prop(graph_color, :color)
+          attrs = {
+            stroke: color,
+            'stroke-width': FRAME_COLOR_STROKE_WIDTH,
+            points: FRAME_COLOR_POINTS,
+          }
+          children << h(:polygon, attrs: attrs)
+        elsif (color ||= @tile&.frame&.color)
           attrs = {
             stroke: color,
             'stroke-width': FRAME_COLOR_STROKE_WIDTH,
@@ -97,7 +106,6 @@ module View
             tile: @tile,
             show_coords: setting_for(:show_coords, @game) && (@role == :map),
             routes: @routes,
-            graph: @graph,
             game: @game
           )
         end

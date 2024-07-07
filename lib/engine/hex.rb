@@ -331,5 +331,7 @@ module Engine
     def inspect
       "<#{self.class.name}: #{name}, tile: #{@tile.name}>"
     end
+
+    alias to_s inspect
   end
 end

@@ -20,7 +20,6 @@ module View
       needs :game, default: nil
       needs :tile
       needs :routes, default: []
-      needs :graph, default: nil, store: true
       needs :show_coords, default: nil
 
       # helper method to pass @tile and @region_use to every part
@@ -77,20 +76,15 @@ module View
 
         render_revenue = should_render_revenue?
         if !@tile.paths.empty? || !@tile.stubs.empty? || !@tile.future_paths.empty?
-          children << render_tile_part(Part::Track, routes: @routes, graph: @graph)
-        end
-        # visualize junctions
-        if @graph && @tile.junction && @graph.include?(@tile.junction)
-          children << h(
-            Part::Junction,
-            color: route_prop(@graph.viz_color_index(@tile.junction), :color),
-          )
+          children << render_tile_part(Part::Track, routes: @routes)
         end
 
-        children << render_tile_part(Part::Cities, show_revenue: !render_revenue, graph: @graph) unless @tile.cities.empty?
+        children << h(Part::Junction, junction: @tile.junction)
+
+        children << render_tile_part(Part::Cities, show_revenue: !render_revenue) unless @tile.cities.empty?
 
         unless @tile.towns.empty?
-          children << render_tile_part(Part::Towns, routes: @routes, show_revenue: !render_revenue, graph: @graph)
+          children << render_tile_part(Part::Towns, routes: @routes, show_revenue: !render_revenue)
         end
 
         borders = render_tile_part(Part::Borders) if @tile.borders.any?(&:type)

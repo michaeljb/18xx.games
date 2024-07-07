@@ -27,7 +27,7 @@ module View
         needs :game, default: nil, store: true
         needs :city_render_location, default: nil
         needs :selected_token, default: nil, store: true
-        needs :graph, default: nil, store: true
+        needs :graph_viz_colors, default: nil, store: true
 
         RESERVATION_FONT_SIZE = {
           1 => 22,
@@ -63,16 +63,14 @@ module View
 
           children = []
 
-          if @graph
-            if @graph.include?(@city)
-              graph_color = route_prop(@graph.viz_color_index(@city), :color)
-              highlight_attrs = {
-                r: @radius + 5,
-                fill: graph_color,
-                stroke: graph_color,
-              }
-              children << h(:circle, attrs: highlight_attrs)
-            end
+          if (color_index = @graph_viz_colors&.[](@city))
+            graph_color = route_prop(color_index, :color)
+            highlight_attrs = {
+              r: @radius + 5,
+              fill: graph_color,
+              stroke: graph_color,
+            }
+            children << h(:circle, attrs: highlight_attrs)
           end
 
           token_attrs = {

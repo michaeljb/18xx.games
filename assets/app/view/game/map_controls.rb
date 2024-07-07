@@ -10,7 +10,6 @@ module View
       needs :show_starting_map, default: false, store: true
       needs :historical_routes, default: [], store: true
       needs :historical_laid_hexes, default: nil, store: true
-      needs :graph, default: nil, store: true
       needs :game, default: nil, store: true
 
       def render
