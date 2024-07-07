@@ -115,13 +115,13 @@ module Engine
       end
 
       # can lay/upgrade track on these
-      def connected_hexes(corporation)
+      def connected_hexes(corporation, advance_to_end: true)
         graph = @corp_graphs[corporation]
-        connected_hexes_by_graph(graph, corporation)
+        connected_hexes_by_graph(graph, corporation, advance_to_end: advance_to_end)
       end
 
-      def connected_hexes_by_graph(graph, corporation)
-        advance_to_end!(graph, 'connected_hexes')
+      def connected_hexes_by_graph(graph, corporation, advance_to_end: true)
+        advance_to_end!(graph, 'connected_hexes') if advance_to_end
 
         layable_hexes = graph.layable_hexes
         tokened_hexes(corporation).each { |h, e| layable_hexes[h].merge(e) }
@@ -130,13 +130,13 @@ module Engine
         layable_hexes.transform_values(&:sort)
       end
 
-      def connected_nodes(corporation)
+      def connected_nodes(corporation, advance_to_end: true)
         graph = @corp_graphs[corporation]
-        connected_nodes_by_graph(graph, corporation)
+        connected_nodes_by_graph(graph, corporation, advance_to_end: advance_to_end)
       end
 
-      def connected_nodes_by_graph(graph, corporation)
-        advance_to_end!(graph, 'connected_nodes')
+      def connected_nodes_by_graph(graph, corporation, advance_to_end: true)
+        advance_to_end!(graph, 'connected_nodes') if advance_to_end
 
         visited_nodes = graph.visited_nodes
         visited_nodes.merge(nodes_connected_via_ability(corporation))
@@ -145,27 +145,27 @@ module Engine
         visited_nodes.to_h { |n| [n, true] }
       end
 
-      def connected_paths(corporation)
+      def connected_paths(corporation, advance_to_end: true)
         graph = @corp_graphs[corporation]
-        connected_paths_by_graph(graph, corporation)
+        connected_paths_by_graph(graph, corporation, advance_to_end: advance_to_end)
       end
 
-      def connected_paths_by_graph(graph, corporation)
-        advance_to_end!(graph, 'connected_paths')
+      def connected_paths_by_graph(graph, corporation, advance_to_end: true)
+        advance_to_end!(graph, 'connected_paths') if advance_to_end
         graph.visited_paths.reject { |p| p.terminal? && p.junction }.to_h { |n| [n, true] }
       end
 
-      def reachable_hexes(corporation)
-        connected_paths(corporation).to_h { |p| [p.hex, true] }
+      def reachable_hexes(corporation, advance_to_end: true)
+        connected_paths(corporation, advance_to_end: advance_to_end).to_h { |p| [p.hex, true] }
       end
 
       # 1841 uses by_token stuff, but the token arg in the by_token methods are
       # actually all cities
-      def connected_hexes_by_token(corporation, city)
+      def connected_hexes_by_token(corporation, city, advance_to_end: true)
         token = token_by_city(corporation, city)
         graph = @by_token_graphs[corporation][token]
 
-        advance_to_end!(graph, 'connected_hexes')
+        advance_to_end!(graph, 'connected_hexes') if advance_to_end
         layable_hexes = graph.layable_hexes
 
         tokened_hexes(corporation).each do |hex, exits|
@@ -176,15 +176,15 @@ module Engine
 
         layable_hexes.transform_values(&:sort)
       end
-      def connected_nodes_by_token(corporation, city)
+      def connected_nodes_by_token(corporation, city, advance_to_end: true)
         token = token_by_city(corporation, city)
         graph = @by_token_graphs[corporation][token]
-        connected_nodes_by_graph(graph, corporation)
+        connected_nodes_by_graph(graph, corporation, advance_to_end)
       end
-      def connected_paths_by_token(corporation, city)
+      def connected_paths_by_token(corporation, city, advance_to_end: true)
         token = token_by_city(corporation, city)
         graph = @by_token_graphs[corporation][token]
-        connected_paths_by_graph(graph, corporation)
+        connected_paths_by_graph(graph, corporation, advance_to_end: advance_to_end)
       end
       def compute_by_token(corporation)
         # TODO: find cities where @game.city_tokened_by? returns true but does
