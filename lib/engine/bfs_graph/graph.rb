@@ -106,6 +106,9 @@ module Engine
             edge = [path.a, path.b].find { |path_end| edge_wrapper(path_end) != props[:from] }
             opts = @opts.clone
             opts[:skip_paths] = @overlapping_paths.keys + path.hex.paths[edge.num] - [path]
+
+            #binding.pry if corporation.id == 'IFAI' && @game.last_processed_action == 939 && @by_token.city.hex.id == 'E9'
+
             skip_graph = self.class.new(@game, @corporation, visualize: false, **opts)
             skip_graph.advance! until skip_graph.finished? ||
                                       (found = (skip_graph.visited.include?(path) &&

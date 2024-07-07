@@ -215,6 +215,8 @@ module Engine
                                   actual = sanitize(
                                     @adapter.send(method, corporation, token.city))
 
+                                  #binding.pry if actual != expected
+
                                   desc = "#{method} does not match for #{corporation.name}, "\
                                          "token in #{token.city.hex.id} city ##{token.city.index} "\
                                          "at fixture/#{title}/#{game_id}?action=#{action}&graph"
