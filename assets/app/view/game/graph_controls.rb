@@ -28,6 +28,7 @@ module View
       needs :graph_v2, default: nil, store: true
       needs :graph_viz_colors, default: nil, store: true
       needs :graph_version, default: GraphVersion::V2, store: true
+      needs :graph_token_city, default: 'All', store: true
       needs :game, default: nil, store: true
       needs :operator, default: nil, store: true
 
@@ -41,14 +42,29 @@ module View
           graph_version = Native(@graph_version_input).elm&.value
           operator_name = Native(@graph_input).elm&.value
           operator = all_operators.find { |o| o.name == operator_name }
+
+          @graph_token_city =
+            if (tokens_input_val = Native(@tokens_input).elm&.value) == :all
+              :all
+            else
+              @game.city_by_id(tokens_input_val)
+            end
+
           if operator
             case graph_version
             when GraphVersion::V1
               graph_v1 = Engine::Graph.new(@game)
               graph_v2 = nil
             else
-              graph_v1 = Engine::BfsGraph::Adapter.new(@game)
-              graph_v2 = graph_v1.corp_graphs[operator]
+              adapter = Engine::BfsGraph::Adapter.new(@game)
+              graph_v1 = adapter
+              graph_v2 =
+                if @graph_token_city == :all
+                  adapter.corp_graphs[operator]
+                else
+                  token = operator.placed_tokens.find { |t| t.city == @graph_token_city }
+                  adapter.by_token_graphs[operator][token]
+                end
             end
           else
             graph_v1 = nil
@@ -59,6 +75,7 @@ module View
           store(:graph_version, graph_version, skip: true)
           store(:graph_v1, graph_v1, skip: true)
           store(:graph_v2, graph_v2, skip: true)
+          store(:graph_token_city, @graph_token_city, skip: true)
           store(:graph_viz_colors, graph_viz_colors, skip: false)
         end
 
@@ -79,6 +96,23 @@ module View
 
         @graph_input = render_select(id: :route, on: { input: graph_change }, children: graph_operators)
         controls << h('label.inline-block', ['Show Graph For:', @graph_input])
+
+        @tokens_input = render_select(
+          id: :tokens,
+          on: { input: graph_change },
+          children: [h(:option, { attrs: { value: :all } }, 'All')] +
+          (@operator&.placed_tokens || []).map do |token|
+            hex = token.hex
+            label =
+              if @operator.placed_tokens.count { |t| t.hex == hex } > 1
+                "#{hex.id} ##{token.city.index}"
+              else
+                hex.id
+              end
+            h(:option, { attrs: { value: token.city.id } }, label)
+          end
+        )
+        controls << h('label.inline-block', ['Token:', @tokens_input])
 
         controls = add_history_controls(controls) if @graph_v2
 
@@ -186,13 +220,27 @@ module View
           if (next_in_queue = @graph_v2.peek)
             colors[next_in_queue] = Colors::NEXT_IN_QUEUE
           end
-          @graph_v1.connected_hexes(@operator, advance_to_end: false).each { |h, _| colors[h] = Colors::LAYABLE_HEX }
-          @graph_v1.reachable_hexes(@operator, advance_to_end: false).each { |h, _| colors[h] = Colors::CONNECTED_HEX }
+
+          if @graph_token_city == :all
+            @graph_v1.connected_hexes(@operator, advance_to_end: false).each { |h, _| colors[h] = Colors::LAYABLE_HEX }
+            @graph_v1.reachable_hexes(@operator, advance_to_end: false).each { |h, _| colors[h] = Colors::CONNECTED_HEX }
+          else
+            @graph_v1.connected_hexes_by_token(@operator, @graph_token_city, advance_to_end: false).each { |h, _| colors[h] = Colors::LAYABLE_HEX }
+            # @graph_v1.reachable_hexes_by_token(@operator, @graph_token_city, advance_to_end: false).each { |h, _| colors[h] = Colors::CONNECTED_HEX }
+          end
+
         elsif @graph_v1
-          @graph_v1.connected_nodes(@operator).each { |n, _| colors[n] = Colors::IN_GRAPH }
-          @graph_v1.connected_paths(@operator).each { |p, _| colors[p] = Colors::IN_GRAPH }
-          @graph_v1.connected_hexes(@operator).each { |h, _| colors[h] = Colors::LAYABLE_HEX }
-          @graph_v1.reachable_hexes(@operator).each { |h, _| colors[h] = Colors::CONNECTED_HEX }
+          if @graph_token_city == :all
+            @graph_v1.connected_nodes(@operator).each { |n, _| colors[n] = Colors::IN_GRAPH }
+            @graph_v1.connected_paths(@operator).each { |p, _| colors[p] = Colors::IN_GRAPH }
+            @graph_v1.connected_hexes(@operator).each { |h, _| colors[h] = Colors::LAYABLE_HEX }
+            @graph_v1.reachable_hexes(@operator).each { |h, _| colors[h] = Colors::CONNECTED_HEX }
+          else
+            @graph_v1.connected_nodes_by_token(@operator, @graph_token_city).each { |n, _| colors[n] = Colors::IN_GRAPH }
+            @graph_v1.connected_paths_by_token(@operator, @graph_token_city).each { |p, _| colors[p] = Colors::IN_GRAPH }
+            @graph_v1.connected_hexes_by_token(@operator, @graph_token_city).each { |h, _| colors[h] = Colors::LAYABLE_HEX }
+            @graph_v1.reachable_hexes_by_token(@operator, @graph_token_city).each { |h, _| colors[h] = Colors::IN_GRAPH }
+          end
         end
 
         colors

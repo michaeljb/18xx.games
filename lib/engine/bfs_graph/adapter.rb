@@ -13,7 +13,7 @@ module Engine
     # more sense to refactor more of the client code to take advantage of
     # BfsGraph::Graph's features like lazy advancement.
     class Adapter
-      attr_reader :corp_graphs
+      attr_reader :corp_graphs, :by_token_graphs
 
       def initialize(game, **opts)
         @game = game
@@ -186,6 +186,11 @@ module Engine
         graph = @by_token_graphs[corporation][token]
         connected_paths_by_graph(graph, corporation, advance_to_end: advance_to_end)
       end
+
+      def reachable_hexes_by_token(corporation, token, advance_to_end: true)
+        raise NotImplementedError
+      end
+
       def compute_by_token(corporation)
         # TODO: find cities where @game.city_tokened_by? returns true but does
         # not appear in corporation.tokens loop

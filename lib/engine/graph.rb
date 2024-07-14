@@ -9,10 +9,11 @@ module Engine
       @connected_hexes = {}
       @connected_nodes = {}
       @connected_paths = {}
+      @reachable_hexes = {}
       @connected_hexes_by_token = Hash.new { |h, k| h[k] = {} }
       @connected_paths_by_token = Hash.new { |h, k| h[k] = {} }
       @connected_nodes_by_token = Hash.new { |h, k| h[k] = {} }
-      @reachable_hexes = {}
+      @reachable_hexes_by_token = Hash.new { |h, k| h[k] = {} }
       @tokenable_cities = {}
       @routes = {}
       @tokens = {}
@@ -29,10 +30,11 @@ module Engine
       @connected_hexes.clear
       @connected_nodes.clear
       @connected_paths.clear
+      @reachable_hexes.clear
       @connected_hexes_by_token.clear
       @connected_nodes_by_token.clear
       @connected_paths_by_token.clear
-      @reachable_hexes.clear
+      @reachable_hexes_by_token.clear
       @tokenable_cities.clear
       @tokens.clear
       @cheater_tokens.clear
@@ -110,6 +112,11 @@ module Engine
       @connected_paths[corporation]
     end
 
+    def reachable_hexes(corporation)
+      compute(corporation) unless @reachable_hexes[corporation]
+      @reachable_hexes[corporation]
+    end
+
     def connected_hexes_by_token(corporation, token)
       compute_by_token(corporation) unless @connected_hexes_by_token[corporation][token]
       @connected_hexes_by_token[corporation][token]
@@ -125,9 +132,9 @@ module Engine
       @connected_paths_by_token[corporation][token]
     end
 
-    def reachable_hexes(corporation)
-      compute(corporation) unless @reachable_hexes[corporation]
-      @reachable_hexes[corporation]
+    def reachable_hexes_by_token(corporation, token)
+      compute_by_token(corporation) unless @reachable_hexes_by_token[corporation][token]
+      @reachable_hexes_by_token[corporation][token]
     end
 
     def compute_by_token(corporation)
@@ -274,6 +281,7 @@ module Engine
         @connected_hexes_by_token[corporation][one_token] = hexes
         @connected_nodes_by_token[corporation][one_token] = nodes
         @connected_paths_by_token[corporation][one_token] = paths
+        @reachable_hexes_by_token[corporation][one_token] = paths.to_h { |path, _| [path.hex, true] }
       else
         @routes[corporation] = routes
         @connected_hexes[corporation] = hexes.transform_values(&:sort)
