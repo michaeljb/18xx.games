@@ -113,16 +113,16 @@ module Engine
         GAME_END_CHECK = {
           bankrupt: :immediate,
           custom: :one_more_full_or_set,
-          stock_market: :one_more_full_or_set,
+          stock_market: :full_or,
         }.freeze
-        GAME_END_CHECK_STOCK = {
+        GAME_END_CHECK_SGE = {
           bankrupt: :immediate,
           custom: :full_or,
           stock_market: :full_or,
         }.freeze
         GAME_END_REASONS_TEXT = {
           bankrupt: 'Player is bankrupt',
-          custom: '6x2-train is bought/exported',
+          custom: '6x2-train was bought/exported',
           stock_market: 'Corporation enters end game trigger on stock market',
         }.freeze
         GAME_END_DESCRIPTION_REASON_MAP_TEXT = {
@@ -1025,7 +1025,7 @@ module Engine
         def event_trigger_endgame!
           return if @game_end_reason
 
-          @log << '-- Event: Endgame triggered --'
+          @log << '-- Event: Endgame triggered by the first 6x2 train being bought/exported --'
           @endgame_triggered = true
         end
 
@@ -1038,12 +1038,9 @@ module Engine
           G18RoyalGorge::StockMarket.new(game_market, [])
         end
 
-        # a 6-train exporting, or a sold out corp hitting the game end zone on
-        # the stock market mess with the timing, so two GAME_END_CHECK configs
-        # are needed
         def game_end_check_values
-          if @round&.stock?
-            self.class::GAME_END_CHECK_STOCK
+          if @optional_rules.include?(:shorter_game_end)
+            self.class::GAME_END_CHECK_SGE
           else
             self.class::GAME_END_CHECK
           end
