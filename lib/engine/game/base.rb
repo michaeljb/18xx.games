@@ -99,7 +99,7 @@ module Engine
                   :tiles, :turn, :total_loans, :undo_possible, :redo_possible, :round_history, :all_tiles,
                   :optional_rules, :exception, :last_processed_action, :broken_action,
                   :turn_start_action_id, :last_turn_start_action_id, :programmed_actions, :round_counter,
-                  :manually_ended, :seed
+                  :manually_ended, :seed, :action_tree
 
       # Game end check is described as a dictionary
       # with reason => after
