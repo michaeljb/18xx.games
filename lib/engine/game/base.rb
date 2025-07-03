@@ -14,6 +14,7 @@ else
   require_rel '../step'
 end
 
+require_relative '../action_tree'
 require_relative '../bank'
 require_relative '../company'
 require_relative '../corporation'
@@ -32,7 +33,6 @@ require_relative '../tile'
 require_relative '../train'
 require_relative '../player_info'
 require_relative '../game_log'
-require_relative 'action_tree'
 require_relative 'meta'
 
 module Engine
@@ -767,7 +767,7 @@ module Engine
       def initialize_actions(actions, at_action: nil)
         @loading = true unless @strict
 
-        @action_tree = ActionTree.new(actions)
+        @action_tree = ActionTree::Tree.new(actions)
 
         @filtered_actions, active_undos = self.class.filtered_actions(actions)
 

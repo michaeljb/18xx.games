@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require './spec/spec_helper'
+require 'engine/action_tree/tree'
 
 # @param fixture [String] "<title>/<id>" for a JSON file in fixtures/
 # @param kwargs [Hash] forwarded to Engine::Game#load
@@ -14,8 +15,8 @@ def get_action_tree(fixture, **_kwargs)
 end
 
 module Engine
-  module Game
-    describe ActionTree do
+  module ActionTree
+    describe Tree do
       describe '1889/tree1' do
         let(:tree) do
           get_action_tree('1889/tree1')
