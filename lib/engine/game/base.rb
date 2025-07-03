@@ -546,7 +546,7 @@ module Engine
         @finished = false
         @log = Engine::GameLog.new(self)
         @queued_log = []
-        @actions = []  # processed actions
+        @actions = [] # processed actions
         @action_tree = nil
         @raw_actions = []
         @turn_start_action_id = 0

@@ -24,9 +24,6 @@ module Engine
       #     in the returned array
       # @returns Array<action> - actions ready to process
       def filtered_actions(head, include_chat: false)
-        require 'pry-byebug'
-        binding.pry
-
         filtered = {}
 
         # collect actions from the head to root by way of 'parent' links, and
@@ -41,13 +38,11 @@ module Engine
           parent_id = action['parent']
           parent = @actions[parent_id].dup
 
-          if parent.nil?
-            # found the root, and it is the current value of `action`
-            break
-          else
-            parent['child'] = id
-            action = parent
-          end
+          # found the root, and it is the current value of `action`
+          break if parent.nil?
+
+          parent['child'] = id
+          action = parent
         end
         root = action
 
@@ -61,9 +56,7 @@ module Engine
 
             # find the latest ancestor of this chat in filtered
             action = @actions[parent_id]
-            until action.nil? || filtered.include?(action['id'])
-              action = @actions[action['parent']]
-            end
+            action = @actions[action['parent']] until action.nil? || filtered.include?(action['id'])
 
             if action.nil?
               # this chat is the new root
@@ -79,9 +72,7 @@ module Engine
 
             # go to end of chats, set next action as the child of the chats
             last_chat = chat
-            until last_chat['child'].nil?
-              last_chat = @chat_actions[last_chat['child']]
-            end
+            last_chat = @chat_actions[last_chat['child']] until last_chat['child'].nil?
             last_chat['child'] = next_action_id
             filtered[next_action_id]['parent'] = id
           end
@@ -91,7 +82,7 @@ module Engine
         # links
         actions = []
         action = root
-        until action.nil? do
+        until action.nil?
           actions << action
           child_id = action['child']
           action = filtered[child_id]
@@ -123,6 +114,7 @@ module Engine
           action = original_action.dup
 
           id = action['id']
+          raise ActionTreeError, "Duplicate action id found: #{id}" if action_tree.include?(id) || @chat_actions.include?(id)
 
           # initialize keys specific to being nodes in the action tree
           action['parent'] = nil

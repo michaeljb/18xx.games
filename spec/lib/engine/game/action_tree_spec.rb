@@ -5,9 +5,9 @@ require './spec/spec_helper'
 # @param fixture [String] "<title>/<id>" for a JSON file in fixtures/
 # @param kwargs [Hash] forwarded to Engine::Game#load
 # @returns [ActionTree] the tree to inspect for testing
-def get_action_tree(fixture, **kwargs)
+def get_action_tree(fixture, **_kwargs)
   filename = File.join('public', 'fixtures', "#{fixture}.json")
-  raise RuntimeError, "#{filename} does not exist" unless File.exist?(filename)
+  raise "#{filename} does not exist" unless File.exist?(filename)
 
   game = Engine::Game.load(filename).maybe_raise!
   game.action_tree
