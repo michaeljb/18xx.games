@@ -32,6 +32,7 @@ require_relative '../tile'
 require_relative '../train'
 require_relative '../player_info'
 require_relative '../game_log'
+require_relative 'action_tree'
 require_relative 'meta'
 
 module Engine
@@ -545,7 +546,8 @@ module Engine
         @finished = false
         @log = Engine::GameLog.new(self)
         @queued_log = []
-        @actions = []
+        @actions = []  # processed actions
+        @action_tree = nil
         @raw_actions = []
         @turn_start_action_id = 0
         @last_turn_start_action_id = 0
@@ -750,7 +752,7 @@ module Engine
           when 'redo'
             active_undos.pop.each { |undo| filtered_actions[undo.last] = undo.first }
           when 'message'
-            # Messages do not get undoed.
+            # Messages do not get undone.
             # warning adding more types of action here will break existing game
             filtered_actions[index] = action
           else
@@ -764,6 +766,9 @@ module Engine
       # Initialize actions respecting the undo state
       def initialize_actions(actions, at_action: nil)
         @loading = true unless @strict
+
+        @action_tree = ActionTree.new(actions)
+
         @filtered_actions, active_undos = self.class.filtered_actions(actions)
 
         # Store all actions for history navigation
