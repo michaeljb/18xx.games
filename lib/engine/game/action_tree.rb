@@ -5,7 +5,7 @@ module Engine
     class ActionTree
       # @param actions [Hash] the actions passed to Engine::Game::Base
       def initialize(actions)
-        # id: Integer => action
+        # id: Integer => ActionNodeTree
         @actions = {}
         @chat_actions = {}
 
@@ -26,55 +26,45 @@ module Engine
       def filtered_actions(head, include_chat: false)
         filtered = {}
 
-        # collect actions from the head to root by way of 'parent' links, and
-        # establish new 'child' links since other branches are ignored here,
-        # creating a doubly linked list; use `.dup` to avoid mutations on
-        # @actions
-        action = @actions[head].dup
+        action = @actions[head]
         loop do
-          id = action['id']
+          id = action.id
           filtered[id] = action
 
-          parent_id = action['parent']
-          parent = @actions[parent_id].dup
+          break if action.root?
 
-          # found the root, and it is the current value of `action`
-          break if parent.nil?
+          # set current action as the canonical child
+          action.parent.child = action
 
-          parent['child'] = id
-          action = parent
+          action = action.parent
         end
         root = action
 
+        # insert chat messages into the doubly linked list
         if include_chat
-          # insert chat messages into the doubly linked list
           @chat_actions.each do |id, chat|
-            parent_id = chat['parent']
-
             # if chat's parent is a chat, nothing to do
-            next if @chat_actions.include?(parent_id)
+            next if @chat_actions.include?(chat.parent&.id)
 
-            # find the latest ancestor of this chat in filtered
-            action = @actions[parent_id]
-            action = @actions[action['parent']] until action.nil? || filtered.include?(action['id'])
+            # find the latest ancestor of this chat that is in filtered
+            action = chat.parent
+            action = action.parent until action.nil? || filtered.include?(action.id)
 
             if action.nil?
-              # this chat is the new root
-              next_action_id = root['child']
+              # no ancestors of this chat are in filtered; make this chat a new root
+              next_action = root
+              chat.delete_parent!
               root = chat
-              chat['parent'] = nil
             else
               # this chat is the new child
-              next_action_id = action['child']
-              action['child'] = id
-              chat['parent'] = action['id']
+              next_action = action.child
+              action.child = chat
             end
 
             # go to end of chats, set next action as the child of the chats
             last_chat = chat
-            last_chat = @chat_actions[last_chat['child']] until last_chat['child'].nil?
-            last_chat['child'] = next_action_id
-            filtered[next_action_id]['parent'] = id
+            last_chat = last_chat.child until last_chat.head?
+            last_chat.child = next_action
           end
         end
 
@@ -83,14 +73,11 @@ module Engine
         actions = []
         action = root
         until action.nil?
-          actions << action
-          child_id = action['child']
-          action = filtered[child_id]
+          # return wrapped actions, not ActionNodeTree objects
+          actions << action.action_h
+          action = action.child
         end
-
-        # return original versions of actions, without parent/child
-        # modifications
-        actions.map { |a| @actions[a['id']] || @chat_actions[a['id']] }
+        actions
       end
 
       private
@@ -110,24 +97,16 @@ module Engine
         prev_action = nil
 
         @actions = actions.each_with_object({}) do |original_action, action_tree|
-          # dup to avoid mutations on the actual game state
-          action = original_action.dup
-
-          id = action['id']
+          action = ActionTreeNode.new(original_action)
+          id = action.id
           raise ActionTreeError, "Duplicate action id found: #{id}" if action_tree.include?(id) || @chat_actions.include?(id)
 
-          # initialize keys specific to being nodes in the action tree
-          action['parent'] = nil
-          action['child'] = nil # the canonical/trunk action following this action
-          action['children'] = [] # all children, including the one set as 'child'
-
           # always branch for chat actions, store them in a separate hash
-          if action['type'] == 'message'
+          if action.chat?
             @chat_actions[id] = action
             if prev_action_or_chat
-              action['parent'] = prev_action_or_chat['id']
-              prev_action_or_chat['children'] << id
-              prev_action_or_chat['child'] = id if prev_action_or_chat['type'] == 'message'
+              action.parent = prev_action_or_chat
+              prev_action_or_chat.child = action if prev_action_or_chat.chat?
             end
             prev_action_or_chat = action
             next
@@ -136,29 +115,111 @@ module Engine
           action_tree[id] = action
 
           # child/parent double link with the previous action
-          if prev_action && action['type'] != 'redo'
-            action['parent'] = prev_action['id']
-            prev_action['children'] << id
-            prev_action['child'] = id
-          end
+          prev_action.child = action if prev_action && !action.redo?
 
           prev_action_or_chat = prev_action =
-            case action['type']
+            case action.type
             when 'undo'
               @active_undos << id
-              prev_id = action['action_id'] || prev_action['parent']
+              prev_id = action.action_h['action_id'] || prev_action.parent.id
               action_tree[prev_id]
             when 'redo'
-              undo_id = @active_undos.pop
-              action['parent'] = undo_id
-              undo_action = action_tree[undo_id]
-              undo_action['children'] << id
-              action_tree[undo_action['parent']]
+              undo_action = action_tree[@active_undos.pop]
+              action.parent = undo_action
+              action_tree[undo_action.parent.id]
             else
               @active_undos.clear
               action
             end
         end
+      end
+    end
+
+    class ActionTreeNode
+      attr_reader :id, :type, :parent, :child
+
+      def initialize(action)
+        @action_h =
+          case action
+          when Hash
+            # dup to avoid mutations on the actual game state
+            action.dup
+          when Engine::Action::Base
+            action.to_h
+          end
+        @id = @action_h['id']
+        @type = @action_h['type']
+
+        @parent = nil
+        @child = nil
+        @children = Set.new
+      end
+
+      def inspect
+        "<ActionTreeNode: id:#{@id}, parent:#{@parent&.id}, child:#{@child&.id}, children:#{@children.map(&:id)}>"
+      end
+
+      def action_h
+        @action_h.dup
+      end
+
+      def children
+        @children.dup
+      end
+
+      def root?
+        @parent == nil
+      end
+
+      def head?
+        @child == nil && @children.empty?
+      end
+
+      def parent=(node)
+        set_parent(node)
+        node.add_to_children(self)
+      end
+
+      def child=(node)
+        node.set_parent(self)
+        set_child(node)
+      end
+
+      def delete_parent!
+        @parent.remove_child!(self) if @parent
+        remove_parent!
+      end
+
+      def chat?
+        @type == 'message'
+      end
+
+      def redo?
+        @type == 'redo'
+      end
+
+      protected
+
+      def set_parent(node)
+        @parent = node
+      end
+
+      def add_to_children(node)
+        @children.add(node)
+      end
+
+      def set_child(node)
+        @child = node
+        add_to_children(node)
+      end
+
+      def remove_child!(node)
+        @children.delete(node)
+        @child = nil if @child == node
+      end
+
+      def remove_parent!
+        @parent = nil
       end
     end
   end

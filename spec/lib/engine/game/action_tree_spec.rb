@@ -23,26 +23,26 @@ module Engine
 
         describe '#new' do
           it 'sets parents, children, and child' do
-            expect(tree[1]['parent']).to be_nil
-            expect(tree[1]['child']).to eq(2)
-            expect(tree[1]['children']).to eq([2])
+            expect(tree[1].parent).to be_nil
+            expect(tree[1].child.id).to eq(2)
+            expect(tree[1].children.map(&:id)).to eq([2])
 
-            expect(tree[2]['parent']).to eq(1)
-            expect(tree[2]['child']).to be_nil
-            expect(tree[2]['children']).to eq([])
+            expect(tree[2].parent.id).to eq(1)
+            expect(tree[2].child).to be_nil
+            expect(tree[2].children).to eq(Set.new)
 
             # chat 5 is not the main child, but branched
-            expect(tree[3]['parent']).to be_nil
-            expect(tree[3]['child']).to eq(4)
-            expect(tree[3]['children']).to eq([5, 4])
+            expect(tree[3].parent).to be_nil
+            expect(tree[3].child.id).to eq(4)
+            expect(tree[3].children.map(&:id)).to eq([5, 4])
 
-            expect(tree[5]['parent']).to eq(3)
-            expect(tree[5]['child']).to be_nil
-            expect(tree[5]['children']).to eq([])
+            expect(tree[5].parent.id).to eq(3)
+            expect(tree[5].child).to be_nil
+            expect(tree[5].children).to eq(Set.new)
 
-            expect(tree[4]['parent']).to eq(3)
-            expect(tree[4]['child']).to be_nil
-            expect(tree[4]['children']).to eq([])
+            expect(tree[4].parent.id).to eq(3)
+            expect(tree[4].child).to be_nil
+            expect(tree[4].children).to eq(Set.new)
           end
         end
 
