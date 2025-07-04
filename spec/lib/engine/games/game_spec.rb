@@ -18,21 +18,27 @@ module Engine
           data = JSON.parse(File.read(fixture))
           result = data['result']
 
-          game_result = JSON.parse(JSON.generate(Engine::Game.load(data).maybe_raise!.result))
-          expect(game_result).to eq(result)
+          begin
+            loaded_game = Engine::Game.load(data)
+            game_result = JSON.parse(JSON.generate(loaded_game.maybe_raise!.result))
+            expect(game_result).to eq(result)
 
-          rungame = Engine::Game.load(data, strict: true).maybe_raise!
-          expect(JSON.parse(JSON.generate(rungame.result))).to eq(result)
-          expect(rungame.finished).to eq(true)
+            rungame = Engine::Game.load(data, strict: true).maybe_raise!
+            expect(JSON.parse(JSON.generate(rungame.result))).to eq(result)
+            expect(rungame.finished).to eq(true)
 
-          # some fixtures want to test that the last N actions of the game replayed the same as in the fixture
-          test_last_actions = data['test_last_actions']
-          next unless test_last_actions
+            # some fixtures want to test that the last N actions of the game replayed the same as in the fixture
+            test_last_actions = data['test_last_actions']
+            next unless test_last_actions
 
-          actions = data['actions']
-          (1..(test_last_actions.to_i)).each do |index|
-            run_action = rungame.actions[rungame.actions.size - index].to_h
-            expect(run_action).to eq(actions[actions.size - index])
+            actions = data['actions']
+            (1..(test_last_actions.to_i)).each do |index|
+              run_action = rungame.actions[rungame.actions.size - index].to_h
+              expect(run_action).to eq(actions[actions.size - index])
+            end
+          rescue Engine::GameError => e
+            expect(data['error']).to eq(e.inspect)
+            expect(result).to be_nil
           end
         end
       end

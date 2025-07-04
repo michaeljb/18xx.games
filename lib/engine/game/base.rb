@@ -767,7 +767,12 @@ module Engine
       def initialize_actions(actions, at_action: nil)
         @loading = true unless @strict
 
-        @action_tree = ActionTree::Tree.new(actions)
+        begin
+          @action_tree = ActionTree::Tree.new(actions)
+        rescue ActionTreeError => e
+          rescue_exception(e, nil)
+          return
+        end
 
         @filtered_actions, active_undos = self.class.filtered_actions(actions)
 
