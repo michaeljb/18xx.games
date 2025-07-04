@@ -1,0 +1,684 @@
+{
+  "id": 212864,
+  "description": "",
+  "user": {
+    "id": 97,
+    "name": "michaeljb"
+  },
+  "players": [
+    {
+      "id": 97,
+      "name": "michaeljb"
+    },
+    {
+      "id": 3638,
+      "name": "michaeljb2"
+    }
+  ],
+  "min_players": 2,
+  "max_players": 6,
+  "title": "1889",
+  "settings": {
+    "seed": 558193254,
+    "is_async": true,
+    "unlisted": true,
+    "auto_routing": false,
+    "player_order": null,
+    "optional_rules": []
+  },
+  "user_settings": null,
+  "status": "finished",
+  "turn": 2,
+  "round": "Stock Round",
+  "acting": [
+    3638
+  ],
+  "result": {
+    "97": 480,
+    "3638": 490
+  },
+  "actions": [
+    {
+      "type": "message",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 1,
+      "created_at": 1751646892,
+      "message": "game time started"
+    },
+    {
+      "type": "bid",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 2,
+      "created_at": 1751646896,
+      "company": "ER",
+      "price": 45
+    },
+    {
+      "type": "bid",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 3,
+      "created_at": 1751646898,
+      "company": "MF",
+      "price": 35
+    },
+    {
+      "type": "bid",
+      "price": 65,
+      "entity": 97,
+      "company": "DR",
+      "entity_type": "player",
+      "id": 4,
+      "user": 97,
+      "created_at": 1751646900
+    },
+    {
+      "type": "bid",
+      "price": 55,
+      "entity": 3638,
+      "company": "SMR",
+      "entity_type": "player",
+      "id": 5,
+      "user": 3638,
+      "created_at": 1751646902
+    },
+    {
+      "type": "undo",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 6,
+      "user": 97,
+      "created_at": 1751646907
+    },
+    {
+      "type": "undo",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 7,
+      "user": 97,
+      "created_at": 1751646908
+    },
+    {
+      "type": "bid",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 8,
+      "created_at": 1751646910,
+      "company": "SMR",
+      "price": 55
+    },
+    {
+      "type": "undo",
+      "entity": 3638,
+      "action_id": 2,
+      "entity_type": "player",
+      "id": 9,
+      "user": 97,
+      "created_at": 1751646917
+    },
+    {
+      "type": "redo",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 10,
+      "user": 97,
+      "created_at": 1751646919
+    },
+    {
+      "type": "bid",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 11,
+      "created_at": 1751646924,
+      "company": "DR",
+      "price": 65
+    },
+    {
+      "type": "bid",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 12,
+      "created_at": 1751646930,
+      "company": "DR",
+      "price": 70
+    },
+    {
+      "type": "bid",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 13,
+      "created_at": 1751646937,
+      "company": "TR",
+      "price": 20
+    },
+    {
+      "type": "pass",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 14,
+      "created_at": 1751646944
+    },
+    {
+      "type": "par",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 15,
+      "created_at": 1751646969,
+      "corporation": "IR",
+      "share_price": "65,5,3"
+    },
+    {
+      "type": "program_buy_shares",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 16,
+      "created_at": 1751646981,
+      "corporation": "IR",
+      "until_condition": 4,
+      "from_market": false,
+      "auto_pass_after": false
+    },
+    {
+      "type": "par",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 17,
+      "created_at": 1751646992,
+      "auto_actions": [
+        {
+          "type": "buy_shares",
+          "entity": 97,
+          "entity_type": "player",
+          "created_at": 1751646992,
+          "shares": [
+            "IR_1"
+          ],
+          "percent": 10
+        }
+      ],
+      "corporation": "AR",
+      "share_price": "70,4,3"
+    },
+    {
+      "type": "pass",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 18,
+      "created_at": 1751646996
+    },
+    {
+      "type": "buy_shares",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 19,
+      "created_at": 1751647024,
+      "shares": [
+        "AR_1"
+      ],
+      "percent": 10
+    },
+    {
+      "type": "message",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 20,
+      "created_at": 1751647388,
+      "message": "hi there"
+    },
+    {
+      "type": "message",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 21,
+      "created_at": 1751647395,
+      "message": "need to get some chats in on top of actions that will be undone"
+    },
+    {
+      "type": "message",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 22,
+      "created_at": 1751647402,
+      "message": "third chat in a row"
+    },
+    {
+      "type": "sell_shares",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 23,
+      "created_at": 1751647405,
+      "shares": [
+        "AR_1"
+      ],
+      "percent": 10
+    },
+    {
+      "type": "message",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 24,
+      "created_at": 1751647416,
+      "message": "new chat branch, time to undo some"
+    },
+    {
+      "type": "undo",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 25,
+      "created_at": 1751647418
+    },
+    {
+      "type": "undo",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 26,
+      "user": 97,
+      "created_at": 1751647420
+    },
+    {
+      "type": "undo",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 27,
+      "user": 97,
+      "created_at": 1751647421
+    },
+    {
+      "type": "redo",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 28,
+      "user": 97,
+      "created_at": 1751647426
+    },
+    {
+      "type": "redo",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 29,
+      "user": 97,
+      "created_at": 1751647426
+    },
+    {
+      "type": "redo",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 30,
+      "user": 97,
+      "created_at": 1751647427
+    },
+    {
+      "type": "undo",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 31,
+      "created_at": 1751647435,
+      "action_id": 18
+    },
+    {
+      "type": "buy_shares",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 32,
+      "created_at": 1751647442,
+      "shares": [
+        "AR_1"
+      ],
+      "percent": 10
+    },
+    {
+      "type": "program_buy_shares",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 33,
+      "created_at": 1751647452,
+      "corporation": "IR",
+      "until_condition": "float",
+      "from_market": false,
+      "auto_pass_after": false
+    },
+    {
+      "type": "program_buy_shares",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 34,
+      "created_at": 1751647458,
+      "auto_actions": [
+        {
+          "type": "pass",
+          "entity": 3638,
+          "entity_type": "player",
+          "created_at": 1751647458
+        },
+        {
+          "type": "buy_shares",
+          "entity": 97,
+          "entity_type": "player",
+          "created_at": 1751647458,
+          "shares": [
+            "IR_2"
+          ],
+          "percent": 10
+        },
+        {
+          "type": "pass",
+          "entity": 97,
+          "entity_type": "player",
+          "created_at": 1751647458
+        },
+        {
+          "type": "buy_shares",
+          "entity": 3638,
+          "entity_type": "player",
+          "created_at": 1751647458,
+          "shares": [
+            "AR_2"
+          ],
+          "percent": 10
+        },
+        {
+          "type": "pass",
+          "entity": 3638,
+          "entity_type": "player",
+          "created_at": 1751647458
+        }
+      ],
+      "corporation": "AR",
+      "until_condition": "float",
+      "from_market": false,
+      "auto_pass_after": false
+    },
+    {
+      "type": "pass",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 35,
+      "created_at": 1751647483,
+      "auto_actions": [
+        {
+          "type": "buy_shares",
+          "entity": 3638,
+          "entity_type": "player",
+          "created_at": 1751647483,
+          "shares": [
+            "AR_3"
+          ],
+          "percent": 10
+        },
+        {
+          "type": "program_disable",
+          "entity": 3638,
+          "entity_type": "player",
+          "created_at": 1751647483,
+          "reason": "AR is floated"
+        }
+      ]
+    },
+    {
+      "type": "pass",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 36,
+      "created_at": 1751647495
+    },
+    {
+      "type": "pass",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 37,
+      "created_at": 1751647497
+    },
+    {
+      "type": "pass",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 38,
+      "created_at": 1751647509
+    },
+    {
+      "type": "lay_tile",
+      "entity": "AR",
+      "entity_type": "corporation",
+      "id": 39,
+      "created_at": 1751647519,
+      "hex": "K8",
+      "tile": "6-0",
+      "rotation": 2
+    },
+    {
+      "type": "undo",
+      "entity": "AR",
+      "entity_type": "corporation",
+      "id": 40,
+      "created_at": 1751647527
+    },
+    {
+      "type": "lay_tile",
+      "entity": "MF",
+      "entity_type": "company",
+      "id": 41,
+      "created_at": 1751647534,
+      "hex": "J9",
+      "tile": "437-0",
+      "rotation": 2
+    },
+    {
+      "type": "lay_tile",
+      "entity": "AR",
+      "entity_type": "corporation",
+      "id": 42,
+      "created_at": 1751647540,
+      "hex": "K8",
+      "tile": "57-0",
+      "rotation": 1
+    },
+    {
+      "type": "buy_train",
+      "entity": "AR",
+      "entity_type": "corporation",
+      "id": 43,
+      "created_at": 1751647542,
+      "train": "2-0",
+      "price": 80,
+      "variant": "2"
+    },
+    {
+      "type": "buy_train",
+      "entity": "AR",
+      "entity_type": "corporation",
+      "id": 44,
+      "created_at": 1751647543,
+      "train": "2-1",
+      "price": 80,
+      "variant": "2"
+    },
+    {
+      "type": "pass",
+      "entity": "AR",
+      "entity_type": "corporation",
+      "id": 45,
+      "created_at": 1751647548
+    },
+    {
+      "type": "buy_shares",
+      "entity": "DR",
+      "entity_type": "company",
+      "id": 46,
+      "created_at": 1751647554,
+      "shares": [
+        "IR_3"
+      ],
+      "percent": 10
+    },
+    {
+      "type": "buy_shares",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 47,
+      "created_at": 1751647560,
+      "shares": [
+        "IR_4"
+      ],
+      "percent": 10
+    },
+    {
+      "type": "pass",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 48,
+      "created_at": 1751647564
+    },
+    {
+      "type": "pass",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 49,
+      "created_at": 1751647566
+    },
+    {
+      "type": "pass",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 50,
+      "created_at": 1751647568
+    },
+    {
+      "type": "lay_tile",
+      "entity": "IR",
+      "entity_type": "corporation",
+      "id": 51,
+      "created_at": 1751647580,
+      "hex": "E2",
+      "tile": "5-0",
+      "rotation": 4
+    },
+    {
+      "type": "buy_train",
+      "entity": "IR",
+      "entity_type": "corporation",
+      "id": 52,
+      "created_at": 1751647581,
+      "train": "2-2",
+      "price": 80,
+      "variant": "2"
+    },
+    {
+      "type": "buy_train",
+      "entity": "IR",
+      "entity_type": "corporation",
+      "id": 53,
+      "created_at": 1751647581,
+      "train": "2-3",
+      "price": 80,
+      "variant": "2"
+    },
+    {
+      "type": "pass",
+      "entity": "IR",
+      "entity_type": "corporation",
+      "id": 54,
+      "created_at": 1751647582
+    },
+    {
+      "type": "lay_tile",
+      "entity": "AR",
+      "entity_type": "corporation",
+      "id": 55,
+      "created_at": 1751647601,
+      "hex": "I8",
+      "tile": "7-0",
+      "rotation": 4
+    },
+    {
+      "type": "run_routes",
+      "entity": "AR",
+      "entity_type": "corporation",
+      "id": 56,
+      "created_at": 1751647609,
+      "routes": [
+        {
+          "train": "2-0",
+          "connections": [
+            [
+              "K8",
+              "L7"
+            ]
+          ],
+          "hexes": [
+            "L7",
+            "K8"
+          ],
+          "revenue": 40,
+          "revenue_str": "L7-K8",
+          "nodes": [
+            "K8-0",
+            "L7-0"
+          ]
+        },
+        {
+          "train": "2-1",
+          "connections": [
+            [
+              "K8",
+              "J9"
+            ]
+          ],
+          "hexes": [
+            "J9",
+            "K8"
+          ],
+          "revenue": 50,
+          "revenue_str": "J9-K8",
+          "nodes": [
+            "K8-0",
+            "J9-0"
+          ]
+        }
+      ],
+      "extra_revenue": 0,
+      "subsidy": 0
+    },
+    {
+      "type": "dividend",
+      "entity": "AR",
+      "entity_type": "corporation",
+      "id": 57,
+      "created_at": 1751647610,
+      "kind": "payout"
+    },
+    {
+      "type": "buy_train",
+      "entity": "AR",
+      "entity_type": "corporation",
+      "id": 58,
+      "created_at": 1751647618,
+      "train": "2-4",
+      "price": 80,
+      "variant": "2"
+    },
+    {
+      "type": "buy_train",
+      "entity": "AR",
+      "entity_type": "corporation",
+      "id": 59,
+      "created_at": 1751647618,
+      "train": "2-5",
+      "price": 80,
+      "variant": "2"
+    },
+    {
+      "type": "end_game",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 60,
+      "created_at": 1751647629
+    }
+  ],
+  "loaded": true,
+  "created_at": 1751646866,
+  "updated_at": 1751647402,
+  "finished_at": null,
+  "manually_ended": true
+}
