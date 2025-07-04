@@ -1,0 +1,6 @@
+- make Game use the Tree instead of its actions array
+    - current action id --> trunk/canonical head
+- add basic visualization
+- URL param head=, history navigation on undone branches
+    - different head given to ActionTree::Tree
+- more tests
