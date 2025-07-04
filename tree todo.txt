@@ -1,6 +1,18 @@
 - make Game use the Tree instead of its actions array
     - current action id --> trunk/canonical head
+
 - add basic visualization
+
+    - `child` relations could have solid line, other `children` get dashed?
+
+    - colors for different states
+        - premoves
+        - broken actions
+        - current head
+        - "change history" branches
+
+
 - URL param head=, history navigation on undone branches
     - different head given to ActionTree::Tree
+
 - more tests
