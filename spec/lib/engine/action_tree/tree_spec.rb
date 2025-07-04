@@ -82,7 +82,7 @@ module Engine
           # undo (action_id: 2, undone by 10)
           expect(node_props(tree[9])).to eq({parent: 8, child: 10, children: [10]})
 
-          # redo
+          # redo (undo 9, set head to 8)
           expect(node_props(tree[10])).to eq({parent: 9, child: nil, children: []})
 
           # bid
@@ -136,13 +136,13 @@ module Engine
           # undo (undone by 28)
           expect(node_props(tree[27])).to eq({parent: 18, child: 28, children: [28]})
 
-          # redo
+          # redo (undo 27, set head to 18)
           expect(node_props(tree[28])).to eq({parent: 27, child: nil, children: []})
 
-          # redo
+          # redo (undo 26, set head to 19)
           expect(node_props(tree[29])).to eq({parent: 26, child: nil, children: []})
 
-          # redo
+          # redo (undo 25, set head to 23)
           expect(node_props(tree[30])).to eq({parent: 25, child: nil, children: []})
 
           # undo (action_id: 18)
