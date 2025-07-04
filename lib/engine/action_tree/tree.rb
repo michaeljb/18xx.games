@@ -14,16 +14,11 @@ module Engine
         # stack of Integer ids - allows "redo" to work
         @active_undos = []
 
-        @_actions = actions
-        build_tree!(@_actions)
+        build_tree!(actions)
       end
 
       def [](id)
         @actions[id] || @chat_actions[id]
-      end
-
-      def reset!
-        build_tree!(@_actions)
       end
 
       # Get the action with id equal to the given `head`, all of its ancestor
@@ -40,18 +35,19 @@ module Engine
 
         return [] unless (action = @actions[head])
 
-        loop do
-          id = action.id
-          filtered[id] = action
+        filtered_action = Node.new(action.action_h)
+        filtered[action.id] = filtered_action
 
-          break if action.root?
+        until action.root? do
+          filtered_parent = Node.new(action.parent.action_h)
+          filtered[filtered_parent.id] = filtered_parent
+          filtered_parent.child = filtered_action
 
-          # set current action as the canonical child
-          action.parent.child = action
-
+          # continue up the `@actions` tree
           action = action.parent
+          filtered_action = filtered[action.id]
         end
-        root = action
+        root = filtered_action
 
         # insert chat messages into the doubly linked list
         if include_chat
@@ -86,15 +82,10 @@ module Engine
         actions = []
         action = root
         until action.nil?
-          # return wrapped actions, not ActionNodeTree objects
+          # return wrapped actions, not Node objects
           actions << action.action_h
           action = action.child
         end
-
-        # TODO: change filtered_actions to clone nodes that are used instead of
-        # mutating the child/parent links on the canonical tree, so that a reset
-        # is not necessary
-        reset!
 
         actions
       end
