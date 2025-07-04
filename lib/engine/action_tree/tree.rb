@@ -142,7 +142,7 @@ module Engine
             action_tree[prev_id]
           when 'redo'
             undo_action = action_tree[@active_undos.pop]
-            action.parent = undo_action
+            undo_action.child = action
             action_tree[undo_action.parent.id]
           else
             @active_undos.clear
