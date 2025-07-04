@@ -16,3 +16,11 @@
     - different head given to ActionTree::Tree
 
 - more tests
+
+    - when adding undo/redo to tree, add instance var on Node that tracks new
+      head? in ActionTree2.json, action 6 undoes 5, so the head is effectively 4
+      again; filtered actions should return [2,3,4] --> undo's new_head is
+      undo.parent.parent? or undo could just have 'child' set instead of being a
+      new prop
+        - when given head is an undo/redo, just follow the child to the 'real'
+          node
