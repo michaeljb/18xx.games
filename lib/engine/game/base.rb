@@ -950,6 +950,8 @@ module Engine
         @filtered_actions.find { |a| a && a['id'] > action_id && a['type'] != 'message' }&.fetch('id')
       end
 
+      # TODO: fix this to work with new tree structure; we don't need <= any
+      # more, action IDs are irrelevant to ordering with the Tree
       def process_to_action(id)
         last_processed_action_id = @raw_actions.last&.fetch('id') || 0
         @raw_all_actions.each.with_index do |action, index|

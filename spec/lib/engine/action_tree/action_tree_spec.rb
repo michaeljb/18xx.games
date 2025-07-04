@@ -19,7 +19,7 @@ module Engine
     describe Tree do
       describe '#new' do
         it 'sets parents, children, and child' do
-          tree = get_action_tree('1889/tree1')
+          tree = get_action_tree('1889/ActionTree1')
 
           expect(tree[1].parent).to be_nil
           expect(tree[1].child.id).to eq(2)
@@ -44,13 +44,13 @@ module Engine
         end
 
         it 'throws an error if duplicate action IDs are found' do
-          expect { get_action_tree('1889/tree_duplicate_ids') }.to raise_error(Engine::ActionTreeError)
+          expect { get_action_tree('1889/ActionTree_duplicate_ids') }.to raise_error(Engine::ActionTreeError)
         end
       end
 
       describe '#filtered_actions' do
         it 'excludes chats' do
-          tree = get_action_tree('1889/tree1')
+          tree = get_action_tree('1889/ActionTree1')
 
           head = 4
           actions = tree.filtered_actions(head, include_chat: false)
@@ -60,7 +60,7 @@ module Engine
         end
 
         it 'includes chats at root' do
-          tree = get_action_tree('1889/tree1')
+          tree = get_action_tree('1889/ActionTree1')
 
           head = 4
           actions = tree.filtered_actions(head, include_chat: true)

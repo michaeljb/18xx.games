@@ -1,0 +1,68 @@
+{
+  "id": 215192,
+  "description": "action tree testing",
+  "user": {
+    "id": 97,
+    "name": "michaeljb"
+  },
+  "players": [
+    {
+      "id": 3638,
+      "name": "michaeljb2"
+    },
+    {
+      "id": 97,
+      "name": "michaeljb"
+    }
+  ],
+  "min_players": 2,
+  "max_players": 2,
+  "title": "1889",
+  "settings": {
+    "seed": 34510511,
+    "is_async": true,
+    "unlisted": true,
+    "auto_routing": false,
+    "player_order": null,
+    "optional_rules": []
+  },
+  "user_settings": null,
+  "status": "active",
+  "turn": 1,
+  "round": "Auction Round",
+  "acting": [
+    3638
+  ],
+  "error": "#<Engine::ActionTreeError: Duplicate action id found: 1>",
+  "actions": [
+    {
+      "type": "message",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 1,
+      "created_at": 1751565614,
+      "message": "hi there hello"
+    },
+    {
+      "type": "bid",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 1,
+      "created_at": 1751565631,
+      "company": "TR",
+      "price": 20
+    },
+    {
+      "type": "end_game",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 4,
+      "created_at": 1751565645
+    }
+  ],
+  "loaded": true,
+  "created_at": 1751565512,
+  "updated_at": 1751565607,
+  "finished_at": null,
+  "manually_ended": null
+}
