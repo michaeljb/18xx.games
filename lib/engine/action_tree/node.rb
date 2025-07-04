@@ -42,11 +42,21 @@ module Engine
         @child == nil && @children.empty?
       end
 
+      # Sets `@parent` to the given node. Adds `self` to the given node's
+      # `@children`.
+      #
+      # @param node [Node]
+      # @returns nil
       def parent=(node)
         set_parent(node)
         node.add_to_children(self)
       end
 
+      # Sets `@child` to the given node. Adds the given node to
+      # `@children`. Sets `node.parent` to `self`
+      #
+      # @param node [Node]
+      # @returns nil
       def child=(node)
         node.set_parent(self)
         set_child(node)
