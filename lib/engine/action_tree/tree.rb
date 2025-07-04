@@ -37,7 +37,9 @@ module Engine
       def filtered_actions(head, include_chat: false)
         filtered = {}
 
-        action = @actions[head]
+
+        return [] unless (action = @actions[head])
+
         loop do
           id = action.id
           filtered[id] = action
@@ -89,9 +91,9 @@ module Engine
           action = action.child
         end
 
-        # possible TODO: change filtered_actions to clone nodes that are used
-        # instead of mutating the child/parent links on the canonical tree, so
-        # that a reset is not necessary
+        # TODO: change filtered_actions to clone nodes that are used instead of
+        # mutating the child/parent links on the canonical tree, so that a reset
+        # is not necessary
         reset!
 
         actions
