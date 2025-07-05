@@ -25,3 +25,6 @@
       new prop
         - when given head is an undo/redo, just follow the child to the 'real'
           node
+
+    - do actions at start of a game, then chats, then undo actions to root, test
+      filtered_actions for this

@@ -32,13 +32,29 @@ module Engine
       def filtered_actions(head, include_chat: false)
         filtered = {}
 
+        binding.pry
 
-        return [] unless (action = @actions[head])
+        return [] unless (action = (@actions[head] || @chat_actions[head]))
 
+        # get off of undo/redo nodes, onto a real action
+        if action.undo?
+          action = action.undo_child
+        elsif action.redo?
+          action = action.redo_child
+        end
+
+        # find nearest real action if excluding chat
+        if !include_chat
+          action = action.parent until action.nil? || !action.chat?
+        end
+        return [] if action.nil?
+
+        # make a new node; construct a graph separate from the main tree
         filtered_action = Node.new(action.action_h)
         filtered[action.id] = filtered_action
 
-        until action.root? do
+        # add ancestors of the action in this branch to `filtered`
+        until action.root?
           filtered_parent = Node.new(action.parent.action_h)
           filtered[filtered_parent.id] = filtered_parent
           filtered_parent.child = filtered_action
@@ -52,15 +68,25 @@ module Engine
         # insert chat messages into the doubly linked list
         if include_chat
           @chat_actions.each do |id, chat|
+            # this chat was already added to `filtered`, indicating `head`
+            # points to a chat that was already added to `filtered`
+            next if filtered.include?(id)
+
             # if chat's parent is a chat, nothing to do
             next if @chat_actions.include?(chat.parent&.id)
 
             # find the latest ancestor of this chat that is in filtered
             action = chat.parent
             action = action.parent until action.nil? || filtered.include?(action.id)
+            # exclude chats newer than head
+            next if action&.id == head
 
             if action.nil?
               # no ancestors of this chat are in filtered; make this chat a new root
+              #
+              # TODO: this should apply iff actions are done at the start of the game,
+              # then some chats, then those actions are undone to root; need to
+              # do some tracking down with undo_parents? need to rework this section
               next_action = root
               chat.delete_parent!
               root = chat
@@ -72,7 +98,12 @@ module Engine
 
             # go to end of chats, set next action as the child of the chats
             last_chat = chat
-            last_chat = last_chat.child until last_chat.head?
+            until last_chat.head?
+              last_chat = last_chat.child
+
+              # don't take anything after head
+              next if last_chat.id == id
+            end
             last_chat.child = next_action
           end
         end

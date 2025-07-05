@@ -3,7 +3,7 @@
 module Engine
   module ActionTree
     class Node
-      attr_reader :id, :type, :parent, :child, :undo_parents, :redo_parents
+      attr_reader :id, :type, :parent, :child, :undo_child, :redo_child, :undo_parents, :redo_parents
 
       def initialize(action)
         @action_h =
@@ -18,10 +18,13 @@ module Engine
         @type = @action_h['type']
 
         @parent = nil
-        @undo_parents = Set.new
-        @redo_parents = Set.new
         @child = nil
         @children = Set.new
+
+        @undo_parents = Set.new
+        @redo_parents = Set.new
+        @undo_child = nil
+        @redo_child = nil
       end
 
       def inspect
@@ -67,13 +70,13 @@ module Engine
       end
 
       def undo_child=(node)
-        set_child(node)
+        set_undo_child(node)
         node.add_to_undo_parents(self)
         node
       end
 
       def redo_child=(node)
-        set_child(node)
+        set_redo_child(node)
         node.add_to_redo_parents(self)
         node
       end
@@ -89,6 +92,10 @@ module Engine
 
       def redo?
         @type == 'redo'
+      end
+
+      def undo?
+        @type == 'undo'
       end
 
       protected
@@ -111,6 +118,16 @@ module Engine
 
       def set_child(node)
         @child = node
+        add_to_children(node)
+      end
+
+      def set_undo_child(node)
+        @undo_child = node
+        add_to_children(node)
+      end
+
+      def set_redo_child(node)
+        @redo_child = node
         add_to_children(node)
       end
 
