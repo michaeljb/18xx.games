@@ -16,6 +16,12 @@
 - URL param head=, history navigation on undone branches
     - different head given to ActionTree::Tree
 
+- random thought/note, don't know if it has more implications yet..  undo/redo
+    - actions immediately have a child, other actions don't ie when processing
+    - an action, it is added to tree and affects game state and then is done,
+    - and has no child; undo/redo has a child, and the game state for _that_
+    - node is reprocessed
+
 - more tests
 
     - when adding undo/redo to tree, add instance var on Node that tracks new
@@ -28,3 +34,7 @@
 
     - do actions at start of a game, then chats, then undo actions to root, test
       filtered_actions for this
+
+
+    - can "pending undos" be removed by simply taking a `head` and looking at
+      chains of undo_parent and redo_parent?
