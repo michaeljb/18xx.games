@@ -48,7 +48,7 @@ module Engine
       # `@children`.
       #
       # @param node [Node]
-      # @returns nil
+      # @returns node
       def parent=(node)
         set_parent(node)
         node.add_to_children(self)
@@ -59,10 +59,10 @@ module Engine
       # `@children`. Sets `node.parent` to `self`
       #
       # @param node [Node]
-      # @returns nil
+      # @returns node
       def child=(node)
-        node.set_parent(self)
         set_child(node)
+        node.set_parent(self)
         node
       end
 
