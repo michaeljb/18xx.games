@@ -4,6 +4,7 @@
 - add basic visualization
 
     - `child` relations could have solid line, other `children` get dashed?
+        - undo/redo child relations dotted?
 
     - colors for different states
         - premoves
