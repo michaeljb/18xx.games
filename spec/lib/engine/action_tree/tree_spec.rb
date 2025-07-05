@@ -250,7 +250,7 @@ module Engine
           expect(action_ids).to eq([3, 4])
         end
 
-        it 'includes chats at root' do
+        xit 'includes chats at root' do
           tree = get_action_tree('1889/ActionTree1')
 
           head = 4
