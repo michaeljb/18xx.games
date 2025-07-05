@@ -57,7 +57,7 @@ module Engine
         it 'sets parents, children, and child with undo and redo actions present' do
           tree = get_action_tree('1889/ActionTree2')
 
-          # message [root]
+          # message
           expect(node_props(tree[1])).to eq({parent: nil, child: nil, children: [], undo_parents: [], redo_parents: []})
 
           # bid [root]
