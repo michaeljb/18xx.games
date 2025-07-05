@@ -127,20 +127,21 @@ module Engine
           # child/parent double link with the previous action
           prev_action.child = action if prev_action && !action.redo?
 
-          prev_action_or_chat = prev_action =
-          case action.type
-          when 'undo'
-            @active_undos << id
-            prev_id = action.action_h['action_id'] || prev_action.parent.id
-            action_tree[prev_id]
-          when 'redo'
-            undo_action = action_tree[@active_undos.pop]
-            undo_action.child = action
-            action_tree[undo_action.parent.id]
-          else
-            @active_undos.clear
-            action
-          end
+          prev_action_or_chat =
+            prev_action =
+            case action.type
+            when 'undo'
+              @active_undos << id
+              prev_id = action.action_h['action_id'] || prev_action.parent.id
+              action.undo_child = action_tree[prev_id]
+            when 'redo'
+              undo_action = action_tree[@active_undos.pop]
+              undo_action.child = action
+              action.redo_child = undo_action.parent
+            else
+              @active_undos.clear
+              action
+            end
         end
       end
     end

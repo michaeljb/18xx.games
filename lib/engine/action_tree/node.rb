@@ -3,7 +3,7 @@
 module Engine
   module ActionTree
     class Node
-      attr_reader :id, :type, :parent, :child
+      attr_reader :id, :type, :parent, :child, :undo_parents, :redo_parents
 
       def initialize(action)
         @action_h =
@@ -18,6 +18,8 @@ module Engine
         @type = @action_h['type']
 
         @parent = nil
+        @undo_parents = Set.new
+        @redo_parents = Set.new
         @child = nil
         @children = Set.new
       end
@@ -50,6 +52,7 @@ module Engine
       def parent=(node)
         set_parent(node)
         node.add_to_children(self)
+        node
       end
 
       # Sets `@child` to the given node. Adds the given node to
@@ -60,6 +63,19 @@ module Engine
       def child=(node)
         node.set_parent(self)
         set_child(node)
+        node
+      end
+
+      def undo_child=(node)
+        set_child(node)
+        node.add_to_undo_parents(self)
+        node
+      end
+
+      def redo_child=(node)
+        set_child(node)
+        node.add_to_redo_parents(self)
+        node
       end
 
       def delete_parent!
@@ -81,6 +97,14 @@ module Engine
         @parent = node
       end
 
+      def add_to_undo_parents(node)
+        @undo_parents.add(node)
+      end
+
+      def add_to_redo_parents(node)
+        @redo_parents.add(node)
+      end
+
       def add_to_children(node)
         @children.add(node)
       end
@@ -96,7 +120,9 @@ module Engine
       end
 
       def remove_parent!
+        node = @parent
         @parent = nil
+        node
       end
     end
   end
