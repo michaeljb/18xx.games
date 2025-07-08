@@ -3,7 +3,7 @@
 module Engine
   module ActionTree
     class Node
-      attr_reader :id, :type, :parent, :child, :undo_child, :redo_child, :undo_parents, :redo_parents
+      attr_reader :id, :type, :parent, :child, :undo_child, :redo_child, :undo_parents, :redo_parents, :chat_child
 
       def initialize(action)
         @action_h =
@@ -19,20 +19,39 @@ module Engine
 
         @parent = nil
         @child = nil
-        @children = Set.new
+        @chat_child = nil # child of self that is a chat
+        @children = {}
 
-        @undo_parents = Set.new
-        @redo_parents = Set.new
-        @undo_child = nil
-        @redo_child = nil
+        @undo_parents = {}
+        @redo_parents = {}
+        @undo_child = nil # child of self if self.undo?
+        @redo_child = nil # child of self if self.redo?
       end
 
       def inspect
-        "<ActionTree::Node:id:#{@id};parent:#{@parent&.id};child:#{@child&.id};children:#{@children.map(&:id)}>"
+        "<ActionTree::Node:id:#{@id};parent:#{@parent&.id};child:#{@child&.id};children:#{@children.keys}>"
       end
 
       def action_h
         @action_h.dup
+      end
+
+      def to_h
+        h = {action: action_h}
+
+        h[:parent] = @parent.id if @parent
+        h[:child] = @child.id if @child
+        h[:children] = @children.keys unless @children.empty?
+        h[:undo_parents] = @undo_parents.keys unless @undo_parents.empty?
+        h[:redo_parents] = @redo_parents.keys unless @redo_parents.empty?
+        h[:undo_child] = @undo_child.id if @undo_child
+        h[:redo_child] = @redo_child.id if @redo_child
+
+        h
+      end
+
+      def to_json
+        to_h.to_json
       end
 
       def children
@@ -40,7 +59,7 @@ module Engine
       end
 
       def root?
-        @parent == nil
+        @type == 'root'
       end
 
       def head?
@@ -54,6 +73,9 @@ module Engine
       # @returns node
       def parent=(node)
         set_parent(node)
+
+        #return node.add_chat_child(self) if self.chat?
+
         node.add_to_children(self)
         node
       end
@@ -64,8 +86,11 @@ module Engine
       # @param node [Node]
       # @returns node
       def child=(node)
-        set_child(node)
         node.set_parent(self)
+
+        #return add_chat_child(node) if node.chat?
+
+        set_child(node)
         node
       end
 
@@ -105,15 +130,27 @@ module Engine
       end
 
       def add_to_undo_parents(node)
-        @undo_parents.add(node)
+        @undo_parents[node.id] = node
       end
 
       def add_to_redo_parents(node)
-        @redo_parents.add(node)
+        @redo_parents[node.id] = node
       end
 
       def add_to_children(node)
-        @children.add(node)
+        @children[node.id] = node
+      end
+
+      def add_chat_child(node)
+        if (chat_node = @chat_child)
+          chat_node = chat_node.chat_child while chat_node.chat_child
+          chat_node.child = node
+        else
+          @chat_child = node
+          add_to_children(node)
+        end
+
+        node
       end
 
       def set_child(node)

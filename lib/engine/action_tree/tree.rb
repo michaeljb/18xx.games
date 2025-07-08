@@ -8,7 +8,7 @@ module Engine
       # @param actions [Hash] the actions passed to Engine::Game::Base
       def initialize(actions)
         # id: Integer => Node
-        @actions = {}
+        @actions = {0 => init_root}
         @chat_actions = {}
 
         # stack of Integer ids - allows "redo" to work
@@ -32,9 +32,11 @@ module Engine
       def filtered_actions(head, include_chat: false)
         filtered = {}
 
-        binding.pry
-
+        # 0 is reserved for a special placeholder root node
+        return [] if head == 0
         return [] unless (action = (@actions[head] || @chat_actions[head]))
+
+        timestamp = action.action_h['created_at']
 
         # get off of undo/redo nodes, onto a real action
         if action.undo?
@@ -42,12 +44,10 @@ module Engine
         elsif action.redo?
           action = action.redo_child
         end
+        real_head = action.id
 
         # find nearest real action if excluding chat
-        if !include_chat
-          action = action.parent until action.nil? || !action.chat?
-        end
-        return [] if action.nil?
+        action = action.parent until action.root? || !action.chat? if !include_chat
 
         # make a new node; construct a graph separate from the main tree
         filtered_action = Node.new(action.action_h)
@@ -73,55 +73,58 @@ module Engine
             next if filtered.include?(id)
 
             # if chat's parent is a chat, nothing to do
-            next if @chat_actions.include?(chat.parent&.id)
+            next if chat.parent.chat?
 
             # find the latest ancestor of this chat that is in filtered
             action = chat.parent
-            action = action.parent until action.nil? || filtered.include?(action.id)
-            # exclude chats newer than head
-            next if action&.id == head
+            action = action.parent until action.root? || filtered.include?(action.id)
+            action = filtered[action.id] if filtered.include?(action.id)
 
-            if action.nil?
-              # no ancestors of this chat are in filtered; make this chat a new root
-              #
-              # TODO: this should apply iff actions are done at the start of the game,
-              # then some chats, then those actions are undone to root; need to
-              # do some tracking down with undo_parents? need to rework this section
-              next_action = root
-              chat.delete_parent!
-              root = chat
+            # this chat is the new child
+            next_action = action.child unless action.child&.chat?
+            filtered_chat = Node.new(chat.action_h)
+            filtered[id] = filtered_chat
+
+            if (last_chat = action.children.values.find(&:chat?))
+              last_chat = last_chat.child while last_chat.child
+              last_chat.child = filtered_chat
             else
-              # this chat is the new child
-              next_action = action.child
-              action.child = chat
+              action.child = filtered_chat
             end
 
             # go to end of chats, set next action as the child of the chats
-            last_chat = chat
-            until last_chat.head?
-              last_chat = last_chat.child
+            last_chat = filtered_chat
 
-              # don't take anything after head
-              next if last_chat.id == id
+            until @chat_actions[last_chat.id].head? || last_chat.id == head
+              chat_child = @chat_actions[last_chat.id].child
+              filtered_chat_child = Node.new(chat_child.action_h)
+              filtered[filtered_chat_child.id] = filtered_chat_child
+              last_chat.child = filtered_chat_child
+              last_chat = filtered_chat_child
             end
-            last_chat.child = next_action
+
+            last_chat.child = next_action if next_action
           end
         end
 
-        # starting from the root, dump actions into an Array by way of 'child'
-        # links
         actions = []
         action = root
-        until action.nil?
-          # return wrapped actions, not Node objects
-          actions << action.action_h
-          action = action.child
-        end
 
+        until (action = action.child).nil?
+          # skip chats newer than head
+          if !action.chat? || !(action.action_h['created_at'] > timestamp)
+            # return unwrapped action hashes, not Node objects
+            actions << action.action_h
+          end
+        end
         actions
       end
 
       private
+
+      def init_root
+        Node.new({'type' => 'root', 'id' => 0})
+      end
 
       # Builds tree from Array of "raw" actions. Resets and populates @actions,
       # @chat_actions, and @active_undos.
@@ -134,10 +137,10 @@ module Engine
 
         # hold reference for linking to parent; treat chat messages differently
         # from actions
-        prev_action_or_chat = nil
-        prev_action = nil
+        prev_action_or_chat = @actions[0]
+        prev_action = @actions[0]
 
-        @actions = actions.each_with_object({}) do |original_action, action_tree|
+        actions.each_with_object(@actions) do |original_action, action_tree|
           action = Node.new(original_action)
           id = action.id
           raise ActionTreeError, "Duplicate action id found: #{id}" if action_tree.include?(id) || @chat_actions.include?(id)
@@ -145,9 +148,10 @@ module Engine
           # always branch for chat actions, store them in a separate hash
           if action.chat?
             @chat_actions[id] = action
-            if prev_action_or_chat
+            if prev_action_or_chat.chat?
+              prev_action_or_chat.child = action
+            else
               action.parent = prev_action_or_chat
-              prev_action_or_chat.child = action if prev_action_or_chat.chat?
             end
             prev_action_or_chat = action
             next
@@ -163,8 +167,10 @@ module Engine
             case action.type
             when 'undo'
               @active_undos << id
-              prev_id = action.action_h['action_id'] || prev_action.parent.id
-              action.undo_child = action_tree[prev_id]
+              LOGGER.debug { "undoing: #{prev_action.to_json}" }
+              LOGGER.debug { "undo action: #{action.to_json}" }
+              prev_id = action.action_h['action_id'] || prev_action.parent&.id
+              action.undo_child = action_tree[prev_id] if prev_id
             when 'redo'
               undo_action = action_tree[@active_undos.pop]
               undo_action.child = action
