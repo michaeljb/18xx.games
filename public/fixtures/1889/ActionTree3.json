@@ -1,0 +1,215 @@
+{
+  "id": 212865,
+  "description": "handle undos that have had chats happen since the action to be undone",
+  "user": {
+    "id": 97,
+    "name": "michaeljb"
+  },
+  "players": [
+    {
+      "id": 97,
+      "name": "michaeljb"
+    },
+    {
+      "id": 3638,
+      "name": "michaeljb2"
+    }
+  ],
+  "min_players": 2,
+  "max_players": 2,
+  "title": "1889",
+  "settings": {
+    "seed": 1513358447,
+    "is_async": true,
+    "unlisted": true,
+    "auto_routing": false,
+    "player_order": null,
+    "optional_rules": []
+  },
+  "user_settings": null,
+  "status": "active",
+  "turn": 1,
+  "round": "Auction Round",
+  "acting": [
+    3638
+  ],
+  "result": {},
+  "actions": [
+    {
+      "type": "message",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 1,
+      "created_at": 1752001510,
+      "message": "hi there"
+    },
+    {
+      "type": "message",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 2,
+      "created_at": 1752001513,
+      "message": "hello"
+    },
+    {
+      "type": "message",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 3,
+      "created_at": 1752001524,
+      "message": "I'll do an action, then undo it"
+    },
+    {
+      "type": "message",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 4,
+      "created_at": 1752001526,
+      "message": "SG"
+    },
+    {
+      "type": "bid",
+      "price": 20,
+      "entity": 97,
+      "company": "TR",
+      "entity_type": "player",
+      "id": 5,
+      "user": 97,
+      "created_at": 1752001528
+    },
+    {
+      "type": "undo",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 6,
+      "user": 97,
+      "created_at": 1752002110
+    },
+    {
+      "type": "bid",
+      "price": 35,
+      "entity": 97,
+      "company": "MF",
+      "entity_type": "player",
+      "id": 7,
+      "user": 97,
+      "created_at": 1752002144
+    },
+    {
+      "type": "message",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 8,
+      "created_at": 1752002156,
+      "message": "now we can chat on top of an action that will be undone"
+    },
+    {
+      "type": "message",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 9,
+      "created_at": 1752002162,
+      "message": "indeed"
+    },
+    {
+      "type": "message",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 10,
+      "created_at": 1752002172,
+      "message": "a few messages will be \"orphaned\""
+    },
+    {
+      "type": "message",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 11,
+      "created_at": 1752002175,
+      "message": "yep"
+    },
+    {
+      "type": "undo",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 12,
+      "user": 97,
+      "created_at": 1752002180
+    },
+    {
+      "type": "bid",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 13,
+      "created_at": 1752002183,
+      "company": "ER",
+      "price": 45
+    },
+    {
+      "type": "end_game",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 14,
+      "created_at": 1752002938
+    },
+    {
+      "type": "undo",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 15,
+      "created_at": 1752003719
+    },
+    {
+      "type": "message",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 16,
+      "created_at": 1752003735,
+      "message": "you just bid 45 on ehime"
+    },
+    {
+      "type": "bid",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 17,
+      "created_at": 1752003768,
+      "company": "MF",
+      "price": 35
+    },
+    {
+      "type": "undo",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 18,
+      "created_at": 1752003771
+    },
+    {
+      "type": "message",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 19,
+      "created_at": 1752003784,
+      "message": "this message should be a child of my previous message about bidding on ehime"
+    },
+    {
+      "type": "bid",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 20,
+      "created_at": 1752003801,
+      "company": "ER",
+      "price": 50
+    },
+    {
+      "type": "end_game",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 21,
+      "created_at": 1752003807
+    }
+  ],
+  "loaded": true,
+  "created_at": 1752001497,
+  "updated_at": 1752002183,
+  "finished_at": null,
+  "manually_ended": null
+}
