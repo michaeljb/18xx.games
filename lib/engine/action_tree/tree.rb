@@ -30,11 +30,15 @@ module Engine
       #     in the returned Array
       # @returns Array<Hash> - actions ready to process
       def filtered_actions(head, include_chat: false)
-        filtered = {}
+        binding.pry
+
+        actions, chat_actions = clone_tree(@actions, @chat_actions)
 
         # 0 is reserved for a special placeholder root node
         return [] if head == 0
-        return [] unless (action = (@actions[head] || @chat_actions[head]))
+
+        # unknown action requested
+        return [] unless (action = (actions[head] || chat_actions[head]))
 
         timestamp = action.action_h['created_at']
 
@@ -49,81 +53,115 @@ module Engine
         # find nearest real action if excluding chat
         action = action.parent until action.root? || !action.chat? if !include_chat
 
-        # make a new node; construct a graph separate from the main tree
-        filtered_action = Node.new(action.action_h)
-        filtered[action.id] = filtered_action
-
-        # add ancestors of the action in this branch to `filtered`
+        # update `child` links so that `action` is the trunk head
+        trunk = {0 => actions[0]}
         until action.root?
-          filtered_parent = Node.new(action.parent.action_h)
-          filtered[filtered_parent.id] = filtered_parent
-          filtered_parent.child = filtered_action
+          trunk[action.id] = action
 
-          # continue up the `@actions` tree
+          if action.parent.nil?
+            binding.pry
+          end
+
+          action.parent.child = action
           action = action.parent
-          filtered_action = filtered[action.id]
         end
-        root = filtered_action
+        root = action
 
         # insert chat messages into the doubly linked list
         if include_chat
-          @chat_actions.each do |id, chat|
+          chat_actions.each do |id, chat|
             # this chat was already added to `filtered`, indicating `head`
             # points to a chat that was already added to `filtered`
-            next if filtered.include?(id)
+            next if actions.include?(id)
 
             # if chat's parent is a chat, nothing to do
             next if chat.parent.chat?
 
-            # find the latest ancestor of this chat that is in filtered
+            # find the latest ancestor of this chat that is in trunk
             action = chat.parent
-            action = action.parent until action.root? || filtered.include?(action.id)
-            action = filtered[action.id] if filtered.include?(action.id)
+            action = action.parent until action.root? || trunk.include?(action.id)
 
-            # this chat is the new child
+            # this chat is the new direct child of its trunk ancestor, or of
+            # another chat_head descended from that ancestor
             next_action = action.child unless action.child&.chat?
-            filtered_chat = Node.new(chat.action_h)
-            filtered[id] = filtered_chat
-
-            if (last_chat = action.children.values.find(&:chat?))
-              last_chat = last_chat.child while last_chat.child
-              last_chat.child = filtered_chat
+            if (chat_head = action.children.values.find(&:chat?))
+              while chat_head.child
+                chat_head = chat_head.child
+                break if chat_head == chat
+              end
+              chat_head.child = chat unless chat_head == chat
             else
-              action.child = filtered_chat
+              action.child = chat
             end
+            trunk[id] = chat
 
             # go to end of chats, set next action as the child of the chats
-            last_chat = filtered_chat
-
-            until @chat_actions[last_chat.id].head? || last_chat.id == head
-              chat_child = @chat_actions[last_chat.id].child
-              filtered_chat_child = Node.new(chat_child.action_h)
-              filtered[filtered_chat_child.id] = filtered_chat_child
-              last_chat.child = filtered_chat_child
-              last_chat = filtered_chat_child
+            chat_head = chat
+            until chat_head.child.nil? # || chat_head.id == head
+              trunk[chat_head.id] = chat_head
+              chat_head = chat_head.child
             end
-
-            last_chat.child = next_action if next_action
+            chat_head.child = next_action if next_action
           end
         end
 
-        actions = []
+        filtered = []
         action = root
-
         until (action = action.child).nil?
           # skip chats newer than head
           if !action.chat? || !(action.action_h['created_at'] > timestamp)
             # return unwrapped action hashes, not Node objects
-            actions << action.action_h
+            filtered << action.action_h
           end
         end
-        actions
+        filtered
       end
 
       private
 
       def init_root
         Node.new({'type' => 'root', 'id' => 0})
+      end
+
+      # return new copies of actions and chat_actions so their parent/child
+      # connections can be modified without mutating the originals
+      def clone_tree(actions, chat_actions)
+        # TODO: parent needs to be set explicitly, disregard children order,
+        # or maybe just need to use undo/redo child instead?
+
+        cloned = {}
+        cloned_chat = {}
+
+        # make copies of all the nodes
+        actions.each do |id, action|
+          cloned[id] = Node.new(action.action_h)
+        end
+        chat_actions.each do |id, action|
+          cloned_chat[id] = Node.new(action.action_h)
+        end
+
+        # connect the nodes after they all exist
+        actions.each do |id, action|
+          action.children.each do |child_id, child|
+            cloned_child = cloned[child_id] || cloned_chat[child_id]
+            if action.child&.id == child_id
+              cloned[id].child = cloned_child
+            else
+              cloned_child.parent = cloned[id]
+            end
+          end
+        end
+        cloned_chat.each do |id, action|
+          action.children.each do |child_id, child|
+            if action.child&.id == child_id
+              cloned_chat[id].child = cloned_chat[child_id]
+            else
+              cloned_chat[child_id].parent = cloned_chat[id]
+            end
+          end
+        end
+
+        [cloned, cloned_chat]
       end
 
       # Builds tree from Array of "raw" actions. Resets and populates @actions,

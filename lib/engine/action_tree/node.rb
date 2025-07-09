@@ -3,7 +3,7 @@
 module Engine
   module ActionTree
     class Node
-      attr_reader :id, :type, :parent, :child, :undo_child, :redo_child, :undo_parents, :redo_parents, :chat_child
+      attr_reader :id, :type, :parent, :child, :undo_child, :redo_child, :undo_parents, :redo_parents
 
       def initialize(action)
         @action_h =
@@ -19,13 +19,12 @@ module Engine
 
         @parent = nil
         @child = nil
-        @chat_child = nil # child of self that is a chat
         @children = {}
 
         @undo_parents = {}
         @redo_parents = {}
-        @undo_child = nil # child of self if self.undo?
-        @redo_child = nil # child of self if self.redo?
+        @undo_child = nil
+        @redo_child = nil
       end
 
       def inspect
@@ -73,9 +72,6 @@ module Engine
       # @returns node
       def parent=(node)
         set_parent(node)
-
-        #return node.add_chat_child(self) if self.chat?
-
         node.add_to_children(self)
         node
       end
@@ -86,11 +82,8 @@ module Engine
       # @param node [Node]
       # @returns node
       def child=(node)
-        node.set_parent(self)
-
-        #return add_chat_child(node) if node.chat?
-
         set_child(node)
+        node.set_parent(self)
         node
       end
 
@@ -139,18 +132,6 @@ module Engine
 
       def add_to_children(node)
         @children[node.id] = node
-      end
-
-      def add_chat_child(node)
-        if (chat_node = @chat_child)
-          chat_node = chat_node.chat_child while chat_node.chat_child
-          chat_node.child = node
-        else
-          @chat_child = node
-          add_to_children(node)
-        end
-
-        node
       end
 
       def set_child(node)
