@@ -11,7 +11,8 @@
         - broken actions
         - current head
         - "change history" branches
-
+        - end game action
+        - chat branches
 
 - URL param head=, history navigation on undone branches
     - different head given to ActionTree::Tree
