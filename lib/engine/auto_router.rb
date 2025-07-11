@@ -64,9 +64,20 @@ module Engine
       path_walk_timed_out = false
       now = Time.now
 
-      skip_paths = static.flat_map(&:paths).to_h { |path| [path, true] }
+      skip_paths = if @train_autoroute_group.nil?
+                     static.flat_map(&:paths).to_h { |path| [path, true] }
+                   elsif @train_autoroute_group == :each_train_separate
+                     # all trains have their own autoroute group so it's not possible to fill skip_paths
+                     {}
+                   else # rubocop:disable Lint/DuplicateBranch
+                     # NOTE: there is room for an optimization here. In the case of TRAIN_AUTOROUTE_GROUP being an array,
+                     # we need to compare the train types that are prefilled and the train types that will be searched and
+                     # if there is overlap and all the trains that are being searched can't visit the path it can be in skip_path
+                     {}
+                   end
+
       # if only routing for subset of trains, omit the trains we won't assemble routes for
-      skip_trains = static.flat_map(:train).to_a
+      skip_trains = static.flat_map(&:train).to_a
       trains -= skip_trains
 
       train_routes = Hash.new { |h, k| h[k] = [] }    # map of train to route list
@@ -401,11 +412,13 @@ module Engine
             Opal.LOGGER.$info("routing phase took " + (performance.now() - this.start_of_all) + "ms")
             this.update_callback(best_routes);
           }).catch((e) => {
+            let best_routes = this.best_routes;
             this.router.flash("Auto route selection failed to complete (" + e + ")");
             Opal.LOGGER.$error("routing phase failed with: " + e);
-            Opal.LOGGER.$error(e.stack);
+            Opal.LOGGER.$error("routing exception backtrace:\n" + e.stack);
             this.router.running = false;
-            this.update_callback([]);
+            this.router.$real_revenue(best_routes)
+            this.update_callback(best_routes);
           });
         }
 
@@ -422,7 +435,9 @@ module Engine
           current_train_data,
         ) {
           for (let route of current_train_data.routes) {
-            await this.check_if_we_should_break();
+            if (await this.check_if_we_should_break()) {
+              return;
+            }
 
             let current_routes_metadata = starting_combo_metadata;
             if (route) { // route is null for the "empty route"
@@ -465,13 +480,14 @@ module Engine
                 this.render = false;
             }
             if (performance.now() - this.start_of_all > this.router.route_timeout * 1000) {
-                throw 'ROUTE_TIMEOUT';
+                throw new Error('ROUTE_TIMEOUT');
             }
             await next_frame();
             if (!this.router.running) {
-              return;
+              return true;
             }
             this.start_of_execution_tick = performance.now();
+            return false;
           }
         }
       }
