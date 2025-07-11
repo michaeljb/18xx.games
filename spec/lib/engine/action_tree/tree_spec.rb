@@ -462,6 +462,9 @@ module Engine
             # rubocop:enable Layout/LineLength
             it "filters actions correctly for ActionTree3 at head: #{head}" do
               tree = get_action_tree('1889/ActionTree3')
+
+              # binding.pry
+
               actual = tree.filtered_actions(head, include_chat: true).map { |a| a['id'] }
               expect(actual).to eq(expected)
             end

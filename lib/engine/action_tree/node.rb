@@ -61,8 +61,16 @@ module Engine
         @type == 'root'
       end
 
+      def root
+        root? ? self : parent.root
+      end
+
       def head?
         @child == nil && @children.empty?
+      end
+
+      def find_head
+        head? ? self : child.find_head
       end
 
       # Sets `@parent` to the given node. Adds `self` to the given node's
@@ -97,6 +105,10 @@ module Engine
         set_redo_child(node)
         node.add_to_redo_parents(self)
         node
+      end
+
+      def delete_child!
+        @child.delete_parent! if @child
       end
 
       def delete_parent!
