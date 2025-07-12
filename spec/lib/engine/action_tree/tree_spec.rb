@@ -253,6 +253,7 @@ module Engine
 
           # rubocop:disable Layout/LineLength
           {
+            0 => [],
             1 => [],
             2 => [2],
             3 => [2, 3],
@@ -324,6 +325,7 @@ module Engine
 
           # rubocop:disable Layout/LineLength
           {
+            0 => [],
             1 => [], # chat
             2 => [], # chat
             3 => [], # chat
@@ -367,6 +369,7 @@ module Engine
           end
 
           {
+            0 => [],
             1 => [1],
             # 2 => [1, 2],
             # 3 => [1, 2, 3],
@@ -437,6 +440,7 @@ module Engine
 
           # rubocop:disable Layout/LineLength
           {
+            0 => [],
             1 => [1], # chat
             2 => [1, 2], # chat
             3 => [1, 2, 3], # chat

@@ -7,9 +7,11 @@ module Engine
     class Tree
       # @param actions [Hash] the actions passed to Engine::Game::Base
       def initialize(actions)
-        # id: Integer => Node
-        @actions = {0 => init_root}
-        @chat_actions = {}
+        @_actions = actions.dup
+
+        @actions = {0 => Node.new({'type' => 'root', 'id' => 0})}
+        # Integers
+        @chats = Set.new
 
         # stack of Integer ids - allows "redo" to work
         @active_undos = []
@@ -18,34 +20,33 @@ module Engine
       end
 
       def [](id)
-        @actions[id] || @chat_actions[id]
+        @actions[id]
       end
 
-      # Get the action with id equal to the given `head`, all of its ancestor
-      # actions, and optionally all chat messages in the tree, returned in an
-      # Array that can be processed.
-      #
-      # @param head [Integer] id of the latest action to include in the returned Array
-      # @param include_chat [TrueClass|FalseClass] whether chat messages appear
-      #     in the returned Array
-      # @returns Array<Hash> - actions ready to process
+      def clone
+        Tree.new(@_actions)
+      end
+
       def filtered_actions(head, include_chat: false)
-        actions, chat_actions = clone_tree(@actions, @chat_actions)
+        clone.actions_array_for!(head, include_chat: include_chat)
+      end
 
-        # binding.pry
+      protected
 
+      def actions_array_for!(head, include_chat: false)
         # 0 is reserved for a special placeholder root node
         return [] if head == 0
 
         # unknown action requested
-        return [] unless (action = (actions[head] || chat_actions[head]))
+        return [] unless (action = @actions[head])
 
         timestamp = action.action_h['created_at']
 
         # get off of undo/redo nodes, onto a "real" action
         #
         # TODO: exceeeeept we want to keep the specified action if it's
-        # undo/redo for the sake of collecting the intended chats?
+        # undo/redo for the sake of collecting the intended chats? maybe not
+        #since we do the timestamp filtering anyway
         if action.undo?
           action = action.undo_child
         elsif action.redo?
@@ -57,8 +58,8 @@ module Engine
         action = action.parent until action.root? || !action.chat? if !include_chat
 
         # update `child` links so that `action` is the trunk head
-        trunk = {0 => actions[0]}
-        action.delete_child!
+        trunk = {0 => @actions[0]}
+        action.delete_children!
         until action.root?
           trunk[action.id] = action
 
@@ -69,29 +70,34 @@ module Engine
 
         # insert chat messages into the doubly linked list
         if include_chat
-          chat_actions.each do |id, chat|
-            # this chat was already added to `trnuk`, indicating `head`
+          @chats.each do |id|
+            chat = @actions[id]
+
+            # this chat was already added to `trunk`, indicating `head`
             # points to a chat that was already added to `trunk`
             next if trunk.include?(id)
 
             # if chat's parent is a chat, nothing to do
-            next if chat.parent.chat?
+            next if chat.parent&.chat?
 
             # find the latest ancestor of this chat that is in trunk
             ancestor = chat.parent
-            ancestor = ancestor.parent until ancestor&.root? || trunk.include?(ancestor.id)
+
+            ancestor = ancestor.parent until ancestor.nil? || ancestor&.root? || trunk.include?(ancestor.id)
+            ancestor = root if ancestor.nil?
 
             # this chat is the new direct child of its trunk ancestor, or of
             # another chat_head descended from that ancestor
             next_action = ancestor.child unless ancestor.child&.chat?
+            prior_chat = ancestor.children.values.find(&:chat?)
             new_parent =
-              if (prior_chat = ancestor.children.values.find(&:chat?))
+              if prior_chat && (prior_chat != chat)
                 prior_chat.find_head
               else
                 ancestor
               end
-            new_parent.child = chat
-            trunk[id] = chat
+             new_parent.child = chat
+             trunk[id] = chat
 
             # go to end of chats, set next action as the child of the chats
             chat.find_head.child = next_action if next_action
@@ -102,7 +108,7 @@ module Engine
         action = root
         until (action = action.child).nil?
           # skip chats newer than head
-          if !(action.chat? && (action.action_h['created_at'] < timestamp))
+          if !(action.chat? && (action.action_h['created_at'] > timestamp))
             # return unwrapped action hashes, not Node objects
             filtered << action.action_h
           end
@@ -112,59 +118,13 @@ module Engine
 
       private
 
-      def init_root
-        Node.new({'type' => 'root', 'id' => 0})
-      end
-
-      # return new copies of actions and chat_actions so their parent/child
-      # connections can be modified without mutating the originals
-      def clone_tree(actions, chat_actions)
-        cloned = {}
-        cloned_chat = {}
-
-        # make copies of all the nodes
-        actions.each do |id, action|
-          cloned[id] = Node.new(action.action_h)
-        end
-        chat_actions.each do |id, action|
-          cloned_chat[id] = Node.new(action.action_h)
-        end
-
-        # connect the nodes after they all exist
-        actions.each do |id, action|
-          action.children.each do |child_id, child|
-            cloned_child = cloned[child_id] || cloned_chat[child_id]
-            if action.child&.id == child_id
-              cloned[id].child = cloned_child
-            elsif action.undo_child&.id == child_id
-              cloned[id].undo_child = cloned_child
-            elsif action.redo_child&.id == child_id
-              cloned[id].redo_child = cloned_child
-            else
-              cloned_child.parent = cloned[id]
-            end
-          end
-        end
-        chat_actions.each do |id, action|
-          action.children.each do |child_id, child|
-            if action.child&.id == child_id
-              cloned_chat[id].child = cloned_chat[child_id]
-            else
-              cloned_chat[child_id].parent = cloned_chat[id]
-            end
-          end
-        end
-
-        [cloned, cloned_chat]
-      end
-
       # Builds tree from Array of "raw" actions. Resets and populates @actions,
-      # @chat_actions, and @active_undos.
+      # @chats, and @active_undos.
       #
       # @param actions [Hash] the actions passed to Engine::Game::Base
       # @returns [Hash]
       def build_tree!(actions)
-        @chat_actions.clear
+        @chats.clear
         @active_undos.clear
 
         # hold reference for linking to parent; treat chat messages differently
@@ -175,11 +135,13 @@ module Engine
         actions.each_with_object(@actions) do |original_action, action_tree|
           action = Node.new(original_action)
           id = action.id
-          raise ActionTreeError, "Duplicate action id found: #{id}" if action_tree.include?(id) || @chat_actions.include?(id)
+          raise ActionTreeError, "Duplicate action id found: #{id}" if action_tree.include?(id)
 
-          # always branch for chat actions, store them in a separate hash
+          action_tree[id] = action
+
+          # always branch for chat actions
           if action.chat?
-            @chat_actions[id] = action
+            @chats.add(id)
             if prev_action_or_chat.chat?
               prev_action_or_chat.child = action
             else
@@ -188,8 +150,6 @@ module Engine
             prev_action_or_chat = action
             next
           end
-
-          action_tree[id] = action
 
           # child/parent double link with the previous action
           prev_action.child = action if prev_action && !action.redo?

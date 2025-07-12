@@ -70,7 +70,13 @@ module Engine
       end
 
       def find_head
-        head? ? self : child.find_head
+        if head?
+          self
+        else
+          binding.pry if child.nil?
+          child.find_head
+        end
+        # head? ? self : child.find_head
       end
 
       # Sets `@parent` to the given node. Adds `self` to the given node's
@@ -107,8 +113,9 @@ module Engine
         node
       end
 
-      def delete_child!
-        @child.delete_parent! if @child
+      def delete_children!
+        @children.values.each(&:delete_parent!)
+        self
       end
 
       def delete_parent!
@@ -162,7 +169,7 @@ module Engine
       end
 
       def remove_child!(node)
-        @children.delete(node)
+        @children.delete(node.id)
         @child = nil if @child == node
       end
 
