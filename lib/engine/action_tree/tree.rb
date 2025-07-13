@@ -52,21 +52,23 @@ module Engine
         elsif action.redo?
           action = action.redo_child
         end
-        real_head = action.id
+        action.delete_children!
 
         # find nearest real action if excluding chat
-        action = action.parent until action.root? || !action.chat? if !include_chat
+        if !include_chat
+          action = action.find_ancestor do |node|
+            !node.chat? || node.root?
+          end
+        end
 
         # update `child` links so that `action` is the trunk head
-        trunk = {0 => @actions[0]}
-        action.delete_children!
-        until action.root?
-          trunk[action.id] = action
+        trunk = {}
 
-          action.parent.child = action
-          action = action.parent
+        root = action.for_self_and_ancestors do |node|
+          trunk[node.id] = node
+          # set node as the canonical child of its parent
+          node.parent.child = node unless node.root?
         end
-        root = action
 
         # insert chat messages into the doubly linked list
         if include_chat
@@ -75,32 +77,28 @@ module Engine
 
             # this chat was already added to `trunk`, indicating `head`
             # points to a chat that was already added to `trunk`
-            next if trunk.include?(id)
-
             # if chat's parent is a chat, nothing to do
-            next if chat.parent&.chat?
+            next if trunk.include?(id) || chat.parent&.chat?
 
-            # find the latest ancestor of this chat that is in trunk
-            ancestor = chat.parent
+            chat.for_self_and_descendants do |node|
+              trunk[node.id] = node
+            end
 
-            ancestor = ancestor.parent until ancestor.nil? || ancestor&.root? || trunk.include?(ancestor.id)
-            ancestor = root if ancestor.nil?
+            ancestor = chat.find_ancestor(default: root) do |node|
+              trunk.include?(node.id)
+            end
 
-            # this chat is the new direct child of its trunk ancestor, or of
-            # another chat_head descended from that ancestor
-            next_action = ancestor.child unless ancestor.child&.chat?
-            prior_chat = ancestor.children.values.find(&:chat?)
-            new_parent =
-              if prior_chat && (prior_chat != chat)
-                prior_chat.find_head
-              else
-                ancestor
-              end
-             new_parent.child = chat
-             trunk[id] = chat
+            next_nonchat_action = ancestor.find_trunk_descendant do |node|
+              !node.chat?
+            end
 
-            # go to end of chats, set next action as the child of the chats
-            chat.find_head.child = next_action if next_action
+            if next_nonchat_action
+              next_nonchat_action.parent.child = chat
+              last_chat = chat.find_head
+              last_chat.child = next_nonchat_action
+            else
+              ancestor.find_head.child = chat
+            end
           end
         end
 

@@ -70,13 +70,37 @@ module Engine
       end
 
       def find_head
-        if head?
-          self
-        else
-          binding.pry if child.nil?
-          child.find_head
-        end
-        # head? ? self : child.find_head
+        head? ? self : @child.find_head
+      end
+
+      def find_root
+        root? ? self : @parent.find_head
+      end
+
+      def find_trunk_descendant(&block)
+        return if @child.nil?
+
+        block.call(@child) ? @child : @child.find_trunk_descendant(&block)
+      end
+
+      def for_self_and_descendants(&block)
+        block.call(self)
+        return if @child.nil?
+
+        @child.for_self_and_descendants(&block)
+      end
+
+      def find_ancestor(default:, &block)
+        return default if @parent.nil?
+
+        block.call(@parent) ? @parent : @parent.find_ancestor(default: default, &block)
+      end
+
+      def for_self_and_ancestors(&block)
+        block.call(self)
+        return self if @parent.nil?
+
+        @parent.for_self_and_ancestors(&block)
       end
 
       # Sets `@parent` to the given node. Adds `self` to the given node's
