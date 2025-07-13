@@ -70,6 +70,7 @@ module Engine
       end
 
       def find_head
+        binding.pry if @child.nil? && !head?
         head? ? self : @child.find_head
       end
 
@@ -109,6 +110,7 @@ module Engine
       # @param node [Node]
       # @returns node
       def parent=(node)
+        delete_parent!
         set_parent(node)
         node.add_to_children(self)
         node
@@ -120,6 +122,7 @@ module Engine
       # @param node [Node]
       # @returns node
       def child=(node)
+        node.delete_parent!
         set_child(node)
         node.set_parent(self)
         node
@@ -137,8 +140,13 @@ module Engine
         node
       end
 
-      def delete_children!
-        @children.values.each(&:delete_parent!)
+      def delete_children!(&block)
+        values = @children.values
+        values = values.filter(&block) if block_given?
+        values.each(&:delete_parent!)
+
+        @child = @children.first[1] if @child.nil? && !@children.empty?
+
         self
       end
 
@@ -162,32 +170,46 @@ module Engine
       protected
 
       def set_parent(node)
+        raise ActionTreeError, "Cannot make #{node.id} its own parent" if node == self
+
         @parent = node
       end
 
       def add_to_undo_parents(node)
+        raise ActionTreeError, "Cannot make #{node.id} its own undo parent" if node == self
+
         @undo_parents[node.id] = node
       end
 
       def add_to_redo_parents(node)
+        raise ActionTreeError, "Cannot make #{node.id} its own redo parent" if node == self
+
         @redo_parents[node.id] = node
       end
 
       def add_to_children(node)
+        raise ActionTreeError, "Cannot make #{node.id} its own child" if node == self
+
         @children[node.id] = node
       end
 
       def set_child(node)
+        raise ActionTreeError, "Cannot make #{node.id} its own child" if node == self
+
         @child = node
         add_to_children(node)
       end
 
       def set_undo_child(node)
+        raise ActionTreeError, "Cannot make #{node.id} its own undo child" if node == self
+
         @undo_child = node
         add_to_children(node)
       end
 
       def set_redo_child(node)
+        raise ActionTreeError, "Cannot make #{node.id} its own redo child" if node == self
+
         @redo_child = node
         add_to_children(node)
       end

@@ -46,51 +46,57 @@ module Engine
         #
         # TODO: exceeeeept we want to keep the specified action if it's
         # undo/redo for the sake of collecting the intended chats? maybe not
-        #since we do the timestamp filtering anyway
+        # since we do the timestamp filtering anyway
         if action.undo?
           action = action.undo_child
         elsif action.redo?
           action = action.redo_child
         end
-        action.delete_children!
 
-        # find nearest real action if excluding chat
-        if !include_chat
-          action = action.find_ancestor do |node|
-            !node.chat? || node.root?
+        binding.pry
+
+        # TODO: a single chat branch? every chat message after the first is a
+        # child of the previous chat message; they can still be a parent of a
+        # real action; may need to draw some graphs to think about this one
+        #
+        # prob need @chat_child for this? @chat_parent?
+        #
+        #
+        # TODO: implement enumerators for ancestors/descendants with/without
+        # self
+        # https://blog.appsignal.com/2018/05/29/ruby-magic-enumerable-and-enumerator.html#implementing-each
+
+        if include_chat
+          # stack up child chat branches into a single branch, delete other
+          # child actions
+          action.delete_children! { |child| !child.chat? }
+          (action.children.values - [action.child]).each do |child|
+            child.delete_parent!
+            action.find_head.child = child
           end
+        else
+          # find nearest real action
+          action = action.find_ancestor { |node| !node.chat? || node.root? }
+          action.delete_children!
         end
 
-        # update `child` links so that `action` is the trunk head
         trunk = {}
-
         root = action.for_self_and_ancestors do |node|
           trunk[node.id] = node
           # set node as the canonical child of its parent
           node.parent.child = node unless node.root?
         end
 
-        # insert chat messages into the doubly linked list
         if include_chat
+          action.for_self_and_descendants { |node| trunk[node.id] = node }
+
           @chats.each do |id|
             chat = @actions[id]
-
-            # this chat was already added to `trunk`, indicating `head`
-            # points to a chat that was already added to `trunk`
-            # if chat's parent is a chat, nothing to do
             next if trunk.include?(id) || chat.parent&.chat?
 
-            chat.for_self_and_descendants do |node|
-              trunk[node.id] = node
-            end
-
-            ancestor = chat.find_ancestor(default: root) do |node|
-              trunk.include?(node.id)
-            end
-
-            next_nonchat_action = ancestor.find_trunk_descendant do |node|
-              !node.chat?
-            end
+            chat.for_self_and_descendants { |node| trunk[node.id] = node }
+            ancestor = chat.find_ancestor(default: root) { |node| trunk.include?(node.id) }
+            next_nonchat_action = ancestor.find_trunk_descendant { |node| !node.chat? }
 
             if next_nonchat_action
               next_nonchat_action.parent.child = chat
@@ -103,13 +109,13 @@ module Engine
         end
 
         filtered = []
-        action = root
-        until (action = action.child).nil?
-          # skip chats newer than head
-          if !(action.chat? && (action.action_h['created_at'] > timestamp))
-            # return unwrapped action hashes, not Node objects
-            filtered << action.action_h
+        trunk[0].child.for_self_and_descendants do |node|
+          if node.chat?
+            next unless include_chat
+            # skip chats newer than head
+            next if node.action_h['created_at'] > timestamp
           end
+          filtered << node.action_h
         end
         filtered
       end
