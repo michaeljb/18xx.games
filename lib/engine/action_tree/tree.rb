@@ -10,11 +10,9 @@ module Engine
         @_actions = actions.dup
 
         @actions = {0 => Node.new({'type' => 'root', 'id' => 0})}
-        # Integers
-        @chats = Set.new
 
-        # stack of Integer ids - allows "redo" to work
-        @active_undos = []
+        @head = @actions[0] # Node
+        @chat_head = nil # Node
 
         build_tree!(actions)
       end
@@ -43,42 +41,23 @@ module Engine
         timestamp = action.action_h['created_at']
 
         # get off of undo/redo nodes, onto a "real" action
-        #
-        # TODO: exceeeeept we want to keep the specified action if it's
-        # undo/redo for the sake of collecting the intended chats? maybe not
-        # since we do the timestamp filtering anyway
-        if action.undo?
-          action = action.undo_child
-        elsif action.redo?
-          action = action.redo_child
+        if action.undo? || action.redo?
+          orig_action = action
+          action = action.real_child
         end
 
-        binding.pry
+        action.delete_children!
 
-        # TODO: a single chat branch? every chat message after the first is a
-        # child of the previous chat message; they can still be a parent of a
-        # real action; may need to draw some graphs to think about this one
-        #
-        # prob need @chat_child for this? @chat_parent?
-        #
-        #
         # TODO: implement enumerators for ancestors/descendants with/without
         # self
         # https://blog.appsignal.com/2018/05/29/ruby-magic-enumerable-and-enumerator.html#implementing-each
 
-        if include_chat
-          # stack up child chat branches into a single branch, delete other
-          # child actions
-          action.delete_children! { |child| !child.chat? }
-          (action.children.values - [action.child]).each do |child|
-            child.delete_parent!
-            action.find_head.child = child
-          end
-        else
-          # find nearest real action
-          action = action.find_ancestor { |node| !node.chat? || node.root? }
-          action.delete_children!
-        end
+        # TODO: find nearest real action when excluding chat
+        #
+        # old code for exlucding chat; probably should be `action.with_ancestors.find`
+        #
+        # action = action.find_ancestor { |node| !node.chat? || node.root? }
+        # action.delete_children!
 
         trunk = {}
         root = action.for_self_and_ancestors do |node|
@@ -88,24 +67,40 @@ module Engine
         end
 
         if include_chat
-          action.for_self_and_descendants { |node| trunk[node.id] = node }
 
-          @chats.each do |id|
-            chat = @actions[id]
-            next if trunk.include?(id) || chat.parent&.chat?
+          binding.pry if head == 4
 
-            chat.for_self_and_descendants { |node| trunk[node.id] = node }
-            ancestor = chat.find_ancestor(default: root) { |node| trunk.include?(node.id) }
-            next_nonchat_action = ancestor.find_trunk_descendant { |node| !node.chat? }
-
-            if next_nonchat_action
-              next_nonchat_action.parent.child = chat
-              last_chat = chat.find_head
-              last_chat.child = next_nonchat_action
-            else
-              ancestor.find_head.child = chat
-            end
+          # find nearest chat; check for a chat parent on action and go up the
+          # ancestry
+          # TODO: use with_ancestors enumerator
+          if !(latest_chat = action.chat_parent)
+            latest_chat = action.find_ancestor(default: nil) { |node| node&.chat_parent }&.chat_parent
           end
+          latest_chat.for_self_and_ancestors { |node| trunk[node.id] = node if node.chat? } if latest_chat
+
+          # TODO: prune children so that only nodes in trunk remain
+          #
+          # then
+          #
+          # TODO: pathfind from root to head, picking up chats sensibly along
+          # the way -- probably can't sort by timestamp due to eventual history changing
+
+          # @chats.each do |id|
+          #   chat = @actions[id]
+          #   next if trunk.include?(id) || chat.parent&.chat?
+
+          #   chat.for_self_and_descendants { |node| trunk[node.id] = node }
+          #   ancestor = chat.find_ancestor(default: root) { |node| trunk.include?(node.id) }
+          #   next_nonchat_action = ancestor.find_trunk_descendant { |node| !node.chat? }
+
+          #   if next_nonchat_action
+          #     next_nonchat_action.parent.child = chat
+          #     last_chat = chat.find_head
+          #     last_chat.child = next_nonchat_action
+          #   else
+          #     ancestor.find_head.child = chat
+          #   end
+          # end
         end
 
         filtered = []
@@ -122,57 +117,45 @@ module Engine
 
       private
 
-      # Builds tree from Array of "raw" actions. Resets and populates @actions,
+      # Builds tree from Array of raw actions. Resets and populates @actions,
       # @chats, and @active_undos.
       #
-      # @param actions [Hash] the actions passed to Engine::Game::Base
-      # @returns [Hash]
-      def build_tree!(actions)
-        @chats.clear
-        @active_undos.clear
+      # @param raw_actions [Hash] the actions passed to Engine::Game::Base
+      # @returns [Hash<Integer => Node>]
+      def build_tree!(raw_actions)
+        prev_action_or_chat = @head
 
-        # hold reference for linking to parent; treat chat messages differently
-        # from actions
-        prev_action_or_chat = @actions[0]
-        prev_action = @actions[0]
-
-        actions.each_with_object(@actions) do |original_action, action_tree|
-          action = Node.new(original_action)
+        raw_actions.each_with_object(@actions) do |raw_action, actions|
+          action = Node.new(raw_action)
           id = action.id
-          raise ActionTreeError, "Duplicate action id found: #{id}" if action_tree.include?(id)
+          raise ActionTreeError, "Duplicate action id found: #{id}" if actions.include?(id)
 
-          action_tree[id] = action
+          actions[id] = action
 
-          # always branch for chat actions
+          action.parent = prev_action_or_chat
+
           if action.chat?
-            @chats.add(id)
-            if prev_action_or_chat.chat?
-              prev_action_or_chat.child = action
-            else
-              action.parent = prev_action_or_chat
-            end
+            @chat_head.child = action if @chat_head
+            @chat_head = action
             prev_action_or_chat = action
             next
           end
 
-          # child/parent double link with the previous action
-          prev_action.child = action if prev_action && !action.redo?
-
-          prev_action_or_chat =
-            prev_action =
+          @head = prev_action_or_chat =
             case action.type
             when 'undo'
-              @active_undos << id
-              LOGGER.debug { "undoing: #{prev_action.to_json}" }
-              LOGGER.debug { "undo action: #{action.to_json}" }
-              prev_id = action.action_h['action_id'] || prev_action.parent&.id
-              action.undo_child = action_tree[prev_id] if prev_id
+              @head.child = action
+              undo_to_id = action.action_h['action_id'] || @head.parent&.id
+              raise ActionTreeError, "Cannot undo root action" if undo_to_id.nil?
+              raise ActionTreeError, "Cannot undo to #{undo_to_id}" unless actions.include?(undo_to_id)
+
+              action.child = actions[undo_to_id]
             when 'redo'
-              undo_action = action_tree[@active_undos.pop]
+              undo_action = @head.undo_parent
               undo_action.child = action
-              action.redo_child = undo_action.parent
+              action.child = undo_action.parent
             else
-              @active_undos.clear
+              @head.child = action
               action
             end
         end

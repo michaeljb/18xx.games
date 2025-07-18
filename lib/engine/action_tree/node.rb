@@ -3,7 +3,7 @@
 module Engine
   module ActionTree
     class Node
-      attr_reader :id, :type, :parent, :child, :undo_child, :redo_child, :undo_parents, :redo_parents
+      attr_reader :id, :type, :parent, :parents, :child, :children
 
       def initialize(action)
         @action_h =
@@ -18,17 +18,14 @@ module Engine
         @type = @action_h['type']
 
         @parent = nil
+        @parents = {}
+
         @child = nil
         @children = {}
-
-        @undo_parents = {}
-        @redo_parents = {}
-        @undo_child = nil
-        @redo_child = nil
       end
 
       def inspect
-        "<ActionTree::Node:id:#{@id};parent:#{@parent&.id};child:#{@child&.id};children:#{@children.keys}>"
+        "<ActionTree::Node:#{@id}>"
       end
 
       def action_h
@@ -36,20 +33,17 @@ module Engine
       end
 
       def to_h
-        h = {action: action_h}
+        h = { action: action_h }
 
         h[:parent] = @parent.id if @parent
+        h[:parents] = @parents.keys unless @parents.empty?
         h[:child] = @child.id if @child
         h[:children] = @children.keys unless @children.empty?
-        h[:undo_parents] = @undo_parents.keys unless @undo_parents.empty?
-        h[:redo_parents] = @redo_parents.keys unless @redo_parents.empty?
-        h[:undo_child] = @undo_child.id if @undo_child
-        h[:redo_child] = @redo_child.id if @redo_child
 
         h
       end
 
-      def to_json
+      def to_json(*_args)
         to_h.to_json
       end
 
@@ -57,48 +51,73 @@ module Engine
         @children.dup
       end
 
+      def real_child
+        if action.undo? || action.redo?
+          @children.reverse_each.find { |_id, node| !node.real_action? }
+        else
+          @child
+        end
+      end
+
+      # find the latest parent that is not a redo or chat; if that parent is an
+      # undo, return it, otherwise throw
+      def undo_parent
+        _id, node = @parents.reverse_each.find { |_id, node| !node.chat? && !node.redo? }
+        raise ActionTreeError, "Cannot find undo_parent for #{@id}" if node.nil? || !node.undo?
+
+        node
+      end
+
+      def chat_parent
+        _id, node = @parents.find { |_id, node| node.chat? }
+        node
+      end
+
+      def parents
+        @parents.dup
+      end
+
       def root?
         @type == 'root'
       end
 
-      def root
-        root? ? self : parent.root
-      end
-
       def head?
-        @child == nil && @children.empty?
+        @child.nil?
       end
 
-      def find_head
-        binding.pry if @child.nil? && !head?
-        head? ? self : @child.find_head
-      end
+      def find_head(found: nil)
+        raise ActionTreeError, "Found loop looking for head from Node #{@id}: #{found}" if found&.include?(id)
 
-      def find_root
-        root? ? self : @parent.find_head
+        found ||= Set.new
+        found.add(id)
+        head? ? self : @child.find_head(found: found)
       end
 
       def find_trunk_descendant(&block)
         return if @child.nil?
 
-        block.call(@child) ? @child : @child.find_trunk_descendant(&block)
+        yield(@child) ? @child : @child.find_trunk_descendant(&block)
       end
 
-      def for_self_and_descendants(&block)
-        block.call(self)
+      def for_self_and_descendants(found: nil, &block)
+        raise ActionTreeError, "Found loop in for_self_and_descendants from Node #{@id}: #{found}" if found&.include?(id)
+
+        found ||= Set.new
+        found.add(id)
+        yield(self)
         return if @child.nil?
 
-        @child.for_self_and_descendants(&block)
+        @child.for_self_and_descendants(found: found, &block)
       end
 
       def find_ancestor(default:, &block)
         return default if @parent.nil?
 
-        block.call(@parent) ? @parent : @parent.find_ancestor(default: default, &block)
+        yield(@parent) ? @parent : @parent.find_ancestor(default: default, &block)
       end
 
       def for_self_and_ancestors(&block)
-        block.call(self)
+        yield(self)
         return self if @parent.nil?
 
         @parent.for_self_and_ancestors(&block)
@@ -110,11 +129,15 @@ module Engine
       # @param node [Node]
       # @returns node
       def parent=(node)
-        delete_parent!
+        delete_parent!(@parent)
         set_parent(node)
         node.add_to_children(self)
         node
       end
+
+      # TODO
+      # def parents<<(node)
+      # end
 
       # Sets `@child` to the given node. Adds the given node to
       # `@children`. Sets `node.parent` to `self`
@@ -122,37 +145,27 @@ module Engine
       # @param node [Node]
       # @returns node
       def child=(node)
-        node.delete_parent!
         set_child(node)
         node.set_parent(self)
         node
       end
 
-      def undo_child=(node)
-        set_undo_child(node)
-        node.add_to_undo_parents(self)
-        node
-      end
-
-      def redo_child=(node)
-        set_redo_child(node)
-        node.add_to_redo_parents(self)
-        node
-      end
-
       def delete_children!(&block)
-        values = @children.values
-        values = values.filter(&block) if block_given?
-        values.each(&:delete_parent!)
+        @children.each do |_id, node|
+          next if block_given? && !block.call(node)
 
-        @child = @children.first[1] if @child.nil? && !@children.empty?
+          node.delete_parent!(self)
+        end
+
+        _id, @child = @children.find { |_id, node| !node.chat? } if @child.nil? && !@children.empty?
 
         self
       end
 
-      def delete_parent!
-        @parent.remove_child!(self) if @parent
-        remove_parent!
+      def delete_parent!(node)
+        node ||= @parent
+        node&.remove_child!(self)
+        remove_parent!(node)
       end
 
       def chat?
@@ -167,24 +180,35 @@ module Engine
         @type == 'undo'
       end
 
+      def real_action?
+        if @is_real_action.nil?
+          @is_real_action = !chat? && !redo? && !undo?
+        else
+          @is_real_action
+        end
+      end
+
       protected
+
+      def add_to_parents(node)
+        raise ActionTreeError, "Cannot make #{node.id} its own parent" if node == self
+
+        @parents[node.id] = node
+      end
 
       def set_parent(node)
         raise ActionTreeError, "Cannot make #{node.id} its own parent" if node == self
 
-        @parent = node
+        @parent = node if node.real_action? || (chat? && node.chat?)
+        add_to_parents(node)
       end
 
-      def add_to_undo_parents(node)
-        raise ActionTreeError, "Cannot make #{node.id} its own undo parent" if node == self
-
-        @undo_parents[node.id] = node
-      end
-
-      def add_to_redo_parents(node)
-        raise ActionTreeError, "Cannot make #{node.id} its own redo parent" if node == self
-
-        @redo_parents[node.id] = node
+      def remove_parent!(node)
+        node ||= @parent
+        @parent = nil if @parent == node
+        @parents.delete(node&.id)
+        @parent = @parents[@parents.keys.last] unless @parents.empty?
+        node
       end
 
       def add_to_children(node)
@@ -200,28 +224,11 @@ module Engine
         add_to_children(node)
       end
 
-      def set_undo_child(node)
-        raise ActionTreeError, "Cannot make #{node.id} its own undo child" if node == self
-
-        @undo_child = node
-        add_to_children(node)
-      end
-
-      def set_redo_child(node)
-        raise ActionTreeError, "Cannot make #{node.id} its own redo child" if node == self
-
-        @redo_child = node
-        add_to_children(node)
-      end
-
       def remove_child!(node)
+        raise ActionTreeError, "Cannot remove #{node.id} from @children" unless @children.include?(node.id)
+
         @children.delete(node.id)
         @child = nil if @child == node
-      end
-
-      def remove_parent!
-        node = @parent
-        @parent = nil
         node
       end
     end
