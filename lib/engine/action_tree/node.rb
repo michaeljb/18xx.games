@@ -27,6 +27,7 @@ module Engine
       def inspect
         "<ActionTree::Node:#{@id}>"
       end
+      alias to_s inspect
 
       def action_h
         @action_h.dup
@@ -85,42 +86,12 @@ module Engine
         @child.nil?
       end
 
-      def find_head(found: nil)
-        raise ActionTreeError, "Found loop looking for head from Node #{@id}: #{found}" if found&.include?(id)
-
-        found ||= Set.new
-        found.add(id)
-        head? ? self : @child.find_head(found: found)
+      def trunk_ancestors(with_self: false)
+        TrunkEnumerator.new(self, :parent, with_self: with_self)
       end
 
-      def find_trunk_descendant(&block)
-        return if @child.nil?
-
-        yield(@child) ? @child : @child.find_trunk_descendant(&block)
-      end
-
-      def for_self_and_descendants(found: nil, &block)
-        raise ActionTreeError, "Found loop in for_self_and_descendants from Node #{@id}: #{found}" if found&.include?(id)
-
-        found ||= Set.new
-        found.add(id)
-        yield(self)
-        return if @child.nil?
-
-        @child.for_self_and_descendants(found: found, &block)
-      end
-
-      def find_ancestor(default:, &block)
-        return default if @parent.nil?
-
-        yield(@parent) ? @parent : @parent.find_ancestor(default: default, &block)
-      end
-
-      def for_self_and_ancestors(&block)
-        yield(self)
-        return self if @parent.nil?
-
-        @parent.for_self_and_ancestors(&block)
+      def trunk_descendants(with_self: false)
+        TrunkEnumerator.new(self, :child, with_self: with_self)
       end
 
       # Sets `@parent` to the given node. Adds `self` to the given node's
@@ -230,6 +201,30 @@ module Engine
         @children.delete(node.id)
         @child = nil if @child == node
         node
+      end
+
+      private
+
+      class TrunkEnumerator
+        include Enumerable
+
+        def initialize(node, method, with_self: false)
+          raise ActionTreeError, "Node::TrunkEnumerator method must be one of :child or :parent" unless %i[child parent].include?(method)
+
+          @node = node
+          @method = method
+          @with_self = with_self
+        end
+
+        def each(&block)
+          node = @node
+          yield node if @with_self
+          while (node = node.send(@method))
+            raise ActionTreeError, "Found loop in Node::TrunkEnumerator(#{@method}) for #{@node}" if node == @node
+
+            yield node
+          end
+        end
       end
     end
   end

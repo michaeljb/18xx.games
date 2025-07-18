@@ -44,6 +44,12 @@ module Engine
         if action.undo? || action.redo?
           orig_action = action
           action = action.real_child
+        elsif action.chat? && !include_chat
+          # TODO: find nearest real action when excluding chat
+          #
+          # old code for exlucding chat; probably should be `action.with_ancestors.find`
+          #
+          # action = action.find_ancestor { |node| !node.chat? || node.root? }
         end
 
         action.delete_children!
@@ -52,31 +58,22 @@ module Engine
         # self
         # https://blog.appsignal.com/2018/05/29/ruby-magic-enumerable-and-enumerator.html#implementing-each
 
-        # TODO: find nearest real action when excluding chat
-        #
-        # old code for exlucding chat; probably should be `action.with_ancestors.find`
-        #
-        # action = action.find_ancestor { |node| !node.chat? || node.root? }
-        # action.delete_children!
-
         trunk = {}
-        root = action.for_self_and_ancestors do |node|
+        root = action.trunk_ancestors(with_self: true).each do |node|
           trunk[node.id] = node
-          # set node as the canonical child of its parent
           node.parent.child = node unless node.root?
         end
 
         if include_chat
 
-          binding.pry if head == 4
+          # binding.pry if head == 4
 
           # find nearest chat; check for a chat parent on action and go up the
           # ancestry
-          # TODO: use with_ancestors enumerator
-          if !(latest_chat = action.chat_parent)
-            latest_chat = action.find_ancestor(default: nil) { |node| node&.chat_parent }&.chat_parent
-          end
-          latest_chat.for_self_and_ancestors { |node| trunk[node.id] = node if node.chat? } if latest_chat
+          latest_chat = (action.trunk_ancestors(with_self: true).find do |node|
+            node&.chat_parent
+          end)&.chat_parent
+          latest_chat.trunk_ancestors(with_self: true).each { |node| trunk[node.id] = node if node.chat? } if latest_chat
 
           # TODO: prune children so that only nodes in trunk remain
           #
@@ -91,7 +88,7 @@ module Engine
 
           #   chat.for_self_and_descendants { |node| trunk[node.id] = node }
           #   ancestor = chat.find_ancestor(default: root) { |node| trunk.include?(node.id) }
-          #   next_nonchat_action = ancestor.find_trunk_descendant { |node| !node.chat? }
+          #   next_nonchat_action = ancestor.trunk_descendants.find { |node| !node.chat? }
 
           #   if next_nonchat_action
           #     next_nonchat_action.parent.child = chat
@@ -103,8 +100,10 @@ module Engine
           # end
         end
 
+        # binding.pry if head == 3
+
         filtered = []
-        trunk[0].child.for_self_and_descendants do |node|
+        trunk[0].trunk_descendants.each do |node|
           if node.chat?
             next unless include_chat
             # skip chats newer than head
