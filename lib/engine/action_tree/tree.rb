@@ -42,7 +42,7 @@ module Engine
         elsif action.chat? && !include_chat
           # find nearest nonchat ancestor
           action = action.walk do |node, queue|
-            if node.chat
+            if node.chat?
               queue.concat(node.parents.values)
             else
               queue.clear
