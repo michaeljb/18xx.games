@@ -39,14 +39,14 @@ module Engine
         if action.undo? || action.redo?
           # find last canonical action after un/re-doing
           action = action.real_child
-        elsif action.chat? && !include_chat
+        elsif action.chat?
           # find nearest nonchat ancestor
-          action = action.walk do |node, queue|
+          action.walk do |node, queue|
             if node.chat?
               queue.concat(node.parents.values)
             else
+              action = node
               queue.clear
-              node
             end
           end
         end
