@@ -243,12 +243,9 @@ module Engine
         end
 
         def each
-          visited = Set.new
           node = @node
-          if @with_self
-            yield node
-            visited.add(node.id)
-          end
+          visited = Set.new([node.id])
+          yield node if @with_self
           while (node = node.send(@method))
             raise ActionTreeError, "Found loop in Node::TrunkEnumerator(#{@method}) for #{@node}" if visited.include?(node.id)
 
@@ -268,15 +265,10 @@ module Engine
         end
 
         def each
-          visited = Set.new
           node = @node
-          if @with_self
-            yield node
-            visited.add(node.id)
-          end
-
+          visited = Set.new([node.id])
+          yield node if @with_self
           queue = node.send(@method).values
-
           # queue.shift is O(N)
           # TODO: implement deque class for O(1)
           while (node = queue.shift)
