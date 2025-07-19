@@ -49,8 +49,8 @@ module Engine
       end
 
       def real_child
-        if action.undo? || action.redo?
-          @children.reverse_each.find { |_id, node| !node.real_action? }
+        if undo? || redo?
+          @children.reverse_each.find { |_id, node| node.real_action? }[1]
         else
           @child
         end
@@ -93,6 +93,10 @@ module Engine
 
       def ancestors_trunk(with_self: false)
         TrunkEnumerator.new(self, :parent, with_self: with_self)
+      end
+
+      def ancestors_chat(with_self: false)
+        TrunkEnumerator.new(self, :chat_parent, with_self: with_self)
       end
 
       def descendants_trunk(with_self: false)
@@ -138,7 +142,7 @@ module Engine
           next if block_given? && !yield(node)
 
           remove_parent!(node)
-          self.delete_parent!(node)
+          delete_parent!(node)
         end
         find_new_parent!
         self
@@ -230,8 +234,8 @@ module Engine
         include Enumerable
 
         def initialize(node, method, with_self: false)
-          raise ActionTreeError, 'Node::TrunkEnumerator method must be one of :child or :parent' unless %i[child
-                                                                                                           parent].include?(method)
+          method_opts = %i[child parent chat_parent]
+          raise ActionTreeError, "Node::TrunkEnumerator method must be one of #{method_opts}" unless method_opts.include?(method)
 
           @node = node
           @method = method

@@ -57,7 +57,7 @@ module Engine
           nearest_chat = orig_action.ancestors_trunk(with_self: true).lazy
                            .find.filter_map(&:chat_parent).force.first
           if nearest_chat
-            nearest_chat.ancestors_trunk(with_self: true).each do |node|
+            nearest_chat.ancestors_chat(with_self: true).each do |node|
               trunk[node.id] = node
             end
           end
@@ -66,6 +66,8 @@ module Engine
         trunk.each do |_id, node|
           node.unlink_parents! { |parent| !trunk.include?(parent.id) }
           node.unlink_children! { |child| !trunk.include?(child.id) }
+
+          # binding.pry if head == 6 && node.id == 4
 
           if node.chat?
             if node.nonchat_parent
