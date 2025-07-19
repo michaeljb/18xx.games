@@ -1,0 +1,153 @@
+{
+  "id": 212865,
+  "description": "handle undos that have had chats happen since the action to be undone, from handcrafted example",
+  "user": {
+    "id": 97,
+    "name": "michaeljb"
+  },
+  "players": [
+    {
+      "id": 97,
+      "name": "michaeljb"
+    },
+    {
+      "id": 3638,
+      "name": "michaeljb2"
+    }
+  ],
+  "min_players": 2,
+  "max_players": 2,
+  "title": "1889",
+  "settings": {
+    "seed": 1513358447,
+    "is_async": true,
+    "unlisted": true,
+    "auto_routing": false,
+    "player_order": null,
+    "optional_rules": []
+  },
+  "user_settings": null,
+  "status": "active",
+  "turn": 1,
+  "round": "Auction Round",
+  "acting": [
+    3638
+  ],
+  "result": {},
+  "actions": [
+    {
+      "type": "bid",
+      "price": 20,
+      "entity": 97,
+      "company": "TR",
+      "entity_type": "player",
+      "id": 1,
+      "user": 97,
+      "created_at": 1
+    },
+    {
+      "type": "message",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 2,
+      "created_at": 2,
+      "message": "chat 1, action 2"
+    },
+    {
+      "type": "message",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 3,
+      "created_at": 3,
+      "message": "chat 2, action 3"
+    },
+    {
+      "type": "bid",
+      "price": 35,
+      "entity": 3638,
+      "company": "MF",
+      "entity_type": "player",
+      "id": 4,
+      "user": 97,
+      "created_at": 4
+    },
+    {
+      "type": "message",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 5,
+      "created_at": 5,
+      "message": "chat 3, action 5"
+    },
+    {
+      "type": "bid",
+      "price": 40,
+      "entity": 97,
+      "company": "MF",
+      "entity_type": "player",
+      "id": 6,
+      "user": 97,
+      "created_at": 6
+    },
+    {
+      "type": "undo",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 7,
+      "user": 97,
+      "created_at": 7
+    },
+    {
+      "type": "undo",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 8,
+      "user": 97,
+      "created_at": 8
+    },
+    {
+      "type": "message",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 9,
+      "created_at": 9,
+      "message": "chat 4, action 9"
+    },
+    {
+      "type": "redo",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 10,
+      "user": 97,
+      "created_at": 10
+    },
+    {
+      "type": "redo",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 11,
+      "user": 97,
+      "created_at": 11
+    },
+    {
+      "type": "message",
+      "entity": 3638,
+      "entity_type": "player",
+      "id": 12,
+      "created_at": 12,
+      "message": "chat 5, action 12"
+    },
+    {
+      "type": "end_game",
+      "entity": 97,
+      "entity_type": "player",
+      "id": 13,
+      "created_at": 13
+    }
+  ],
+  "loaded": true,
+  "created_at": 1752001497,
+  "updated_at": 1752002183,
+  "finished_at": null,
+  "manually_ended": null
+}
