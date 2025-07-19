@@ -133,6 +133,7 @@ module Engine
 
           if action.chat?
             @chat_head.child = action if @chat_head
+            action.parent = prev_action_or_chat
             @chat_head = action
             prev_action_or_chat = action
             next
