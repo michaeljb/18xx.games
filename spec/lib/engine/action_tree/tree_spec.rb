@@ -355,6 +355,30 @@ module Engine
               expect(actual).to eq(expected)
             end
           end
+
+          {
+            0 => [],
+            1 => [1],
+            2 => [1],
+            3 => [1],
+            4 => [1, 4],
+            5 => [1, 4],
+            6 => [1, 4, 6],
+            7 => [1, 4],
+            8 => [1],
+            9 => [1],
+            10 => [1, 4],
+            11 => [1, 4, 6],
+            12 => [1, 4, 6],
+            13 => [1, 4, 6, 13],
+          }.each do |head, expected|
+            # rubocop:enable Layout/LineLength
+            it "filters actions correctly for ActionTree4 at head: #{head}" do
+              tree = get_action_tree('1889/ActionTree4')
+              actual = tree.filtered_actions(head, include_chat: false).map { |a| a['id'] }
+              expect(actual).to eq(expected)
+            end
+          end
         end
 
         describe 'with include_chat: true' do
@@ -466,15 +490,11 @@ module Engine
             # rubocop:enable Layout/LineLength
             it "filters actions correctly for ActionTree3 at head: #{head}" do
               tree = get_action_tree('1889/ActionTree3')
-
-              # binding.pry
-
               actual = tree.filtered_actions(head, include_chat: true).map { |a| a['id'] }
               expect(actual).to eq(expected)
             end
           end
 
-          # rubocop:disable Layout/LineLength
           {
             0 => [],
             1 => [1],
@@ -494,9 +514,6 @@ module Engine
             # rubocop:enable Layout/LineLength
             it "filters actions correctly for ActionTree4 at head: #{head}" do
               tree = get_action_tree('1889/ActionTree4')
-
-              # binding.pry
-
               actual = tree.filtered_actions(head, include_chat: true).map { |a| a['id'] }
               expect(actual).to eq(expected)
             end

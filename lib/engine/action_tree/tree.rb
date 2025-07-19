@@ -37,6 +37,7 @@ module Engine
 
         orig_action = action
         if action.undo? || action.redo?
+          # find "real action" head
           action = action.real_child
         elsif action.chat?
           # find nearest nonchat ancestor
@@ -62,6 +63,8 @@ module Engine
             queue << node.parent
             queue << node.chat_parent
 
+            # include chat messages that newer than the "real action" head, but
+            # older than the given undo/redo head
             queue << node.parent.pending_undo if node.undo?
             if node.redo?
               queue << node.undo_parent
