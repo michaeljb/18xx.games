@@ -3,7 +3,7 @@
 module Engine
   module ActionTree
     class Node
-      attr_reader :id, :type, :parent, :child
+      attr_reader :id, :type, :child, :children, :parent, :parents
 
       def initialize(action)
         @action_h =
@@ -81,14 +81,6 @@ module Engine
       def nonchat_parent
         _id, node = @parents.find { |_id, node| !node.chat? }
         node
-      end
-
-      def children
-        @children.dup
-      end
-
-      def parents
-        @parents.dup
       end
 
       def root?

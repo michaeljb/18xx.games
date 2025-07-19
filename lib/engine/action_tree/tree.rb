@@ -94,7 +94,7 @@ module Engine
         trunk[0].walk do |node, queue|
           filtered[node.id] = node.action_h unless node.root?
 
-          node.children.values.each do |child|
+          node.children.each do |_id, child|
             next if child.chat? && child.chat_parent && !filtered.include?(child.chat_parent.id)
 
             queue << child
