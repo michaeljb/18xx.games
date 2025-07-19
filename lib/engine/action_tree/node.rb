@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'queue'
+
 module Engine
   module ActionTree
     class Node
@@ -101,9 +103,9 @@ module Engine
 
       def walk
         visited = Set.new
-        queue = [self]
+        queue = Queue.new(self)
         until queue.empty?
-          node = queue.shift # O(N)
+          node = queue.dequeue!
           next if node.nil?
           next if visited.include?(node.id)
 
