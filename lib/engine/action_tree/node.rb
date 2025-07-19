@@ -26,7 +26,7 @@ module Engine
 
       def inspect
         "<ActionTree::Node:id:#{@id};parent:#{@parent&.id};parents:#{@parents.keys};child:#{@child&.id};children:#{@children.keys}>"
-          end
+      end
       alias to_s inspect
 
       def action_h
@@ -83,7 +83,7 @@ module Engine
         @child.nil?
       end
 
-      def walk(&block)
+      def walk
         visited = Set.new
         queue = [self]
         until queue.empty?
@@ -92,7 +92,7 @@ module Engine
           next if visited.include?(node.id)
 
           visited.add(node.id)
-          block.call(node, queue)
+          yield(node, queue)
         end
       end
 

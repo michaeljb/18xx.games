@@ -37,7 +37,6 @@ module Engine
 
         orig_action = action
         if action.undo? || action.redo?
-          # find last canonical action after un/re-doing
           action = action.real_child
         elsif action.chat?
           # find nearest nonchat ancestor
@@ -66,38 +65,43 @@ module Engine
           end
         end
 
-        # TODO: possible to filter ancestors before the main enumerable block?
-        # like a check that needs to succeed before deciding which elements to
-        # enqueue for enumerable's checking? this could allow better
-        # chat/undo/real control
-
         trunk.each do |_id, node|
           node.unlink_parents! { |parent| !trunk.include?(parent.id) }
           node.unlink_children! { |child| !trunk.include?(child.id) }
+        end
 
+        trunk.each do |_id, node|
           # TODO: can this be cleaned up by fixing build_tree! logic for chats
           # and stuff? maybe it would be most ideal for the latest link to be
           # the canonical one; or get rid of parent/child and just use
           # parent/children; maybe another enumerator for nonchat actions can work
-          if node.chat?
-            if node.nonchat_parent
-              node.unlink_parents! { |parent| parent != node.nonchat_parent }
-              node.parent = node.nonchat_parent
-            end
-          else
-            if node.chat_parent
-              node.unlink_parents! { |parent| parent != node.chat_parent }
-              node.parent = node.chat_parent
-            end
+
+          if !node.chat? && node.chat_parent
+            node.unlink_parents! { |parent| parent != node.chat_parent }
+            node.parent = node.chat_parent
           end
+
+          # if node.children.count { |id, child| child.chat }
+
+          # if node.chat?
+          #   if node.nonchat_parent
+          #     node.unlink_parents! { |parent| parent != node.nonchat_parent }
+          #     node.parent = node.nonchat_parent
+          #   end
+          # end
         end
 
-        filtered = []
-        trunk[0].child.walk do |node, queue|
-          filtered << node.action_h
-          queue << node.child
+        filtered = {}
+        trunk[0].walk do |node, queue|
+          filtered[node.id] = node.action_h unless node.root?
+
+          node.children.values.each do |child|
+            next if child.chat? && child.chat_parent && !filtered.include?(child.chat_parent.id)
+
+            queue << child
+          end
         end
-        filtered
+        filtered.values
       end
 
       private
