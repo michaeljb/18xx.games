@@ -9,7 +9,7 @@ module Engine
       def initialize(actions)
         @_actions = actions.dup
 
-        @actions = {0 => Node.new({'type' => 'root', 'id' => 0})}
+        @actions = { 0 => Node.new({ 'type' => 'root', 'id' => 0 }) }
 
         @head = @actions[0] # Node
         @chat_head = nil # Node
@@ -32,55 +32,59 @@ module Engine
       protected
 
       def actions_array_for!(head, include_chat: false)
-        # 0 is reserved for a special placeholder root node
-        return [] if head == 0
-
-        # unknown action requested
+        return [] if head.zero?
         return [] unless (action = @actions[head])
 
-        timestamp = action.action_h['created_at']
-
-        # get off of undo/redo nodes, onto a "real" action
+        orig_action = action
         if action.undo? || action.redo?
-          orig_action = action
           action = action.real_child
         elsif action.chat? && !include_chat
-          # TODO: find nearest real action when excluding chat
-          #
-          # old code for exlucding chat; probably should be `action.with_ancestors.find`
-          #
-          # action = action.find_ancestor { |node| !node.chat? || node.root? }
+          action = action.ancestors_bfs.find { |node| !node.chat? }
         end
 
-        action.delete_children!
+        action.unlink_children!
 
-        # TODO: implement enumerators for ancestors/descendants with/without
-        # self
-        # https://blog.appsignal.com/2018/05/29/ruby-magic-enumerable-and-enumerator.html#implementing-each
-
+        # collect main actions leading to head
         trunk = {}
-        root = action.trunk_ancestors(with_self: true).each do |node|
+        action.ancestors_trunk(with_self: true).each do |node|
           trunk[node.id] = node
           node.parent.child = node unless node.root?
         end
 
+        # collect most recent chat prior to head and all earlier chats
         if include_chat
+          # nearest_chat = orig_action.ancestors_bfs(with_self: true).find(&:chat?)
+          nearest_chat = orig_action.ancestors_trunk(with_self: true).lazy
+                           .find.filter_map(&:chat_parent).force.first
+          if nearest_chat
+            nearest_chat.ancestors_trunk(with_self: true).each do |node|
+              trunk[node.id] = node
+            end
+          end
+        end
 
-          # binding.pry if head == 4
+        trunk.each do |_id, node|
+          node.unlink_parents! { |parent| !trunk.include?(parent.id) }
+          node.unlink_children! { |child| !trunk.include?(child.id) }
 
-          # find nearest chat; check for a chat parent on action and go up the
-          # ancestry
-          latest_chat = (action.trunk_ancestors(with_self: true).find do |node|
-            node&.chat_parent
-          end)&.chat_parent
-          latest_chat.trunk_ancestors(with_self: true).each { |node| trunk[node.id] = node if node.chat? } if latest_chat
+          if node.chat?
+            if node.nonchat_parent
+              node.unlink_parents! { |parent| parent != node.nonchat_parent }
+              node.parent = node.nonchat_parent
+            end
+          else
+            if node.chat_parent
+              node.unlink_parents! { |parent| parent != node.chat_parent }
+              node.parent = node.chat_parent
+            end
+          end
+        end
 
-          # TODO: prune children so that only nodes in trunk remain
-          #
-          # then
-          #
-          # TODO: pathfind from root to head, picking up chats sensibly along
-          # the way -- probably can't sort by timestamp due to eventual history changing
+        # TODO: pathfind from root to head, picking up chats sensibly along
+        # the way
+
+        # start at root
+        # if multiple actions, prefer the chat?
 
           # @chats.each do |id|
           #   chat = @actions[id]
@@ -98,17 +102,11 @@ module Engine
           #     ancestor.find_head.child = chat
           #   end
           # end
-        end
-
-        # binding.pry if head == 3
 
         filtered = []
-        trunk[0].trunk_descendants.each do |node|
-          if node.chat?
-            next unless include_chat
-            # skip chats newer than head
-            next if node.action_h['created_at'] > timestamp
-          end
+        trunk[0].descendants_trunk.each do |node|
+          raise ActionTreeError, 'Found chat in final trunk, but should be skipping chat' if node.chat? && !include_chat
+
           filtered << node.action_h
         end
         filtered
@@ -145,7 +143,7 @@ module Engine
             when 'undo'
               @head.child = action
               undo_to_id = action.action_h['action_id'] || @head.parent&.id
-              raise ActionTreeError, "Cannot undo root action" if undo_to_id.nil?
+              raise ActionTreeError, 'Cannot undo root action' if undo_to_id.nil?
               raise ActionTreeError, "Cannot undo to #{undo_to_id}" unless actions.include?(undo_to_id)
 
               action.child = actions[undo_to_id]

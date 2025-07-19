@@ -48,10 +48,6 @@ module Engine
         to_h.to_json
       end
 
-      def children
-        @children.dup
-      end
-
       def real_child
         if action.undo? || action.redo?
           @children.reverse_each.find { |_id, node| !node.real_action? }
@@ -74,6 +70,11 @@ module Engine
         node
       end
 
+      def nonchat_parent
+        _id, node = @parents.find { |_id, node| !node.chat? }
+        node
+      end
+
       def parents
         @parents.dup
       end
@@ -86,11 +87,15 @@ module Engine
         @child.nil?
       end
 
-      def trunk_ancestors(with_self: false)
+      def ancestors_bfs(with_self: false)
+        BfsEnumerator.new(self, :parents, with_self: with_self)
+      end
+
+      def ancestors_trunk(with_self: false)
         TrunkEnumerator.new(self, :parent, with_self: with_self)
       end
 
-      def trunk_descendants(with_self: false)
+      def descendants_trunk(with_self: false)
         TrunkEnumerator.new(self, :child, with_self: with_self)
       end
 
@@ -100,15 +105,10 @@ module Engine
       # @param node [Node]
       # @returns node
       def parent=(node)
-        delete_parent!(@parent)
         set_parent(node)
         node.add_to_children(self)
         node
       end
-
-      # TODO
-      # def parents<<(node)
-      # end
 
       # Sets `@child` to the given node. Adds the given node to
       # `@children`. Sets `node.parent` to `self`
@@ -121,15 +121,26 @@ module Engine
         node
       end
 
-      def delete_children!(&block)
-        @children.each do |_id, node|
-          next if block_given? && !block.call(node)
+      def unlink_children!
+        @children.dup.each do |_id, node|
+          next if block_given? && !yield(node)
 
+          @child = nil if @child == node
+          remove_child!(node)
           node.delete_parent!(self)
         end
+        find_new_child!
+        self
+      end
 
-        _id, @child = @children.find { |_id, node| !node.chat? } if @child.nil? && !@children.empty?
+      def unlink_parents!
+        @parents.dup.each do |_id, node|
+          next if block_given? && !yield(node)
 
+          remove_parent!(node)
+          self.delete_parent!(node)
+        end
+        find_new_parent!
         self
       end
 
@@ -178,7 +189,7 @@ module Engine
         node ||= @parent
         @parent = nil if @parent == node
         @parents.delete(node&.id)
-        @parent = @parents[@parents.keys.last] unless @parents.empty?
+        find_new_parent!
         node
       end
 
@@ -196,33 +207,80 @@ module Engine
       end
 
       def remove_child!(node)
-        raise ActionTreeError, "Cannot remove #{node.id} from @children" unless @children.include?(node.id)
-
-        @children.delete(node.id)
+        node ||= @chid
         @child = nil if @child == node
+        @children.delete(node.id)
+        find_new_child!
         node
       end
 
       private
 
+      def find_new_parent!
+        @parent = @parents[@parents.keys.last] if @parent.nil? && !@parents.empty?
+        # _id, @parent = @parents.find { |_id, node| !node.chat? } if @parent.nil? && !@parents.empty?
+      end
+
+      def find_new_child!
+        @child = @children[@children.keys.last] if @child.nil? && !@children.empty?
+        # _id, @child = @children.find { |_id, node| !node.chat? } if @child.nil? && !@children.empty?
+      end
+
       class TrunkEnumerator
         include Enumerable
 
         def initialize(node, method, with_self: false)
-          raise ActionTreeError, "Node::TrunkEnumerator method must be one of :child or :parent" unless %i[child parent].include?(method)
+          raise ActionTreeError, 'Node::TrunkEnumerator method must be one of :child or :parent' unless %i[child
+                                                                                                           parent].include?(method)
 
           @node = node
           @method = method
           @with_self = with_self
         end
 
-        def each(&block)
+        def each
+          visited = Set.new
           node = @node
-          yield node if @with_self
+          if @with_self
+            yield node
+            visited.add(node.id)
+          end
           while (node = node.send(@method))
-            raise ActionTreeError, "Found loop in Node::TrunkEnumerator(#{@method}) for #{@node}" if node == @node
+            raise ActionTreeError, "Found loop in Node::TrunkEnumerator(#{@method}) for #{@node}" if visited.include?(node.id)
 
             yield node
+            visited.add(node.id)
+          end
+        end
+      end
+
+      class BfsEnumerator
+        include Enumerable
+
+        def initialize(node, method, with_self: false)
+          @node = node
+          @method = method
+          @with_self = with_self
+        end
+
+        def each
+          visited = Set.new
+          node = @node
+          if @with_self
+            yield node
+            visited.add(node.id)
+          end
+
+          queue = node.send(@method).values
+
+          # queue.shift is O(N)
+          # TODO: implement deque class for O(1)
+          while (node = queue.shift)
+            raise ActionTreeError, "Found loop in Node::BfsEnumerator for #{@node}" if visited.include?(node.id)
+
+            yield node
+            visited.add(node.id)
+            queue.concat(node.send(@method).values)
           end
         end
       end
