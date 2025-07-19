@@ -37,19 +37,25 @@ module Engine
 
         orig_action = action
         if action.undo? || action.redo?
+          # find last canonical action after un/re-doing
           action = action.real_child
         elsif action.chat? && !include_chat
+          # find nearest nonchat ancestor
           action = action.walk do |node, queue|
             if node.chat
               queue.concat(node.parents.values)
             else
               queue.clear
-              next node
+              node
             end
           end
         end
 
-        trunk = action.ancestors_trunk(with_self: true).to_h { |node| [node.id, node] }
+        trunk = {}
+        action.walk do |node, queue|
+          trunk[node.id] = node
+          queue << node.parent
+        end
 
         if include_chat
           orig_action.walk do |node, queue|
@@ -86,34 +92,10 @@ module Engine
           end
         end
 
-        # TODO: pathfind from root to head, picking up chats sensibly along
-        # the way
-
-        # start at root
-        # if multiple actions, prefer the chat?
-
-          # @chats.each do |id|
-          #   chat = @actions[id]
-          #   next if trunk.include?(id) || chat.parent&.chat?
-
-          #   chat.for_self_and_descendants { |node| trunk[node.id] = node }
-          #   ancestor = chat.find_ancestor(default: root) { |node| trunk.include?(node.id) }
-          #   next_nonchat_action = ancestor.trunk_descendants.find { |node| !node.chat? }
-
-          #   if next_nonchat_action
-          #     next_nonchat_action.parent.child = chat
-          #     last_chat = chat.find_head
-          #     last_chat.child = next_nonchat_action
-          #   else
-          #     ancestor.find_head.child = chat
-          #   end
-          # end
-
         filtered = []
-        trunk[0].descendants_trunk.each do |node|
-          raise ActionTreeError, 'Found chat in final trunk, but should be skipping chat' if node.chat? && !include_chat
-
+        trunk[0].child.walk do |node, queue|
           filtered << node.action_h
+          queue << node.child
         end
         filtered
       end

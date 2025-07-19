@@ -83,19 +83,11 @@ module Engine
         @child.nil?
       end
 
-      def ancestors_trunk(with_self: false)
-        TrunkEnumerator.new(self, :parent, with_self: with_self)
-      end
-
-      def descendants_trunk(with_self: false)
-        TrunkEnumerator.new(self, :child, with_self: with_self)
-      end
-
       def walk(&block)
         visited = Set.new
         queue = [self]
         until queue.empty?
-          node = queue.shift
+          node = queue.shift # O(N)
           next if node.nil?
           next if visited.include?(node.id)
 
@@ -229,31 +221,6 @@ module Engine
       def find_new_child!
         @child = @children[@children.keys.last] if @child.nil? && !@children.empty?
         # _id, @child = @children.find { |_id, node| !node.chat? } if @child.nil? && !@children.empty?
-      end
-
-      class TrunkEnumerator
-        include Enumerable
-
-        def initialize(node, method, with_self: false)
-          method_opts = %i[child parent chat_parent]
-          raise ActionTreeError, "Node::TrunkEnumerator method must be one of #{method_opts}" unless method_opts.include?(method)
-
-          @node = node
-          @method = method
-          @with_self = with_self
-        end
-
-        def each
-          node = @node
-          visited = Set.new([node.id])
-          yield node if @with_self
-          while (node = node.send(@method))
-            raise ActionTreeError, "Found loop in Node::TrunkEnumerator(#{@method}) for #{@node}" if visited.include?(node.id)
-
-            yield node
-            visited.add(node.id)
-          end
-        end
       end
     end
   end
