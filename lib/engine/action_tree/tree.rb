@@ -45,11 +45,11 @@ module Engine
         trunk = action.ancestors_trunk(with_self: true).to_h { |node| [node.id, node] }
 
         if include_chat
-          orig_action.ancestors_trunk(with_self: true).each do |node|
-            if (nearest_chat = node.chat_parent)
-              nearest_chat.ancestors_chat(with_self: true).each { |n| trunk[n.id] = n }
-              break
-            end
+          orig_action.walk do |node, queue|
+            trunk[node.id] = node if node.chat?
+            queue << node.parent
+            queue << node.chat_parent
+            queue << node.parent.pending_undo if node.undo?
           end
         end
 
@@ -148,7 +148,9 @@ module Engine
 
               action.child = actions[undo_to_id]
             when 'redo'
-              undo_action = @head.undo_parent
+              undo_action = @head.pending_undo
+              raise ActionTreeError, "Cannot find pending_undo for #{@id}" if undo_action.nil?
+
               undo_action.child = action
               action.child = undo_action.parent
             else

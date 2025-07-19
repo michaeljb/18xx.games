@@ -56,13 +56,9 @@ module Engine
         end
       end
 
-      # find the latest parent that is not a redo or chat; if that parent is an
-      # undo, return it, otherwise throw
-      def undo_parent
+      def pending_undo
         _id, node = @parents.reverse_each.find { |_id, node| !node.chat? && !node.redo? }
-        raise ActionTreeError, "Cannot find undo_parent for #{@id}" if node.nil? || !node.undo?
-
-        node
+        node&.undo? ? node : nil
       end
 
       def chat_parent
@@ -95,12 +91,21 @@ module Engine
         TrunkEnumerator.new(self, :parent, with_self: with_self)
       end
 
-      def ancestors_chat(with_self: false)
-        TrunkEnumerator.new(self, :chat_parent, with_self: with_self)
-      end
-
       def descendants_trunk(with_self: false)
         TrunkEnumerator.new(self, :child, with_self: with_self)
+      end
+
+      def walk(&block)
+        visited = Set.new
+        queue = [self]
+        until queue.empty?
+          node = queue.shift
+          next if node.nil?
+          next if visited.include?(node.id)
+
+          visited.add(node.id)
+          block.call(node, queue)
+        end
       end
 
       # Sets `@parent` to the given node. Adds `self` to the given node's
