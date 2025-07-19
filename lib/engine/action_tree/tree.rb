@@ -42,8 +42,6 @@ module Engine
           action = action.ancestors_bfs.find { |node| !node.chat? }
         end
 
-        action.unlink_children!
-
         # collect main actions leading to head
         trunk = {}
         action.ancestors_trunk(with_self: true).each do |node|
@@ -133,7 +131,7 @@ module Engine
 
           actions[id] = action
 
-          action.parent = prev_action_or_chat
+          prev_action_or_chat.child = action
 
           if action.chat?
             @chat_head.child = action if @chat_head
