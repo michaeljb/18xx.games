@@ -33,7 +33,7 @@
   "acting": [
     3638
   ],
-  "result": {},
+  "result": {"3638": 415, "97": 420},
   "actions": [
     {
       "type": "bid",
