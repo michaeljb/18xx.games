@@ -67,8 +67,10 @@ module Engine
           node.unlink_parents! { |parent| !trunk.include?(parent.id) }
           node.unlink_children! { |child| !trunk.include?(child.id) }
 
-          # binding.pry if head == 6 && node.id == 4
-
+          # TODO: can this be cleaned up by fixing build_tree! logic for chats
+          # and stuff? maybe it would be most ideal for the latest link to be
+          # the canonical one; or get rid of parent/child and just use
+          # parent/children; maybe another enumerator for nonchat actions can work
           if node.chat?
             if node.nonchat_parent
               node.unlink_parents! { |parent| parent != node.nonchat_parent }
