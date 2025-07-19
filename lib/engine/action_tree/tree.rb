@@ -39,7 +39,14 @@ module Engine
         if action.undo? || action.redo?
           action = action.real_child
         elsif action.chat? && !include_chat
-          action = action.ancestors_bfs.find { |node| !node.chat? }
+          action = action.walk do |node, queue|
+            if node.chat
+              queue.concat(node.parents.values)
+            else
+              queue.clear
+              next node
+            end
+          end
         end
 
         trunk = action.ancestors_trunk(with_self: true).to_h { |node| [node.id, node] }

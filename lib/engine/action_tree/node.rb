@@ -83,10 +83,6 @@ module Engine
         @child.nil?
       end
 
-      def ancestors_bfs(with_self: false)
-        BfsEnumerator.new(self, :parents, with_self: with_self)
-      end
-
       def ancestors_trunk(with_self: false)
         TrunkEnumerator.new(self, :parent, with_self: with_self)
       end
@@ -256,32 +252,6 @@ module Engine
 
             yield node
             visited.add(node.id)
-          end
-        end
-      end
-
-      class BfsEnumerator
-        include Enumerable
-
-        def initialize(node, method, with_self: false)
-          @node = node
-          @method = method
-          @with_self = with_self
-        end
-
-        def each
-          node = @node
-          visited = Set.new([node.id])
-          yield node if @with_self
-          queue = node.send(@method).values
-          # queue.shift is O(N)
-          # TODO: implement deque class for O(1)
-          while (node = queue.shift)
-            raise ActionTreeError, "Found loop in Node::BfsEnumerator for #{@node}" if visited.include?(node.id)
-
-            yield node
-            visited.add(node.id)
-            queue.concat(node.send(@method).values)
           end
         end
       end
