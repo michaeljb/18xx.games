@@ -3,7 +3,7 @@
 module Engine
   module ActionTree
     class Node
-      attr_reader :id, :type, :parent, :parents, :child, :children
+      attr_reader :id, :type, :parent, :child
 
       def initialize(action)
         @action_h =
@@ -25,7 +25,8 @@ module Engine
       end
 
       def inspect
-        "<ActionTree::Node:id:#{@id};parent:#{@parent&.id};parents:#{@parents.keys};child:#{@child&.id};children:#{@children.keys}>"
+        "<ActionTree::Node:id:#{@id};parent:#{@parent&.id};parents:#{@parents.keys};"\
+          "child:#{@child&.id};children:#{@children.keys}>"
       end
       alias to_s inspect
 
@@ -82,6 +83,10 @@ module Engine
         node
       end
 
+      def children
+        @children.dup
+      end
+
       def parents
         @parents.dup
       end
@@ -94,7 +99,7 @@ module Engine
         @child.nil?
       end
 
-      def walk()
+      def walk
         visited = Set.new
         queue = [self]
         until queue.empty?
@@ -115,7 +120,6 @@ module Engine
       def parent=(node)
         set_parent(node)
         node.add_to_children(self)
-        node
       end
 
       # Sets `@child` to the given node. Adds the given node to
@@ -126,7 +130,6 @@ module Engine
       def child=(node)
         set_child(node)
         node.set_parent(self)
-        node
       end
 
       def unlink_children!
@@ -186,12 +189,21 @@ module Engine
         @parents[node.id] = node
       end
 
+      # rubocop:disable Naming/AccessorMethodName
       def set_parent(node)
         raise ActionTreeError, "Cannot make #{node.id} its own parent" if node == self
 
         @parent = node if node.real_action? || (chat? && node.chat?)
         add_to_parents(node)
       end
+
+      def set_child(node)
+        raise ActionTreeError, "Cannot make #{node.id} its own child" if node == self
+
+        @child = node
+        add_to_children(node)
+      end
+      # rubocop:enable Naming/AccessorMethodName
 
       def remove_parent!(node)
         node ||= @parent
@@ -205,13 +217,6 @@ module Engine
         raise ActionTreeError, "Cannot make #{node.id} its own child" if node == self
 
         @children[node.id] = node
-      end
-
-      def set_child(node)
-        raise ActionTreeError, "Cannot make #{node.id} its own child" if node == self
-
-        @child = node
-        add_to_children(node)
       end
 
       def remove_child!(node)
