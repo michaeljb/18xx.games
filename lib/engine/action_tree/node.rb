@@ -25,8 +25,8 @@ module Engine
       end
 
       def inspect
-        "<ActionTree::Node:#{@id}>"
-      end
+        "<ActionTree::Node:id:#{@id};parent:#{@parent&.id};parents:#{@parents.keys};child:#{@child&.id};children:#{@children.keys}>"
+          end
       alias to_s inspect
 
       def action_h
