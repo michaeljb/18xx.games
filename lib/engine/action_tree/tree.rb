@@ -42,24 +42,21 @@ module Engine
           action = action.ancestors_bfs.find { |node| !node.chat? }
         end
 
-        # collect main actions leading to head
-        trunk = {}
-        action.ancestors_trunk(with_self: true).each do |node|
-          trunk[node.id] = node
-          node.parent.child = node unless node.root?
-        end
+        trunk = action.ancestors_trunk(with_self: true).to_h { |node| [node.id, node] }
 
-        # collect most recent chat prior to head and all earlier chats
         if include_chat
-          # nearest_chat = orig_action.ancestors_bfs(with_self: true).find(&:chat?)
-          nearest_chat = orig_action.ancestors_trunk(with_self: true).lazy
-                           .find.filter_map(&:chat_parent).force.first
-          if nearest_chat
-            nearest_chat.ancestors_chat(with_self: true).each do |node|
-              trunk[node.id] = node
+          orig_action.ancestors_trunk(with_self: true).each do |node|
+            if (nearest_chat = node.chat_parent)
+              nearest_chat.ancestors_chat(with_self: true).each { |n| trunk[n.id] = n }
+              break
             end
           end
         end
+
+        # TODO: possible to filter ancestors before the main enumerable block?
+        # like a check that needs to succeed before deciding which elements to
+        # enqueue for enumerable's checking? this could allow better
+        # chat/undo/real control
 
         trunk.each do |_id, node|
           node.unlink_parents! { |parent| !trunk.include?(parent.id) }
