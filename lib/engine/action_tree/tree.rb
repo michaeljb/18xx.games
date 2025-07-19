@@ -61,7 +61,12 @@ module Engine
             trunk[node.id] = node if node.chat?
             queue << node.parent
             queue << node.chat_parent
+
             queue << node.parent.pending_undo if node.undo?
+            if node.redo?
+              queue << node.undo_parent
+              queue << node.prev_redo if node.prev_redo
+            end
           end
         end
 
@@ -80,15 +85,6 @@ module Engine
             node.unlink_parents! { |parent| parent != node.chat_parent }
             node.parent = node.chat_parent
           end
-
-          # if node.children.count { |id, child| child.chat }
-
-          # if node.chat?
-          #   if node.nonchat_parent
-          #     node.unlink_parents! { |parent| parent != node.nonchat_parent }
-          #     node.parent = node.nonchat_parent
-          #   end
-          # end
         end
 
         filtered = {}
@@ -142,10 +138,15 @@ module Engine
               action.child = actions[undo_to_id]
             when 'redo'
               undo_action = @head.pending_undo
-              raise ActionTreeError, "Cannot find pending_undo for #{@id}" if undo_action.nil?
+              raise ActionTreeError, "Cannot find action to redo for #{@id}" if undo_action.nil? || !undo_action.undo?
 
               undo_action.child = action
               action.child = undo_action.parent
+              if (prev_redo = @head.prev_redo)
+                action.parent = prev_redo
+              end
+
+              undo_action.parent
             else
               @head.child = action
               action

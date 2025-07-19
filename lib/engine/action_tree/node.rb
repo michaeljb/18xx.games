@@ -61,6 +61,17 @@ module Engine
         node&.undo? ? node : nil
       end
 
+      def undo_parent
+        _id, node = @parents.reverse_each.find { |_id, node| node.undo? }
+        node
+      end
+
+      # an "active" redo
+      def prev_redo
+        _id, node = @parents.reverse_each.find { |_id, node| !node.chat? }
+        node&.redo? ? node : nil
+      end
+
       def chat_parent
         _id, node = @parents.find { |_id, node| node.chat? }
         node
@@ -83,7 +94,7 @@ module Engine
         @child.nil?
       end
 
-      def walk
+      def walk()
         visited = Set.new
         queue = [self]
         until queue.empty?
