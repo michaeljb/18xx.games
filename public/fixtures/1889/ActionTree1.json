@@ -27,7 +27,7 @@
     "optional_rules": []
   },
   "user_settings": null,
-  "status": "active",
+  "status": "finished",
   "turn": 1,
   "round": "Auction Round",
   "acting": [
@@ -64,7 +64,7 @@
       "type": "message",
       "entity": 97,
       "entity_type": "player",
-      "id": 5,
+      "id": 4,
       "created_at": 1751565644,
       "message": "hellloooooo"
     },
@@ -72,7 +72,7 @@
       "type": "end_game",
       "entity": 97,
       "entity_type": "player",
-      "id": 4,
+      "id": 5,
       "created_at": 1751565645
     }
   ],
