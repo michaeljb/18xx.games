@@ -12,7 +12,6 @@ module Engine
         @actions = { 0 => Node.new({ 'type' => 'root', 'id' => 0 }) }
 
         @head = @actions[0] # Node
-        #@chat_root = nil # Node
         @chat_head = nil # Node
 
         build_tree!(actions)
@@ -151,7 +150,6 @@ module Engine
           prev_action_or_chat.child = action
 
           if action.chat?
-            #@chat_root = action unless @chat_root
             @chat_head.child = action if @chat_head
             action.parent = prev_action_or_chat
             @chat_head = action

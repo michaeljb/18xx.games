@@ -127,7 +127,7 @@ module Engine
         visited = Set.new
         queue = [self]
         until queue.empty?
-          node = queue.shift # O(N)
+          node = queue.shift # O(N) for N items currently in the queue
           next if node.nil?
           next if visited.include?(node.id)
 
@@ -256,12 +256,10 @@ module Engine
 
       def find_new_parent!
         @parent = @parents[@parents.keys.last] if @parent.nil? && !@parents.empty?
-        # _id, @parent = @parents.find { |_id, node| !node.chat? } if @parent.nil? && !@parents.empty?
       end
 
       def find_new_child!
         @child = @children[@children.keys.last] if @child.nil? && !@children.empty?
-        # _id, @child = @children.find { |_id, node| !node.chat? } if @child.nil? && !@children.empty?
       end
     end
   end
