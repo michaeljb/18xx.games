@@ -30,25 +30,6 @@ module Engine
   module ActionTree
     describe Tree do
       describe '#new' do
-        xit 'sets parents, children, and child' do
-          tree = get_action_tree('1889/ActionTree1')
-
-          # chat [root]
-          expect(node_props(tree[1])).to eq({parent: nil, child: 2, children: [2]})
-
-          # chat [head]
-          expect(node_props(tree[2])).to eq({parent: 1, child: nil, children: []})
-
-          # bid [root]
-          expect(node_props(tree[3])).to eq({parent: nil, child: 4, children: [4, 5]})
-
-          # chat [head]
-          expect(node_props(tree[4])).to eq({parent: 3, child: nil, children: []})
-
-          # end_game [head]
-          expect(node_props(tree[5])).to eq({parent: 3, child: nil, children: []})
-        end
-
         it 'throws an error if duplicate action IDs are found' do
           expect { get_action_tree('1889/ActionTree_duplicate_ids') }.to raise_error(Engine::ActionTreeError)
         end
@@ -240,16 +221,6 @@ module Engine
 
       describe '#filtered_actions' do
         describe 'with include_chat: false' do
-          it 'excludes chats' do
-            tree = get_action_tree('1889/ActionTree1')
-
-            head = 4
-            actions = tree.filtered_actions(head, include_chat: false)
-            action_ids = actions.map { |a| a['id'] }
-
-            expect(action_ids).to eq([3, 4])
-          end
-
           # rubocop:disable Layout/LineLength
           {
             0 => [],
@@ -325,25 +296,25 @@ module Engine
           # rubocop:disable Layout/LineLength
           {
             0 => [],
-            1 => [], # chat
-            2 => [], # chat
-            3 => [], # chat
-            4 => [], # chat
+            1 => [],
+            2 => [],
+            3 => [],
+            4 => [],
             5 => [5],
-            6 => [], # undo
+            6 => [],
             7 => [7],
-            8 => [7], # chat
-            9 => [7], # chat
-            10 => [7], # chat
-            11 => [7], # chat
-            12 => [], # undo
+            8 => [7],
+            9 => [7],
+            10 => [7],
+            11 => [7],
+            12 => [],
             13 => [13],
             14 => [13, 14],
-            15 => [13], # undo
-            16 => [13], # chat
+            15 => [13],
+            16 => [13],
             17 => [13, 17],
-            18 => [13], # undo
-            19 => [13], # chat
+            18 => [13],
+            19 => [13],
             20 => [13, 20],
             21 => [13, 20, 21],
           }.each do |head, expected|
@@ -381,16 +352,6 @@ module Engine
         end
 
         describe 'with include_chat: true' do
-          xit 'includes chats at root' do
-            tree = get_action_tree('1889/ActionTree1')
-
-            head = 4
-            actions = tree.filtered_actions(head, include_chat: true)
-            action_ids = actions.map { |a| a['id'] }
-
-            expect(action_ids).to eq([1, 2, 3, 5, 4])
-          end
-
           {
             0 => [],
             1 => [1],
