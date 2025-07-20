@@ -22,6 +22,13 @@ module Engine
 
         @child = nil
         @children = {}
+
+        @original_links = nil
+      end
+
+      def freeze_original_links!
+        @original_links = Set.new(@parents.keys + @children.keys)
+        @original_links.freeze
       end
 
       def inspect
@@ -51,7 +58,11 @@ module Engine
 
       def real_child
         if undo? || redo?
-          @children.reverse_each.find { |_id, node| node.real_action? }[1]
+          if @child.real_action?
+            @child
+          else
+            @children.reverse_each.find { |_id, node| node.real_action? }[1]
+          end
         else
           @child
         end
@@ -67,6 +78,13 @@ module Engine
         node
       end
 
+      def original_undo_parent
+        return if root?
+
+        _id, node = @parents.find { |id, node| @original_links.include?(id) && node.undo? }
+        node
+      end
+
       # an "active" redo
       def prev_redo
         _id, node = @parents.reverse_each.find { |_id, node| !node.chat? }
@@ -75,6 +93,11 @@ module Engine
 
       def chat_parent
         _id, node = @parents.find { |_id, node| node.chat? }
+        node
+      end
+
+      def chat_child
+        _id, node = @children.find { |_id, node| node.chat? }
         node
       end
 
@@ -91,7 +114,11 @@ module Engine
         @child.nil?
       end
 
-      def walk
+      # Traverse the tree, starting from self. The given block takes `node` and
+      # `queue`. `node` is the currently visited node on the walk, and `queue`
+      # is the array of nodes to visit next, in FIFO order. The given block must
+      # modify `queue` to continue the walk.
+      def tree_walk
         visited = Set.new
         queue = [self]
         until queue.empty?

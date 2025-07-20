@@ -12,6 +12,7 @@ module Engine
         @actions = { 0 => Node.new({ 'type' => 'root', 'id' => 0 }) }
 
         @head = @actions[0] # Node
+        #@chat_root = nil # Node
         @chat_head = nil # Node
 
         build_tree!(actions)
@@ -29,6 +30,11 @@ module Engine
         clone.actions_array_for!(head, include_chat: include_chat)
       end
 
+      def inspect
+        "<Engine::ActionTree::Tree>"
+      end
+      alias to_s inspect
+
       protected
 
       def actions_array_for!(head, include_chat: false)
@@ -41,7 +47,7 @@ module Engine
           action = action.real_child
         elsif action.chat?
           # find nearest nonchat ancestor
-          action.walk do |node, queue|
+          action.tree_walk do |node, queue|
             if node.chat?
               queue.concat(node.parents.values)
             else
@@ -52,19 +58,26 @@ module Engine
         end
 
         trunk = {}
-        action.walk do |node, queue|
+        action.tree_walk do |node, queue|
           trunk[node.id] = node
           queue << node.parent
         end
 
         if include_chat
-          orig_action.walk do |node, queue|
-            trunk[node.id] = node if node.chat?
-            queue << node.parent
-            queue << node.chat_parent
+          orig_action.tree_walk do |node, queue|
+            if node.chat?
+              node.tree_walk do |chat, queue2|
+                next if trunk.include?(chat.id)
 
-            # include chat messages that newer than the "real action" head, but
-            # older than the given undo/redo head
+                trunk[chat.id] = chat
+                queue2 << chat.chat_parent
+              end
+              next
+            end
+
+            queue << node.chat_parent
+            queue << node.parent
+            queue << node.original_undo_parent
             queue << node.parent.pending_undo if node.undo?
             if node.redo?
               queue << node.undo_parent
@@ -91,7 +104,7 @@ module Engine
         end
 
         filtered = {}
-        trunk[0].walk do |node, queue|
+        trunk[0].tree_walk do |node, queue|
           filtered[node.id] = node.action_h unless node.root?
 
           node.children.each do |_id, child|
@@ -123,37 +136,43 @@ module Engine
           prev_action_or_chat.child = action
 
           if action.chat?
+            #@chat_root = action unless @chat_root
             @chat_head.child = action if @chat_head
             action.parent = prev_action_or_chat
             @chat_head = action
             prev_action_or_chat = action
+
+            action.freeze_original_links!
             next
           end
 
           @head = prev_action_or_chat =
-            case action.type
-            when 'undo'
-              @head.child = action
-              undo_to_id = action.action_h['action_id'] || @head.parent&.id
-              raise ActionTreeError, 'Cannot undo root action' if undo_to_id.nil?
-              raise ActionTreeError, "Cannot undo to #{undo_to_id}" unless actions.include?(undo_to_id)
+          case action.type
+          when 'undo'
+            @head.child = action
+            undo_to_id = action.action_h['action_id'] || @head.parent&.id
+            raise ActionTreeError, 'Cannot undo root action' if undo_to_id.nil?
+            raise ActionTreeError, "Cannot undo to #{undo_to_id}" unless actions.include?(undo_to_id)
 
-              action.child = actions[undo_to_id]
-            when 'redo'
-              undo_action = @head.pending_undo
-              raise ActionTreeError, "Cannot find action to redo for #{@id}" if undo_action.nil? || !undo_action.undo?
+            action.child = actions[undo_to_id]
+            action.child
+          when 'redo'
+            undo_action = @head.pending_undo
+            raise ActionTreeError, "Cannot find action to redo for #{@id}" if undo_action.nil? || !undo_action.undo?
 
-              undo_action.child = action
-              action.child = undo_action.parent
-              if (prev_redo = @head.prev_redo)
-                action.parent = prev_redo
-              end
-
-              undo_action.parent
-            else
-              @head.child = action
-              action
+            undo_action.child = action
+            action.child = undo_action.parent
+            if (prev_redo = @head.prev_redo)
+              action.parent = prev_redo
             end
+            undo_action.parent
+          else
+            action.parent = @head.pending_undo if @head.pending_undo
+            @head.child = action
+            action
+          end
+
+          action.freeze_original_links!
         end
       end
     end
