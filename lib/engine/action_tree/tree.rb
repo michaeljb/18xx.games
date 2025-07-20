@@ -99,7 +99,7 @@ module Engine
 
         trunk.each do |_id, node|
           if node.parents.size > 1
-            node.unlink_parents! { |parent| !parent.chat? }
+            node.unlink_parents! { |parent| parent != node.parents.values.last }
           end
         end
 
@@ -156,8 +156,6 @@ module Engine
 
           actions[id] = action
 
-          prev_action_or_chat.child = action
-
           if action.chat?
             #@chat_root = action unless @chat_root
             @chat_head.child = action if @chat_head
@@ -168,6 +166,8 @@ module Engine
             action.freeze_original_links!
             next
           end
+
+          prev_action_or_chat.child = action
 
           @head = prev_action_or_chat =
           case action.type
