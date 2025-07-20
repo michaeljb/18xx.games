@@ -101,6 +101,11 @@ module Engine
         node
       end
 
+      def nonchat_child
+        _id, node = @children.find { |_id, node| !node.chat? }
+        node
+      end
+
       def nonchat_parent
         _id, node = @parents.find { |_id, node| !node.chat? }
         node
@@ -127,8 +132,9 @@ module Engine
           next if visited.include?(node.id)
 
           visited.add(node.id)
-          yield(node, queue)
+          result = yield(node, queue)
         end
+        result
       end
 
       # Sets `@parent` to the given node. Adds `self` to the given node's

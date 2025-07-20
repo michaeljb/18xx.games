@@ -41,102 +41,94 @@ module Engine
         return [] if head.zero?
         return [] unless (action = @actions[head])
 
-        orig_action = action
+        subtree = {}
+
+        # add chats to subtree
+        if include_chat
+          action.tree_walk do |node, queue|
+            if node.chat?
+              # add this chat and its chat ancestors to subtree
+              node.tree_walk do |chat_action, chat_queue|
+                next if subtree.include?(chat_action.id)
+
+                subtree[chat_action.id] = chat_action
+                chat_queue << chat_action.chat_parent
+              end
+            else
+              queue << node.chat_parent
+              queue << node.parent
+              # special handling for branches made by undo/redo
+              queue << node.original_undo_parent
+              queue << node.parent.pending_undo if node.undo?
+              if node.redo?
+                queue << node.undo_parent
+                queue << node.prev_redo if node.prev_redo
+              end
+            end
+          end
+        end
+
+        # find correct action head, add it and its ancestors to subtree
         if action.undo? || action.redo?
-          # find "real action" head
           action = action.real_child
         elsif action.chat?
-          # find nearest nonchat ancestor
-          action.tree_walk do |node, queue|
+          action = action.tree_walk do |node, queue|
             if node.chat?
               queue.concat(node.parents.values)
             else
-              action = node
               queue.clear
+              node
             end
           end
         end
-
-        trunk = {}
         action.tree_walk do |node, queue|
-          trunk[node.id] = node
+          subtree[node.id] = node
           queue << node.parent
         end
 
+        # prune links to nodes outside of the subtree
+        subtree.each do |_id, node|
+          node.unlink_parents! { |parent| !subtree.include?(parent.id) }
+          node.unlink_children! { |child| !subtree.include?(child.id) }
+        end
+
+        # simplify child links to chats
         if include_chat
-          orig_action.tree_walk do |node, queue|
-            if node.chat?
-              node.tree_walk do |chat, queue2|
-                next if trunk.include?(chat.id)
-
-                trunk[chat.id] = chat
-                queue2 << chat.chat_parent
-              end
-              next
-            end
-
-            queue << node.chat_parent
-            queue << node.parent
-            queue << node.original_undo_parent
-            queue << node.parent.pending_undo if node.undo?
-            if node.redo?
-              queue << node.undo_parent
-              queue << node.prev_redo if node.prev_redo
+          subtree.each do |_id, node|
+            if node.children.count { |_id, child| child.chat? } > 1
+              first_chat = node.children.values.find(&:chat?)
+              node.unlink_children! { |child| child.chat? && child != first_chat }
             end
           end
         end
 
-        trunk.each do |_id, node|
-          node.unlink_parents! { |parent| !trunk.include?(parent.id) }
-          node.unlink_children! { |child| !trunk.include?(child.id) }
-        end
+        # walk the pruned subtree to form the filtered_actions array with chats
+        # interleaved correctly
+        filtered = []
+        subtree[0].tree_walk do |node, queue|
+          filtered << node.action_h unless node.root?
 
-        trunk.each do |_id, node|
-          if node.chat? && node.children.size > 1
-            node.unlink_children! { |child| child.chat? }
+          if node.chat?
+            if node.nonchat_child || (node.chat_child && node.chat_child.parents.size > 1)
+              queue << node.chat_child
+            else
+              queue.unshift(node.chat_child)
+            end
+          else
+            if node.chat_child
+              queue << node.chat_child
+              queue << node.child
+            else
+              queue.unshift(node.child)
+            end
           end
         end
 
-        trunk.each do |_id, node|
-          if node.parents.size > 1
-            node.unlink_parents! { |parent| parent != node.parents.values.last }
-          end
+        if filtered.size != subtree.size - 1
+          raise ActionTreeError, "Expected to create array of size #{subtree.size - 1}, got #{filtered.size}"
         end
 
-        filtered = {}
-        trunk[0].tree_walk do |node, queue|
-          filtered[node.id] = node.action_h
-
-          node.children.reverse_each do |id, child|
-            queue.unshift child
-          end
-        end
-        filtered.delete(0)
-        return filtered.values
-
-        trunk.each do |_id, node|
-          # TODO: can this be cleaned up by fixing build_tree! logic for chats
-          # and stuff? maybe it would be most ideal for the latest link to be
-          # the canonical one; or get rid of parent/child and just use
-          # parent/children; maybe another enumerator for nonchat actions can work
-
-          if !node.chat? && node.chat_parent
-            node.unlink_parents! { |parent| parent != node.chat_parent }
-            node.parent = node.chat_parent
-          end
-        end
-
-        filtered = {}
-        trunk[0].tree_walk do |node, queue|
-          filtered[node.id] = node.action_h unless node.root?
-
-          node.children.each do |_id, child|
-            next if child.chat? && child.chat_parent && !filtered.include?(child.chat_parent.id)
-
-            queue << child
-          end
-        end
-        filtered.values
+        filtered
       end
 
       private
@@ -156,6 +148,8 @@ module Engine
 
           actions[id] = action
 
+          prev_action_or_chat.child = action
+
           if action.chat?
             #@chat_root = action unless @chat_root
             @chat_head.child = action if @chat_head
@@ -166,8 +160,6 @@ module Engine
             action.freeze_original_links!
             next
           end
-
-          prev_action_or_chat.child = action
 
           @head = prev_action_or_chat =
           case action.type
