@@ -19,7 +19,6 @@ end
 # @returns [Hash] Integer ID based info on the tree relations for the given node
 def node_props(node)
   {
-    parent: node.parent&.id,
     child: node.child&.id,
     children: node.children.keys,
     parent: node.parent&.id,

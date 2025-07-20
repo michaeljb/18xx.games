@@ -92,6 +92,29 @@ module Engine
         end
 
         trunk.each do |_id, node|
+          if node.chat? && node.children.size > 1
+            node.unlink_children! { |child| child.chat? }
+          end
+        end
+
+        trunk.each do |_id, node|
+          if node.parents.size > 1
+            node.unlink_parents! { |parent| !parent.chat? }
+          end
+        end
+
+        filtered = {}
+        trunk[0].tree_walk do |node, queue|
+          filtered[node.id] = node.action_h
+
+          node.children.reverse_each do |id, child|
+            queue.unshift child
+          end
+        end
+        filtered.delete(0)
+        return filtered.values
+
+        trunk.each do |_id, node|
           # TODO: can this be cleaned up by fixing build_tree! logic for chats
           # and stuff? maybe it would be most ideal for the latest link to be
           # the canonical one; or get rid of parent/child and just use
