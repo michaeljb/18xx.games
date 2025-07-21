@@ -3,7 +3,7 @@
 module Engine
   module ActionTree
     class Node
-      attr_reader :id, :type, :child, :children, :parent, :parents
+      attr_reader :id, :type, :child, :children, :original_child, :parent, :parents
 
       def initialize(action)
         @action_h =
@@ -19,16 +19,17 @@ module Engine
 
         @parent = nil
         @parents = {}
+        @original_parents = Set.new
 
         @child = nil
         @children = {}
-
-        @original_links = nil
+        @original_child = nil
       end
 
       def freeze_original_links!
-        @original_links = Set.new(@parents.keys + @children.keys)
-        @original_links.freeze
+        @original_parents = Set.new(@parents.keys)
+        @original_parents.freeze
+        @original_child = @child
       end
 
       def inspect
@@ -78,17 +79,21 @@ module Engine
         node
       end
 
+      def original_parents
+        @original_parents.map { |id| @parents[id] }
+      end
+
       def original_undo_parent
         return if root?
 
-        _id, node = @parents.find { |id, node| @original_links.include?(id) && node.undo? }
+        _id, node = @parents.find { |id, node| @original_parents.include?(id) && node.undo? }
         node
       end
 
       def original_redo_parent
         return if root?
 
-        _id, node = @parents.find { |id, node| @original_links.include?(id) && node.redo? }
+        _id, node = @parents.find { |id, node| @original_parents.include?(id) && node.redo? }
         node
       end
 

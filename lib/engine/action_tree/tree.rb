@@ -43,30 +43,17 @@ module Engine
 
         subtree = {}
 
-        # binding.pry if head == 31
-
-        # add chats to subtree
         if include_chat
+          chats = []
           action.tree_walk do |node, queue|
-            if node.chat?
-              # add this chat and its chat ancestors to subtree
-              node.tree_walk do |chat_action, chat_queue|
-                next if subtree.include?(chat_action.id)
+            node.chat? ? chats << node : queue.concat(node.original_parents)
+          end
+          chats.each do |chat|
+            chat.tree_walk do |node, queue|
+              next if subtree.include?(node.id)
 
-                subtree[chat_action.id] = chat_action
-                chat_queue << chat_action.chat_parent
-              end
-            else
+              subtree[node.id] = node
               queue << node.chat_parent
-              queue << node.parent
-              # special handling for branches made by undo/redo
-              queue << node.original_undo_parent
-              queue << node.original_redo_parent
-              queue << node.parent.pending_undo if node.undo?
-              if node.redo?
-                queue << node.undo_parent
-                queue << node.prev_redo if node.prev_redo
-              end
             end
           end
         end
@@ -171,6 +158,8 @@ module Engine
           when 'redo'
             undo_action = @action_head.pending_undo
             raise ActionTreeError, "Cannot find action to redo for #{action.id}" if undo_action.nil? || !undo_action.undo?
+
+            action.parent = @head
 
             undo_action.child = action
             redo_to = undo_action.parent
