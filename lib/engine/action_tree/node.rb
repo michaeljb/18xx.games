@@ -85,6 +85,13 @@ module Engine
         node
       end
 
+      def original_redo_parent
+        return if root?
+
+        _id, node = @parents.find { |id, node| @original_links.include?(id) && node.redo? }
+        node
+      end
+
       # an "active" redo
       def prev_redo
         _id, node = @parents.reverse_each.find { |_id, node| !node.chat? }

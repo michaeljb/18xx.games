@@ -61,6 +61,7 @@ module Engine
               queue << node.parent
               # special handling for branches made by undo/redo
               queue << node.original_undo_parent
+              queue << node.original_redo_parent
               queue << node.parent.pending_undo if node.undo?
               if node.redo?
                 queue << node.undo_parent
