@@ -43,7 +43,7 @@ module Engine
 
         subtree = {}
 
-        # binding.pry
+        # binding.pry if head == 31
 
         # add chats to subtree
         if include_chat
@@ -147,40 +147,32 @@ module Engine
           raise ActionTreeError, "Duplicate action id found: #{id}" if actions.include?(id)
 
           actions[id] = action
-
-          @head.child = action unless @head.undo? || @head.redo?
-
           case action.type
           when 'message'
             @chat_head&.child = action
             @action_head.child = action
-
-            # TODO: this is semi-redundant with setting `@head.child` above
             action.parent = @head
-
             @chat_head = action
             @head = action
           when 'undo'
-            #binding.pry
-
-            @action_head.child = action
+            # binding.pry if id == 31
 
             undo_to_id = action.action_h['action_id'] || @action_head.parent&.id || @head.parent&.id
             undo_to = actions[undo_to_id]
             raise ActionTreeError, "Cannot undo to #{undo_to_id}" unless undo_to
 
+            # TODO: new method to make the link, but without setting @parent
+            action.parent = @head
+
+            @action_head.child = action
             action.child = undo_to
             @action_head = undo_to
           when 'redo'
-            #binding.pry
-
             undo_action = @action_head.pending_undo
-            raise ActionTreeError, "Cannot find action to redo for #{@id}" if undo_action.nil? || !undo_action.undo?
+            raise ActionTreeError, "Cannot find action to redo for #{action.id}" if undo_action.nil? || !undo_action.undo?
 
             undo_action.child = action
-
             redo_to = undo_action.parent
-
             action.child = redo_to
             if (prev_redo = @action_head.prev_redo)
               action.parent = prev_redo
@@ -188,6 +180,8 @@ module Engine
 
             @action_head = redo_to
           else
+            action.parent = @head
+            # TODO: @undo_head for holding undo/redo actions?
             action.parent = @action_head.pending_undo if @action_head.pending_undo
             @action_head.child = action
             @action_head = action
