@@ -11,8 +11,9 @@ module Engine
 
         @actions = { 0 => Node.new({ 'type' => 'root', 'id' => 0 }) }
 
-        @head = @actions[0] # Node
-        @chat_head = nil # Node
+        @head = @actions[0] # Node; any kind of action
+        @action_head = @head # Node; an action, no chat/undo/redo
+        @chat_head = nil # Node; chat
 
         build_tree!(actions)
       end
@@ -42,6 +43,8 @@ module Engine
 
         subtree = {}
 
+        # binding.pry
+
         # add chats to subtree
         if include_chat
           action.tree_walk do |node, queue|
@@ -67,7 +70,7 @@ module Engine
           end
         end
 
-        # find correct action head, add it and its ancestors to subtree
+        # find action_head, add it and its ancestors to subtree
         if action.undo? || action.redo?
           action = action.real_child
         elsif action.chat?
@@ -138,8 +141,6 @@ module Engine
       # @param raw_actions [Hash] the actions passed to Engine::Game::Base
       # @returns [Hash<Integer => Node>]
       def build_tree!(raw_actions)
-        prev_action_or_chat = @head
-
         raw_actions.each_with_object(@actions) do |raw_action, actions|
           action = Node.new(raw_action)
           id = action.id
@@ -147,44 +148,52 @@ module Engine
 
           actions[id] = action
 
-          prev_action_or_chat.child = action
+          @head.child = action unless @head.undo? || @head.redo?
 
-          if action.chat?
-            @chat_head.child = action if @chat_head
-            action.parent = prev_action_or_chat
-            @chat_head = action
-            prev_action_or_chat = action
-
-            action.freeze_original_links!
-            next
-          end
-
-          @head = prev_action_or_chat =
           case action.type
-          when 'undo'
-            @head.child = action
-            undo_to_id = action.action_h['action_id'] || @head.parent&.id
-            raise ActionTreeError, 'Cannot undo root action' if undo_to_id.nil?
-            raise ActionTreeError, "Cannot undo to #{undo_to_id}" unless actions.include?(undo_to_id)
+          when 'message'
+            @chat_head&.child = action
+            @action_head.child = action
 
-            action.child = actions[undo_to_id]
-            action.child
+            # TODO: this is semi-redundant with setting `@head.child` above
+            action.parent = @head
+
+            @chat_head = action
+            @head = action
+          when 'undo'
+            #binding.pry
+
+            @action_head.child = action
+
+            undo_to_id = action.action_h['action_id'] || @action_head.parent&.id || @head.parent&.id
+            undo_to = actions[undo_to_id]
+            raise ActionTreeError, "Cannot undo to #{undo_to_id}" unless undo_to
+
+            action.child = undo_to
+            @action_head = undo_to
           when 'redo'
-            undo_action = @head.pending_undo
+            #binding.pry
+
+            undo_action = @action_head.pending_undo
             raise ActionTreeError, "Cannot find action to redo for #{@id}" if undo_action.nil? || !undo_action.undo?
 
             undo_action.child = action
-            action.child = undo_action.parent
-            if (prev_redo = @head.prev_redo)
+
+            redo_to = undo_action.parent
+
+            action.child = redo_to
+            if (prev_redo = @action_head.prev_redo)
               action.parent = prev_redo
             end
-            undo_action.parent
+
+            @action_head = redo_to
           else
-            action.parent = @head.pending_undo if @head.pending_undo
-            @head.child = action
-            action
+            action.parent = @action_head.pending_undo if @action_head.pending_undo
+            @action_head.child = action
+            @action_head = action
           end
 
+          @head = action
           action.freeze_original_links!
         end
       end
