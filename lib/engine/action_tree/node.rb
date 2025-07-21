@@ -136,15 +136,18 @@ module Engine
       # is the array of nodes to visit next, in FIFO order. The given block must
       # modify `queue` to continue the walk.
       def tree_walk
-        visited = Set.new
         queue = [self]
+        visited = Set.new
         until queue.empty?
           node = queue.shift # O(N) for N items currently in the queue
           next if node.nil?
           next if visited.include?(node.id)
 
-          visited.add(node.id)
           result = yield(node, queue)
+          # TODO: test this -- requiring a truthy result to mark a node as
+          # visited; perhaps simplify the block for the final traversal in
+          # `actions_array_for!`
+          visited.add(node.id) if result
         end
         result
       end

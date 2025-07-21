@@ -38,13 +38,15 @@ module Engine
 
       protected
 
+      # TODO: break this into smaller functions
       def actions_array_for!(head, include_chat: false)
         return [] if head.zero?
         return [] unless (action = @actions[head])
 
         subtree = {}
 
-        # find action_head, add it and its ancestors to subtree
+        # find action_head
+        # TODO: make this a function
         action_head =
           if action.undo? || action.redo?
             action.original_child
@@ -60,17 +62,20 @@ module Engine
           else
             action
           end
+
+        # add action_head and its ancestors to subtree
         action_head.tree_walk do |node, queue|
           subtree[node.id] = node
           queue << node.parent
         end
 
+        # TODO: make this a function
         if include_chat
           close_chat_ancestors = Hash.new { |h, k| h[k] = Set.new }
 
           find_close_chats = lambda do |action_node|
             action_node.tree_walk do |node, queue|
-              next if subtree.include?(node.id) && action_node != node
+              next true if subtree.include?(node.id) && action_node != node
 
               if node.chat?
                 close_chat_ancestors[action_node.id].add(node.id)
@@ -80,7 +85,7 @@ module Engine
             end
           end
 
-          find_close_chats.call(action) if action != action_head
+          find_close_chats.call(action) if action != action_head && !action.chat?
           action_head.tree_walk do |node, queue|
             find_close_chats.call(node)
             queue << node.parent
@@ -88,10 +93,13 @@ module Engine
 
           chat_head = nil
           close_chat_ancestors.each do |node_id, chat_ids|
-            node = trunk[node_id]
-            next if chat_ids.include?(node.chat_parent.id)
+            node = subtree[node_id]
+            if node.nil?
+              raise ActionTreeError, "Node #{node_id} not found in subtree"
+            end
 
-            # TODO: test this
+            next if chat_ids.include?(node.chat_parent&.id)
+
             nearest_chat = @actions[chat_ids.first].tree_walk do |node, queue|
               if !chat_ids.include?(node.id)
                 queue.clear
@@ -104,19 +112,19 @@ module Engine
             chat_head = nearest_chat if chat_head.nil?
           end
 
-          chat_head.tree_walk do |node, queue|
+          chat_head&.tree_walk do |node, queue|
             subtree[node.id] = node
             queue << node.chat_parent
           end
         end
 
-
+        # TODO: function
         subtree.each do |_id, node|
           # prune links to nodes outside of the subtree
           node.unlink_parents! { |parent| !subtree.include?(parent.id) }
           node.unlink_children! { |child| !subtree.include?(child.id) }
 
-          # simplify child links to chats
+          # don't let a real action have multiple chat children
           if include_chat
             if node.children.count { |_id, child| child.chat? } > 1
               first_chat = node.children.values.find(&:chat?)
@@ -125,12 +133,31 @@ module Engine
           end
         end
 
+        # example numbers here are for ActionTree2 at head == 32
+        #
+        # TODO:
+        #
+        # at this point, if a chat (24) is a parent to a real action (32), there
+        # must exist an ancestor chat that is the child of a real action (DNE;
+        # this is what is needed to code for next) that is a closer ancestor of
+        # that chat (24) than its nearest chat ancestor (1) that is the parent
+        # of a real action (2)
+        #
+        # if one is not be found, take the latest real action from the trunk
+        # that is not parented by a chat (17), and make that (17) the parent of
+        # the chat action (20) whose chat parent (1) is a parent of a nonchat
+        # action (2)
+
+        # binding.pry if head == 32
+
         # walk the pruned subtree to form the filtered_actions array with chats
         # interleaved correctly
         filtered = []
         subtree[0].tree_walk do |node, queue|
           filtered << node.action_h unless node.root?
 
+          # TODO: clean this up, possibly taking advantage of `next false` to
+          # prevent a node from being marked as visited
           if node.chat?
             if node.nonchat_child || (node.chat_child && node.chat_child.parents.size > 1)
               queue << node.chat_child
