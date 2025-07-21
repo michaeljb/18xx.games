@@ -39,3 +39,5 @@
 
     - can "pending undos" be removed by simply taking a `head` and looking at
       chains of undo_parent and redo_parent?
+
+- rename 'tree' to 'graph'
