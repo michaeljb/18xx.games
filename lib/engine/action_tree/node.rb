@@ -143,11 +143,10 @@ module Engine
           next if node.nil?
           next if visited.include?(node.id)
 
-          result = yield(node, queue)
-          # TODO: test this -- requiring a truthy result to mark a node as
-          # visited; perhaps simplify the block for the final traversal in
-          # `actions_array_for!`
-          visited.add(node.id) if result
+          if (yield_result = yield(node, queue))
+            result = yield_result
+            visited.add(node.id)
+          end
         end
         result
       end

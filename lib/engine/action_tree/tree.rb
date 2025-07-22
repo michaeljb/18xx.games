@@ -45,93 +45,21 @@ module Engine
 
         subtree = {}
 
-        # find action_head
-        # TODO: make this a function
-        action_head =
-          if action.undo? || action.redo?
-            action.original_child
-          elsif action.chat?
-            action.tree_walk do |node, queue|
-              if node.chat?
-                queue.concat(node.original_parents)
-              else
-                queue.clear
-                node
-              end
-            end
-          else
-            action
-          end
+        # chat and undo/redo actions are never the action head
+        action_head = find_action_head(action)
 
-        # add action_head and its ancestors to subtree
+        # build the action trunk
         action_head.tree_walk do |node, queue|
           subtree[node.id] = node
           queue << node.parent
         end
 
-        # TODO: make this a function
         if include_chat
-          close_chat_ancestors = Hash.new { |h, k| h[k] = Set.new }
-
-          find_close_chats = lambda do |action_node|
-            action_node.tree_walk do |node, queue|
-              next true if subtree.include?(node.id) && action_node != node
-
-              if node.chat?
-                close_chat_ancestors[action_node.id].add(node.id)
-              else
-                queue.concat(node.original_parents)
-              end
-            end
-          end
-
-          find_close_chats.call(action) if action != action_head && !action.chat?
-          action_head.tree_walk do |node, queue|
-            find_close_chats.call(node)
-            queue << node.parent
-          end
-
-          chat_head = nil
-          close_chat_ancestors.each do |node_id, chat_ids|
-            node = subtree[node_id]
-            if node.nil?
-              raise ActionTreeError, "Node #{node_id} not found in subtree"
-            end
-
-            next if chat_ids.include?(node.chat_parent&.id)
-
-            nearest_chat = @actions[chat_ids.first].tree_walk do |node, queue|
-              if !chat_ids.include?(node.id)
-                queue.clear
-                next
-              end
-              queue << node.chat_child
-              node
-            end
-            nearest_chat.child = node
-            chat_head = nearest_chat if chat_head.nil?
-          end
-
-          chat_head&.tree_walk do |node, queue|
-            subtree[node.id] = node
-            queue << node.chat_parent
-          end
+          # binding.pry if head == 32
+          add_chat_branch_to_subtree!(action, action_head, subtree)
         end
 
-        # TODO: function
-        subtree.each do |_id, node|
-          # prune links to nodes outside of the subtree
-          node.unlink_parents! { |parent| !subtree.include?(parent.id) }
-          node.unlink_children! { |child| !subtree.include?(child.id) }
-
-          # don't let a real action have multiple chat children
-          if include_chat
-            if node.children.count { |_id, child| child.chat? } > 1
-              first_chat = node.children.values.find(&:chat?)
-              node.unlink_children! { |child| child.chat? && child != first_chat }
-            end
-          end
-        end
+        prune_subtree!(subtree)
 
         # example numbers here are for ActionTree2 at head == 32
         #
@@ -239,6 +167,94 @@ module Engine
 
           @head = action
           action.freeze_original_links!
+        end
+      end
+
+      def find_action_head(action)
+        if action.undo? || action.redo?
+          action.original_child
+        elsif action.chat?
+          action.tree_walk do |node, queue|
+            if node.chat?
+              queue.concat(node.original_parents)
+            else
+              queue.clear
+              node
+            end
+          end
+        else
+          action
+        end
+      end
+
+      def closest_chat_ancestor(action_node, subtree)
+        chat_ancestors = Set.new
+
+        action_node.tree_walk do |node, queue|
+          # walk through undos/etc, but not this action_node's parent from
+          # the subtree
+          next true if subtree.include?(node.id) && action_node != node
+
+          if node.chat?
+            chat_ancestors.add(node.id)
+          else
+            queue.concat(node.original_parents)
+          end
+        end
+
+        @actions[chat_ancestors.first]&.tree_walk do |node, queue|
+          if !chat_ancestors.include?(node.id)
+            queue.clear
+            next
+          end
+          queue << node.chat_child
+          node
+        end
+      end
+
+      # TODO: does this work for [chat, undo, chat, redo]?
+      def add_chat_branch_to_subtree!(action, action_head, subtree)
+        chat_head =
+          if action.chat?
+            action
+          else
+            closest_chat_ancestors = {}
+            if action.redo? || action.undo?
+              closest_chat_ancestors[action] = closest_chat_ancestor(action, subtree)
+            end
+            action_head.tree_walk do |node, queue|
+              closest_chat_ancestors[node] = closest_chat_ancestor(node, subtree)
+              queue << node.parent
+            end
+
+            latest_chat = nil
+            closest_chat_ancestors.each do |node, chat|
+              latest_chat ||= chat
+
+              # add missing links from chat branch to the trunk
+              chat&.child = node
+            end
+
+            latest_chat
+          end
+
+        chat_head&.tree_walk do |node, queue|
+          subtree[node.id] = node
+          queue << node.chat_parent
+        end
+      end
+
+      # prune links to nodes outside of the subtree, and don't let a real action
+      # have more chat children than its first
+      def prune_subtree!(subtree)
+        subtree.each do |_id, node|
+          node.unlink_parents! { |parent| !subtree.include?(parent.id) }
+          node.unlink_children! { |child| !subtree.include?(child.id) }
+
+          if node.children.count { |_id, child| child.chat? } > 1
+            first_chat = node.children.values.find(&:chat?)
+            node.unlink_children! { |child| child.chat? && child != first_chat }
+          end
         end
       end
     end
