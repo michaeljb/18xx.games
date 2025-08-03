@@ -20,7 +20,7 @@ module Engine
       end
 
       def inspect
-        "<Engine::ActionTree::Tree>"
+        '<Engine::ActionTree::Tree>'
       end
       alias to_s inspect
 
@@ -54,65 +54,52 @@ module Engine
           queue << node.parent
         end
 
-        if include_chat
-          chat_ancestors = add_chat_branch_to_subtree!(head_node, action_head, subtree)
-        end
+        add_chat_branch_to_subtree!(head_node, action_head, subtree) if include_chat
 
         prune_subtree!(subtree)
 
-        # example numbers here are for ActionTree2 at head == 32
-        #
-        # TODO:
-        #
-        # at this point, if a chat (24, 'marked_chat') is a parent to a real
-        # action (32), there must exist an ancestor chat that is the child of a
-        # real action (DNE; this is what is needed to code for next) that is a
-        # closer ancestor of that chat (24) than its nearest chat ancestor (1)
-        # that is the parent of a real action (2)
-        #
-        # if one is not be found, take the latest real action from the trunk
-        # that is not parented by a chat (17), and make that (17) the parent of
-        # the chat action (20) whose chat parent (1) is a parent of a nonchat
-        # action (2)
-
         # TODO: separate function
         if include_chat
-
-          ancestral_chats = chat_ancestors.to_set { |_k, v| v }
-
-          lower_bound = nil
-          upper_bound = nil
-          target = nil
+          lower_bound = upper_bound = target = nil
+          reset_bounds = lambda do
+            lower_bound = nil
+            upper_bound = nil
+            target = nil
+          end
 
           (head_node.chat? ? head_node : action_head).tree_walk(check_visited: false) do |node, queue|
-            case {chat: node.chat?, child: node.nonchat_child, parent: node.nonchat_parent, lower: lower_bound, upper: upper_bound, target: target }
-            in {chat: true, lower: nil, upper: nil, }
-              lower_bound = node if node.nonchat_child && !node.nonchat_parent
+            state = {
+              chat: node.chat?,
+              child: node.nonchat_child,
+              parent: node.nonchat_parent,
+              lower_bound: lower_bound,
+              upper_bound: upper_bound,
+              target: target,
+            }
+            case state
+            in {chat: true, lower_bound: nil, child: Node, parent: nil }
+              lower_bound = node
               queue.unshift(node.chat_parent)
-            in {chat: true, child: Node, lower: Node, upper: nil, }
+            in {chat: true, lower_bound: nil, } |
+               {chat: true, lower_bound: Node, upper_bound: nil, child: nil, }
+              queue.unshift(node.chat_parent)
+            in {chat: true, lower_bound: Node, upper_bound: nil, child: Node, }
               upper_bound = node
               queue.unshift(node.chat_child)
-            in {chat: true, child: nil, lower: Node, upper: nil, }
-              queue.unshift(node.chat_parent)
-            in {chat: true, parent: Node, lower: Node, upper: Node, }
-              lower_bound = nil
-              upper_bound = nil
-              target = nil
-            in {chat: true, parent: nil, lower: Node, upper: Node, }
-                  target = node
+            in {chat: true, parent: Node, lower_bound: Node, upper_bound: Node, }
+              reset_bounds.call
+            in {chat: true, parent: nil, lower_bound: Node, upper_bound: Node, }
+              target = node
             in {chat: false, target: Node}
-                target.parent = node
-                lower_bound = nil
-                upper_bound = nil
-                target = nil
-
-                queue << node.chat_parent
-                queue << node.nonchat_parent
+              target.parent = node
+              reset_bounds.call
+              queue << node.chat_parent
+              queue << node.nonchat_parent
             in {chat: false, target: nil}
-                queue << node.chat_parent
-                queue << node.nonchat_parent
+              queue << node.chat_parent
+              queue << node.nonchat_parent
             else
-              raise ActionTreeError, "fail"
+              raise ActionTreeError, 'Unexpected state when fixing chat connections'
             end
           end
         end
@@ -131,13 +118,11 @@ module Engine
             else
               queue.unshift(node.chat_child)
             end
+          elsif node.chat_child
+            queue << node.chat_child
+            queue << node.child
           else
-            if node.chat_child
-              queue << node.chat_child
-              queue << node.child
-            else
-              queue.unshift(node.child)
-            end
+            queue.unshift(node.child)
           end
         end
 
@@ -170,8 +155,6 @@ module Engine
             @chat_head = action
             @head = action
           when 'undo'
-            # binding.pry if id == 31
-
             undo_to_id = action.action_h['action_id'] || @action_head.parent&.id || @head.parent&.id
             undo_to = actions[undo_to_id]
             raise ActionTreeError, "Cannot undo to #{undo_to_id}" unless undo_to
@@ -242,7 +225,7 @@ module Engine
         end
 
         @actions[chat_ancestors.first]&.tree_walk do |node, queue|
-          if !chat_ancestors.include?(node.id)
+          unless chat_ancestors.include?(node.id)
             queue.clear
             next
           end
@@ -254,9 +237,7 @@ module Engine
       # TODO: does this work for [chat, undo, chat, redo]?
       def add_chat_branch_to_subtree!(action, action_head, subtree)
         closest_chat_ancestors = {}
-        if action.redo? || action.undo?
-          closest_chat_ancestors[action] = closest_chat_ancestor(action, subtree)
-        end
+        closest_chat_ancestors[action] = closest_chat_ancestor(action, subtree) if action.redo? || action.undo?
         action_head.tree_walk do |node, queue|
           closest_chat_ancestors[node] = closest_chat_ancestor(node, subtree)
           queue << node.parent
