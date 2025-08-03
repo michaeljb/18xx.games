@@ -58,51 +58,7 @@ module Engine
 
         prune_subtree!(subtree)
 
-        # TODO: separate function
-        if include_chat
-          lower_bound = upper_bound = target = nil
-          reset_bounds = lambda do
-            lower_bound = nil
-            upper_bound = nil
-            target = nil
-          end
-
-          (head_node.chat? ? head_node : action_head).tree_walk(check_visited: false) do |node, queue|
-            state = {
-              chat: node.chat?,
-              child: node.nonchat_child,
-              parent: node.nonchat_parent,
-              lower_bound: lower_bound,
-              upper_bound: upper_bound,
-              target: target,
-            }
-            case state
-            in {chat: true, lower_bound: nil, child: Node, parent: nil }
-              lower_bound = node
-              queue.unshift(node.chat_parent)
-            in {chat: true, lower_bound: nil, } |
-               {chat: true, lower_bound: Node, upper_bound: nil, child: nil, }
-              queue.unshift(node.chat_parent)
-            in {chat: true, lower_bound: Node, upper_bound: nil, child: Node, }
-              upper_bound = node
-              queue.unshift(node.chat_child)
-            in {chat: true, parent: Node, lower_bound: Node, upper_bound: Node, }
-              reset_bounds.call
-            in {chat: true, parent: nil, lower_bound: Node, upper_bound: Node, }
-              target = node
-            in {chat: false, target: Node}
-              target.parent = node
-              reset_bounds.call
-              queue << node.chat_parent
-              queue << node.nonchat_parent
-            in {chat: false, target: nil}
-              queue << node.chat_parent
-              queue << node.nonchat_parent
-            else
-              raise ActionTreeError, 'Unexpected state when fixing chat connections'
-            end
-          end
-        end
+        fix_chat_connections!(head_node.chat? ? head_node : action_head) if include_chat
 
         # walk the pruned subtree to form the filtered_actions array with chats
         # interleaved correctly
@@ -276,6 +232,51 @@ module Engine
           if node.children.count { |_id, child| child.chat? } > 1
             first_chat = node.children.values.find(&:chat?)
             node.unlink_children! { |child| child.chat? && child != first_chat }
+          end
+        end
+      end
+
+      def fix_chat_connections!(starting_node)
+        lower_bound = upper_bound = target = nil
+        reset_bounds = lambda do
+          lower_bound = nil
+          upper_bound = nil
+          target = nil
+        end
+
+        starting_node.tree_walk(check_visited: false) do |node, queue|
+          state = {
+            chat: node.chat?,
+            child: node.nonchat_child,
+            parent: node.nonchat_parent,
+            lower_bound: lower_bound,
+            upper_bound: upper_bound,
+            target: target,
+          }
+          case state
+          in {chat: true, lower_bound: nil, child: Node, parent: nil }
+            lower_bound = node
+            queue.unshift(node.chat_parent)
+          in {chat: true, lower_bound: nil, } |
+              {chat: true, lower_bound: Node, upper_bound: nil, child: nil, }
+            queue.unshift(node.chat_parent)
+          in {chat: true, lower_bound: Node, upper_bound: nil, child: Node, }
+            upper_bound = node
+            queue.unshift(node.chat_child)
+          in {chat: true, parent: Node, lower_bound: Node, upper_bound: Node, }
+            reset_bounds.call
+          in {chat: true, parent: nil, lower_bound: Node, upper_bound: Node, }
+            target = node
+          in {chat: false, target: Node}
+            target.parent = node
+            reset_bounds.call
+            queue << node.chat_parent
+            queue << node.nonchat_parent
+          in {chat: false, target: nil}
+            queue << node.chat_parent
+            queue << node.nonchat_parent
+          else
+            raise ActionTreeError, 'Unexpected state when fixing chat connections'
           end
         end
       end
