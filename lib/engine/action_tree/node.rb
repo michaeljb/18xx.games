@@ -133,19 +133,21 @@ module Engine
 
       # Traverse the tree, starting from self. The given block takes `node` and
       # `queue`. `node` is the currently visited node on the walk, and `queue`
-      # is the array of nodes to visit next, in FIFO order. The given block must
-      # modify `queue` to continue the walk.
-      def tree_walk
+      # is the array of nodes to visit next. The given block must modify `queue`
+      # to continue the walk.
+      def tree_walk(check_visited: true)
+        # TODO?: deque implementation for O(1) addition/removal on either end
         queue = [self]
-        visited = Set.new
+        # TODO?: visited = Hash.new(0), allow max_visits instead of check_visited
+        visited = Set.new if check_visited
         until queue.empty?
           node = queue.shift # O(N) for N items currently in the queue
           next if node.nil?
-          next if visited.include?(node.id)
+          next if check_visited && visited.include?(node.id)
 
           if (yield_result = yield(node, queue))
             result = yield_result
-            visited.add(node.id)
+            visited.add(node.id) if check_visited
           end
         end
         result

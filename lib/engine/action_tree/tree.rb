@@ -41,12 +41,12 @@ module Engine
       # TODO: break this into smaller functions
       def actions_array_for!(head, include_chat: false)
         return [] if head.zero?
-        return [] unless (action = @actions[head])
+        return [] unless (head_node = @actions[head])
 
         subtree = {}
 
         # chat and undo/redo actions are never the action head
-        action_head = find_action_head(action)
+        action_head = find_action_head(head_node)
 
         # build the action trunk
         action_head.tree_walk do |node, queue|
@@ -55,8 +55,7 @@ module Engine
         end
 
         if include_chat
-          # binding.pry if head == 32
-          add_chat_branch_to_subtree!(action, action_head, subtree)
+          chat_ancestors = add_chat_branch_to_subtree!(head_node, action_head, subtree)
         end
 
         prune_subtree!(subtree)
@@ -65,18 +64,84 @@ module Engine
         #
         # TODO:
         #
-        # at this point, if a chat (24) is a parent to a real action (32), there
-        # must exist an ancestor chat that is the child of a real action (DNE;
-        # this is what is needed to code for next) that is a closer ancestor of
-        # that chat (24) than its nearest chat ancestor (1) that is the parent
-        # of a real action (2)
+        # at this point, if a chat (24, 'marked_chat') is a parent to a real
+        # action (32), there must exist an ancestor chat that is the child of a
+        # real action (DNE; this is what is needed to code for next) that is a
+        # closer ancestor of that chat (24) than its nearest chat ancestor (1)
+        # that is the parent of a real action (2)
         #
         # if one is not be found, take the latest real action from the trunk
         # that is not parented by a chat (17), and make that (17) the parent of
         # the chat action (20) whose chat parent (1) is a parent of a nonchat
         # action (2)
 
-        # binding.pry if head == 32
+        # TODO: separate function
+        if include_chat
+
+          ancestral_chats = chat_ancestors.to_set { |_k, v| v }
+
+          chat_lower_bound = nil
+          chat_upper_bound = nil
+          chat_target = nil
+          chat_with_nonchat_parent = nil
+          # TODO add pointer to chat found with nonchat parent; reset the
+          # mark (at the "reset the mark" comment below) iff that pointer is
+          # still nil
+          # TODO keep thinking through this logi
+
+          # binding.pry if head == 32
+
+          (head_node.chat? ? head_node : action_head).tree_walk(check_visited: false) do |node, queue|
+
+            # node.chat?, lower_bound, upper_bound, target, node.nonchat_child, node.nonchat_parent
+
+            if node.chat?
+              if !chat_lower_bound && !chat_upper_bound
+                chat_lower_bound = node if node.nonchat_child && !node.nonchat_parent
+                queue.unshift(node.chat_parent)
+              elsif chat_lower_bound && !chat_upper_bound
+                if node.nonchat_child
+                  #if node.nonchat_parent
+                  #  # reset the mark
+                  #  chat_lower_bound = node if chat_with_nonchat_parent.nil?
+                  #  queue.unshift(node.chat_parent)
+                  #else
+                  # nbinding.pry
+                    chat_upper_bound = node
+                    queue.unshift(node.chat_child)
+                  #end
+                else
+                  queue.unshift(node.chat_parent)
+                end
+              elsif chat_lower_bound && chat_upper_bound
+                if node.nonchat_parent
+                  chat_lower_bound = nil
+                  chat_upper_bound = nil
+                  chat_target = nil
+                  # no queue change; continue with nonchat trunk
+                else
+                  chat_target = node
+                  #queue << chat_target
+                end
+              elsif !chat_lower_bound && chat_upper_bound
+                raise ActionTreeError, "fail"
+              end
+            else
+              if chat_target
+                chat_target.parent = node
+                chat_lower_bound = nil
+                chat_upper_bound = nil
+                chat_target = nil
+
+                queue << node.chat_parent
+                queue << node.nonchat_parent
+              else
+                queue << node.chat_parent
+                queue << node.nonchat_parent
+              end
+            end
+          end
+        end
 
         # walk the pruned subtree to form the filtered_actions array with chats
         # interleaved correctly
@@ -214,19 +279,19 @@ module Engine
 
       # TODO: does this work for [chat, undo, chat, redo]?
       def add_chat_branch_to_subtree!(action, action_head, subtree)
-        chat_head =
+        closest_chat_ancestors = {}
+        if action.redo? || action.undo?
+          closest_chat_ancestors[action] = closest_chat_ancestor(action, subtree)
+        end
+        action_head.tree_walk do |node, queue|
+          closest_chat_ancestors[node] = closest_chat_ancestor(node, subtree)
+          queue << node.parent
+        end
+
+        @chat_head =
           if action.chat?
             action
           else
-            closest_chat_ancestors = {}
-            if action.redo? || action.undo?
-              closest_chat_ancestors[action] = closest_chat_ancestor(action, subtree)
-            end
-            action_head.tree_walk do |node, queue|
-              closest_chat_ancestors[node] = closest_chat_ancestor(node, subtree)
-              queue << node.parent
-            end
-
             latest_chat = nil
             closest_chat_ancestors.each do |node, chat|
               latest_chat ||= chat
@@ -238,10 +303,12 @@ module Engine
             latest_chat
           end
 
-        chat_head&.tree_walk do |node, queue|
+        @chat_head&.tree_walk do |node, queue|
           subtree[node.id] = node
           queue << node.chat_parent
         end
+
+        closest_chat_ancestors
       end
 
       # prune links to nodes outside of the subtree, and don't let a real action
