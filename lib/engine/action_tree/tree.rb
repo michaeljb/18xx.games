@@ -80,65 +80,49 @@ module Engine
 
           ancestral_chats = chat_ancestors.to_set { |_k, v| v }
 
-          chat_lower_bound = nil
-          chat_upper_bound = nil
-          chat_target = nil
-          chat_with_nonchat_parent = nil
-          # TODO add pointer to chat found with nonchat parent; reset the
-          # mark (at the "reset the mark" comment below) iff that pointer is
-          # still nil
-          # TODO keep thinking through this logi
+          lower_bound = nil
+          upper_bound = nil
+          target = nil
+          chat_with_nonchat_parent = nil # TODO: remove this?
 
           # binding.pry if head == 32
+          # binding.pry if head == 23
 
           (head_node.chat? ? head_node : action_head).tree_walk(check_visited: false) do |node, queue|
+            case [node.chat?, node.nonchat_child, node.nonchat_parent, lower_bound, upper_bound, target]
+            in [true, Object, Object, nil, nil, Object]
+              lower_bound = node if node.nonchat_child && !node.nonchat_parent
+              queue.unshift(node.chat_parent)
+            # in [true, Node, Node, Node, nil, Object]
+            #   # reset the mark
+            #   lower_bound = node if chat_with_nonchat_parent.nil?
+            #   queue.unshift(node.chat_parent)
+            in [true, Node, Object, Node, nil, Object]
+              upper_bound = node
+              queue.unshift(node.chat_child)
+            in [true, nil, Object, Node, nil, Object]
+              queue.unshift(node.chat_parent)
+            in [true, Object, Node, Node, Node, Object]
+              lower_bound = nil
+              upper_bound = nil
+              target = nil
+              # no queue change; continue with nonchat trunk
+            in [true, Object, nil, Node, Node, Object]
+                  target = node
 
-            # node.chat?, lower_bound, upper_bound, target, node.nonchat_child, node.nonchat_parent
+            in [false, Object, Object, Object, Object, Node]
+                target.parent = node
+                lower_bound = nil
+                upper_bound = nil
+                target = nil
 
-            if node.chat?
-              if !chat_lower_bound && !chat_upper_bound
-                chat_lower_bound = node if node.nonchat_child && !node.nonchat_parent
-                queue.unshift(node.chat_parent)
-              elsif chat_lower_bound && !chat_upper_bound
-                if node.nonchat_child
-                  #if node.nonchat_parent
-                  #  # reset the mark
-                  #  chat_lower_bound = node if chat_with_nonchat_parent.nil?
-                  #  queue.unshift(node.chat_parent)
-                  #else
-                  # nbinding.pry
-                    chat_upper_bound = node
-                    queue.unshift(node.chat_child)
-                  #end
-                else
-                  queue.unshift(node.chat_parent)
-                end
-              elsif chat_lower_bound && chat_upper_bound
-                if node.nonchat_parent
-                  chat_lower_bound = nil
-                  chat_upper_bound = nil
-                  chat_target = nil
-                  # no queue change; continue with nonchat trunk
-                else
-                  chat_target = node
-                  #queue << chat_target
-                end
-              elsif !chat_lower_bound && chat_upper_bound
-                raise ActionTreeError, "fail"
-              end
+                queue << node.chat_parent
+                queue << node.nonchat_parent
+            in [false, Object, Object, Object, Object, nil]
+                queue << node.chat_parent
+                queue << node.nonchat_parent
             else
-              if chat_target
-                chat_target.parent = node
-                chat_lower_bound = nil
-                chat_upper_bound = nil
-                chat_target = nil
-
-                queue << node.chat_parent
-                queue << node.nonchat_parent
-              else
-                queue << node.chat_parent
-                queue << node.nonchat_parent
-              end
+              raise ActionTreeError, "fail"
             end
           end
         end
