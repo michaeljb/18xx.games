@@ -89,28 +89,28 @@ module Engine
           # binding.pry if head == 23
 
           (head_node.chat? ? head_node : action_head).tree_walk(check_visited: false) do |node, queue|
-            case [node.chat?, node.nonchat_child, node.nonchat_parent, lower_bound, upper_bound, target]
-            in [true, Object, Object, nil, nil, Object]
+            case {chat: node.chat?, child: node.nonchat_child, parent: node.nonchat_parent, lower: lower_bound, upper: upper_bound, target: target }
+            in {chat: true, lower: nil, upper: nil, }
               lower_bound = node if node.nonchat_child && !node.nonchat_parent
               queue.unshift(node.chat_parent)
-            # in [true, Node, Node, Node, nil, Object]
+            # in {chat: true, child: Node, parent: Node, lower: Node, upper: nil, }
             #   # reset the mark
             #   lower_bound = node if chat_with_nonchat_parent.nil?
             #   queue.unshift(node.chat_parent)
-            in [true, Node, Object, Node, nil, Object]
+            in {chat: true, child: Node, lower: Node, upper: nil, }
               upper_bound = node
               queue.unshift(node.chat_child)
-            in [true, nil, Object, Node, nil, Object]
+            in {chat: true, child: nil, lower: Node, upper: nil, }
               queue.unshift(node.chat_parent)
-            in [true, Object, Node, Node, Node, Object]
+            in {chat: true, parent: Node, lower: Node, upper: Node, }
               lower_bound = nil
               upper_bound = nil
               target = nil
               # no queue change; continue with nonchat trunk
-            in [true, Object, nil, Node, Node, Object]
+            in {chat: true, parent: nil, lower: Node, upper: Node, }
                   target = node
 
-            in [false, Object, Object, Object, Object, Node]
+            in {chat: false, target: Node}
                 target.parent = node
                 lower_bound = nil
                 upper_bound = nil
@@ -118,7 +118,7 @@ module Engine
 
                 queue << node.chat_parent
                 queue << node.nonchat_parent
-            in [false, Object, Object, Object, Object, nil]
+            in {chat: false, target: nil}
                 queue << node.chat_parent
                 queue << node.nonchat_parent
             else
