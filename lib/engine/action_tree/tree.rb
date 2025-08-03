@@ -83,20 +83,12 @@ module Engine
           lower_bound = nil
           upper_bound = nil
           target = nil
-          chat_with_nonchat_parent = nil # TODO: remove this?
-
-          # binding.pry if head == 32
-          # binding.pry if head == 23
 
           (head_node.chat? ? head_node : action_head).tree_walk(check_visited: false) do |node, queue|
             case {chat: node.chat?, child: node.nonchat_child, parent: node.nonchat_parent, lower: lower_bound, upper: upper_bound, target: target }
             in {chat: true, lower: nil, upper: nil, }
               lower_bound = node if node.nonchat_child && !node.nonchat_parent
               queue.unshift(node.chat_parent)
-            # in {chat: true, child: Node, parent: Node, lower: Node, upper: nil, }
-            #   # reset the mark
-            #   lower_bound = node if chat_with_nonchat_parent.nil?
-            #   queue.unshift(node.chat_parent)
             in {chat: true, child: Node, lower: Node, upper: nil, }
               upper_bound = node
               queue.unshift(node.chat_child)
@@ -106,10 +98,8 @@ module Engine
               lower_bound = nil
               upper_bound = nil
               target = nil
-              # no queue change; continue with nonchat trunk
             in {chat: true, parent: nil, lower: Node, upper: Node, }
                   target = node
-
             in {chat: false, target: Node}
                 target.parent = node
                 lower_bound = nil
