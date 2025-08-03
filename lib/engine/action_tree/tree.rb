@@ -58,7 +58,7 @@ module Engine
 
         prune_subtree!(subtree)
 
-        fix_chat_connections!(head_node.chat? ? head_node : action_head) if include_chat
+        fix_chat_connections!(head_node.chat? ? head_node : action_head, subtree) if include_chat
 
         # walk the pruned subtree to form the filtered_actions array with chats
         # interleaved correctly
@@ -236,7 +236,7 @@ module Engine
         end
       end
 
-      def fix_chat_connections!(starting_node)
+      def fix_chat_connections!(starting_node, subtree)
         lower_bound = upper_bound = target = nil
         reset_bounds = lambda do
           lower_bound = nil
@@ -245,6 +245,8 @@ module Engine
         end
 
         starting_node.tree_walk(check_visited: false) do |node, queue|
+          raise ActionTreeError, 'Processing unexpected node' unless subtree.include?(node.id)
+
           state = {
             chat: node.chat?,
             child: node.nonchat_child,
