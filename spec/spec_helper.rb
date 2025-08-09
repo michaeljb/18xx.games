@@ -3,6 +3,7 @@
 require 'snabberb/component'
 
 require 'engine'
+require_relative 'fixture_spec_helper'
 
 Engine::Logger.set_level(Logger::FATAL)
 
