@@ -153,8 +153,13 @@ def format_fixture_json(filename, chat: nil, pretty: nil)
 
   # remove player names
   data['players'].each.with_index do |player, index|
-    player['name'] = "Player #{index + 1}" unless /(Player )?(\d+|[A-Z])/.match?(player['name'])
+    player['name'] = "Player #{index + 1}" unless /^(Player )?(\d+|[A-Z])$/.match?(player['name'])
   end
+
+  data['user'] = {id: 0, name: 'You'}
+  data['description'] = ''
+
+  data['result'].transform_values!(&:to_i)
 
   # remove or  chats, unless chat arg was "keep"
   if chat == 'scrub'

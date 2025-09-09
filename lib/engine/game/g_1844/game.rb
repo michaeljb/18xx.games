@@ -507,7 +507,7 @@ module Engine
 
             debt = share_holder.cash.abs
             share_holder.debt += debt
-            share_holder.cash += debt
+            @bank.spend(debt, share_holder)
             @log << "#{share_holder.name} takes #{format_currency(debt)} of debt to complete payment"
           end
         end
@@ -975,7 +975,7 @@ module Engine
         end
 
         def take_player_loan(player, loan)
-          player.cash += loan # debt does not come from the bank
+          @bank.spend(loan, player)
           interest = player_debt_interest(loan)
           player.debt += loan + interest
 
@@ -997,7 +997,7 @@ module Engine
           payoff = player.cash >= player.debt ? player.debt : player.cash
           verb = payoff == player.debt ? 'pays off' : 'decreases'
           @log << "#{player.name} #{verb} their debt of #{format_currency(player.debt)}"
-          player.cash -= payoff
+          player.spend(payoff, @bank)
           player.debt -= payoff
         end
 

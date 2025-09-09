@@ -29,6 +29,7 @@ module Engine
         CURRENCY_FORMAT_STR = '£%s'
 
         BANK_CASH = 10_000
+        BANK_CASH_AND_COMPANY_CREDITS = 20_000
 
         CERT_LIMIT = { 2 => 32, 3 => 21, 4 => 16 }.freeze
 
@@ -309,7 +310,11 @@ module Engine
 
         def init_bank
           # amount doesn't matter here
-          Bank.new(20_000, log: @log, check: false)
+          Bank.new(init_bank_cash, log: @log, check: false)
+        end
+
+        def init_bank_cash
+          BANK_CASH_AND_COMPANY_CREDITS
         end
 
         def option_23p_map?

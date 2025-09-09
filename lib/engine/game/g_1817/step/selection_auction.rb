@@ -154,7 +154,6 @@ module Engine
             player.companies << company
             seed = seed_money_provided(company, price)
             if @seed_money && seed.positive?
-              @game.bank.cash -= seed
               @seed_money -= seed
             end
             player.spend(price, @game.bank) if price.positive?

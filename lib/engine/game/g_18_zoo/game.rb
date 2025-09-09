@@ -1000,8 +1000,7 @@ module Engine
         end
 
         def take_player_loan(player, debt)
-          # Give the player the money. The money for loans is outside money, doesnt count towards the normal bank money.
-          player.cash += debt
+          @bank.spend(debt, player)
 
           @player_debts[player] += debt
         end

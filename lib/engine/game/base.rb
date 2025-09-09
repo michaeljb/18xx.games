@@ -956,6 +956,7 @@ module Engine
             @raw_actions << action
           end
         end
+        self
       end
 
       # hook from Engine::Round::Operating before next_entity!
@@ -2439,6 +2440,14 @@ module Engine
         description.strip
       end
 
+      # Used to verify that all cash in the game is properly and accounted
+      # for. Games introducing other entities that use cash, e.g., national
+      # railways that stay separate from @corporations (like 1861), need to
+      # override this method to include those entities.
+      def spenders
+        [@bank, *@players, *@corporations, *@minors]
+      end
+
       private
 
       def init_graph
@@ -2446,10 +2455,14 @@ module Engine
       end
 
       def init_bank
-        cash = self.class::BANK_CASH
+        cash = init_bank_cash
         cash = cash[players.size] if cash.is_a?(Hash)
 
         Bank.new(cash, log: @log, check: game_end_check_values.include?(:bank))
+      end
+
+      def init_bank_cash
+        self.class::BANK_CASH
       end
 
       def init_cert_limit

@@ -1972,14 +1972,14 @@ module Engine
 
         def payoff_player_loan(player)
           if player.cash >= @player_debts[player]
-            player.cash -= @player_debts[player]
+            player.spend(@player_debts[player], @bank)
             @log << "#{player.name} pays off their loan of #{format_currency(@player_debts[player])}"
             @player_debts[player] = 0
           else
             @player_debts[player] -= player.cash
             @log << "#{player.name} decreases their loan by #{format_currency(player.cash)} "\
                     "(#{format_currency(@player_debts[player])})"
-            player.cash = 0
+            player.set_cash(0, @bank)
           end
         end
 
@@ -2283,7 +2283,7 @@ module Engine
         end
 
         def take_player_loan(player, loan)
-          player.cash += loan
+          @bank.spend(loan, player)
           @player_debts[player] += loan + player_loan_interest(loan)
         end
 

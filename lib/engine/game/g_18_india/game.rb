@@ -219,6 +219,7 @@ module Engine
         # modified to use the separate shareholder for ipo_owner
         def init_corporations(stock_market)
           @ipo_pool = ShareHolderEntity.new('IPO')
+          @ipo_pool.spender = @bank
 
           game_corporations.map do |corporation|
             self.class::CORPORATION_CLASS.new(

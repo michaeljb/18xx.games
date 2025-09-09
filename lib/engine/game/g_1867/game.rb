@@ -577,7 +577,9 @@ module Engine
           end
         end
 
-        def nationalization_transfer_assets(corporation); end
+        def nationalization_transfer_assets(corporation)
+          corporation.set_cash(0, @bank)
+        end
 
         def nationalize!(corporation)
           return if !corporation.floated? || !@corporations.include?(corporation)
@@ -824,6 +826,10 @@ module Engine
           return if corporation.tokens.size == 3
 
           corporation.tokens << Engine::Token.new(corporation, price: 40)
+        end
+
+        def spenders
+          [*super, @national]
         end
 
         private

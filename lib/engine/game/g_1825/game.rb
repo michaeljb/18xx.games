@@ -569,7 +569,7 @@ module Engine
 
         def init_bank
           # amount doesn't matter here
-          Bank.new(BANK_CASH, log: @log, check: false)
+          Bank.new(init_bank_cash, log: @log, check: false)
         end
 
         def bank_cash

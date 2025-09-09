@@ -202,7 +202,7 @@ module Engine
 
           # Give PEIR their initial cash and setup their shares to not count
           # towards the limit
-          peir.cash = 200
+          peir.set_cash(200, @bank)
           @peir_shares = peir.shares
 
           # If Ice Boat shipping is in the game, set its corporations

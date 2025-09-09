@@ -506,7 +506,7 @@ module Engine
           @stock_market.set_par(corporation, price)
           bundle = ShareBundle.new(corporation.shares_of(corporation))
           @share_pool.transfer_shares(bundle, @share_pool)
-          corporation.cash = 50
+          corporation.set_cash(50, @bank)
           corporation
         end
 
@@ -541,7 +541,7 @@ module Engine
           # debt increases
           old_price = @debt_corp.share_price
           @stock_market.move_right(@debt_corp)
-          @debt_corp.cash = @debt_corp.share_price.price
+          @debt_corp.set_cash(@debt_corp.share_price.price, @bank)
 
           log_share_price(@debt_corp, old_price, 1)
         end
@@ -549,7 +549,7 @@ module Engine
         def or_set_finished
           handle_metal_payout(@steel_corp)
           init_available_steel
-          @steel_corp.cash = 50
+          @steel_corp.set_cash(50, @bank)
 
           handle_metal_payout(@gold_corp)
           @gold_shipped = 0
@@ -572,7 +572,7 @@ module Engine
             num_shares = payee.num_shares_of(entity)
 
             if payee == gold_miner&.owner && entity == @gold_corp
-              entity.cash += per_share * 2
+              @bank.spend(per_share * 2, entity)
               num_shares += 2
             end
 
@@ -904,7 +904,7 @@ module Engine
           corporation.ipoed = true
           corporation.floated = true
           price = @stock_market.share_price([0, 6])
-          corporation.cash = price.price
+          corporation.set_cash(price.price, @bank)
           @stock_market.set_par(corporation, price)
           bundle = ShareBundle.new(corporation.shares_of(corporation))
           @share_pool.transfer_shares(bundle, @share_pool)
@@ -1086,7 +1086,7 @@ module Engine
           return unless (player = local_jeweler&.player)
 
           @log << "#{player.name} receives #{format_currency(@local_jeweler_cash)} from #{local_jeweler.name}"
-          player.cash += @local_jeweler_cash
+          @bank.spend(@local_jeweler_cash, player)
           @local_jeweler_cash = 0
         end
 

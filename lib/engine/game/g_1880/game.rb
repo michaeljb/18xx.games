@@ -586,8 +586,7 @@ module Engine
         end
 
         def take_player_loan(player, loan)
-          # Give the player the money. The money for loans is outside money, doesnt count towards the normal bank money.
-          player.cash += loan
+          @bank.spend(loan, player)
 
           # Add interest to the loan, must atleast pay 150% of the loaned value
           interest = player_loan_interest(loan)
@@ -612,14 +611,14 @@ module Engine
           # Pay full or partial of the player loan. The money from loans is outside money, doesnt count towards
           # the normal bank money.
           if player.cash >= @player_debts[player]
-            player.cash -= @player_debts[player]
+            player.spend(@player_debts[player], @bank)
             @log << "#{player.name} pays off their loan of #{format_currency(@player_debts[player])}"
             @player_debts[player] = 0
           else
             @player_debts[player] -= player.cash
             @log << "#{player.name} decreases their loan by #{format_currency(player.cash)} "\
                     "(#{format_currency(@player_debts[player])})"
-            player.cash = 0
+            player.set_cash(0, @bank)
           end
         end
 

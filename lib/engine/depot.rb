@@ -16,6 +16,7 @@ module Engine
       @upcoming = @trains.dup
       @discarded = []
       @bank = @game.bank
+      @spender = @bank
     end
 
     def export!
@@ -133,14 +134,6 @@ module Engine
       all_others.select do |train|
         train.owner.owner == corporation.owner
       end
-    end
-
-    def cash
-      @bank.cash
-    end
-
-    def cash=(new_cash)
-      @bank.cash = new_cash
     end
 
     def name
