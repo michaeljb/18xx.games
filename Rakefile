@@ -172,6 +172,8 @@ def format_fixture_json(filename, pretty: nil)
     end
   end
 
+  data['result'].transform_values!(&:to_i)
+
   # TODO: get rid of undone actions
 
   # if 'pretty' arg is given, any value other than "0" will produce
