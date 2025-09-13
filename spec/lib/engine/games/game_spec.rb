@@ -102,6 +102,32 @@ module Engine
                 expect(ending_cash).to eq(starting_cash)
               end
             end
+
+            # # this block can be quite expensive even for a single fixture, so
+            # # its best use is to identify exactly at which action something
+            # # breaks in a particular fixture, running `rspec` with
+            # # `--fail-fast` and `-e` for a game that fails one of the above
+            # # tests
+            # describe 'validated at every action' do
+            #   @game = Engine::Game.load(@data, strict: strict, at_action: 0).maybe_raise!
+            #   starting_cash = @game.bank_starting_cash
+            #   [@data['actions']].each do |action|
+            #     @game.process_to_action(action['id'])
+            #     # use a URL here to easily open up the game in the browser for
+            #     # inspection when a test fails
+            #     describe "http://localhost:9292/fixture/#{@game.class.title}/#{@game_id}?action=#{action['id']}" do
+            #       it "total cash is consistent" do
+            #         cash = @game.spenders.compact.map(&:spender).uniq.sum(&:cash)
+            #         expect(cash).to eq(starting_cash)
+            #       end
+            #       it 'integer money' do
+            #         [@game.bank, *@game.players, *@game.corporations].each do |entity|
+            #           expect(entity.cash).to be_kind_of(Integer)
+            #         end
+            #       end
+            #     end
+            #   end
+            # end
           end
         end
       end
