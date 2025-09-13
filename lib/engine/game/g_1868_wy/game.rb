@@ -1050,11 +1050,8 @@ module Engine
             )
             add_coal_development_tokens(coal_company)
             coal_company.owner = player
+            coal_company.spender = player
             coal_company.float!
-
-            def coal_company.cash
-              player.cash
-            end
 
             coal_company
           end

@@ -31,10 +31,7 @@ module Engine
             )
             3.times { new_oil_token!(oil_company) }
             oil_company.owner = player
-
-            def oil_company.cash
-              player.cash
-            end
+            oil_company.spender = player
 
             oil_company
           end

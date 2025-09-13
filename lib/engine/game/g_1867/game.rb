@@ -826,6 +826,10 @@ module Engine
           corporation.tokens << Engine::Token.new(corporation, price: 40)
         end
 
+        def spenders
+          [*super, @national]
+        end
+
         private
 
         def new_auction_round

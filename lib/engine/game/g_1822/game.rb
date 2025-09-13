@@ -1895,6 +1895,10 @@ module Engine
           @player_debts[player] += loan + player_loan_interest(loan)
         end
 
+        def spenders
+          [*super, @tax_haven, *@phase_revenue.values].compact
+        end
+
         def train_type(train)
           train.name == 'E' ? :etrain : :normal
         end
