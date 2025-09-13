@@ -92,6 +92,15 @@ module Engine
                   expect(run_action).to eq(actions[actions.size - index])
                 end
               end
+
+              it 'all expected cash is accounted for' do
+                starting_cash = @game.bank_starting_cash
+
+                ending_cash = @game.spenders.compact.map(&:spender).uniq.sum(&:cash)
+
+                expect(ending_cash).to be_kind_of(Integer)
+                expect(ending_cash).to eq(starting_cash)
+              end
             end
           end
         end
