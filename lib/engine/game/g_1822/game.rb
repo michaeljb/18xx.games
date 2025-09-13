@@ -1141,7 +1141,7 @@ module Engine
           # Setup the bidding token per player
           @bidding_token_per_player = init_bidding_token
 
-          # Initialize the player depts, if player have to take an emergency loan
+          # Initialize the player debts, if player have to take an emergency loan
           @player_debts = Hash.new { |h, k| h[k] = 0 }
 
           # Initialize a dummy player for phase revenue companies
@@ -1805,15 +1805,13 @@ module Engine
           @optional_rules&.include?(:plus_expansion_single_stack)
         end
 
-        # Pay full or partial of the player loan. The money from loans is
-        # outside money, doesnt count towards the normal bank money.
         def payoff_player_loan(player, payoff_amount: nil)
           loan_balance = @player_debts[player]
           payoff_amount = player.cash if !payoff_amount || payoff_amount > player.cash
           payoff_amount = [payoff_amount, loan_balance].min
 
           @player_debts[player] -= payoff_amount
-          player.cash -= payoff_amount
+          player.spend(payoff_amount, @bank)
 
           @log <<
             if payoff_amount == loan_balance
@@ -1888,11 +1886,12 @@ module Engine
         end
 
         def take_player_loan(player, loan)
-          # Give the player the money. The money for loans is outside money, doesnt count towards the normal bank money.
-          player.cash += loan
-
-          # Add interest to the loan, must atleast pay 150% of the loaned value
+          @bank.spend(loan, player)
           @player_debts[player] += loan + player_loan_interest(loan)
+        end
+
+        def spenders
+          [*super, @tax_haven, *@phase_revenue.values].compact
         end
 
         def train_type(train)

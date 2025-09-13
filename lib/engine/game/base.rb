@@ -2439,6 +2439,23 @@ module Engine
         description.strip
       end
 
+      # Used to verify that all cash in the game is accounted for. Games
+      # introducing other entities that use cash, e.g., national railways that
+      # stay separate from @corporations (like 1861), need to override this
+      # method to include those entities.
+      def spenders
+        [@bank, *@players, *@corporations, *@minors]
+      end
+
+      def bank_starting_cash
+        cash = self.class::BANK_CASH
+        cash.is_a?(Hash) ? cash[players.size] : cash
+      end
+
+      def init_bank_kwargs
+        { check: game_end_check_values.include?(:bank) }
+      end
+
       private
 
       def init_graph
@@ -2446,10 +2463,7 @@ module Engine
       end
 
       def init_bank
-        cash = self.class::BANK_CASH
-        cash = cash[players.size] if cash.is_a?(Hash)
-
-        Bank.new(cash, log: @log, check: game_end_check_values.include?(:bank))
+        Bank.new(bank_starting_cash, log: @log, **init_bank_kwargs)
       end
 
       def init_cert_limit

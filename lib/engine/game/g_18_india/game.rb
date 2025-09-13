@@ -208,7 +208,7 @@ module Engine
 
           def initialize(name = nil)
             @name = name
-            @cash = 0
+            @spender = @bank
           end
 
           def corporation?

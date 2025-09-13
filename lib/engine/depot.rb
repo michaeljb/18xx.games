@@ -135,12 +135,8 @@ module Engine
       end
     end
 
-    def cash
-      @bank.cash
-    end
-
-    def cash=(new_cash)
-      @bank.cash = new_cash
+    def spender
+      @bank
     end
 
     def name
