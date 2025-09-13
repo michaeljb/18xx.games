@@ -577,7 +577,9 @@ module Engine
           end
         end
 
-        def nationalization_transfer_assets(corporation); end
+        def nationalization_transfer_assets(corporation)
+          corporation.set_cash(0, @bank)
+        end
 
         def nationalize!(corporation)
           return if !corporation.floated? || !@corporations.include?(corporation)

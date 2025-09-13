@@ -1813,7 +1813,7 @@ module Engine
           payoff_amount = [payoff_amount, loan_balance].min
 
           @player_debts[player] -= payoff_amount
-          player.cash -= payoff_amount
+          player.spend(payoff_amount, @bank)
 
           @log <<
             if payoff_amount == loan_balance
@@ -1888,10 +1888,7 @@ module Engine
         end
 
         def take_player_loan(player, loan)
-          # Give the player the money. The money for loans is outside money, doesnt count towards the normal bank money.
-          player.cash += loan
-
-          # Add interest to the loan, must atleast pay 150% of the loaned value
+          @bank.spend(loan, player)
           @player_debts[player] += loan + player_loan_interest(loan)
         end
 
