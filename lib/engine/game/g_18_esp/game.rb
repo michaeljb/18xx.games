@@ -382,7 +382,7 @@ module Engine
           @opened_mountain_passes = []
           @combined_trains = {}
 
-          # Initialize the player depts, if player have to take an emergency loan
+          # Initialize the player debts, if player have to take an emergency loan
           init_player_debts
 
           @tile_groups = init_tile_groups
@@ -1039,7 +1039,6 @@ module Engine
         end
 
         def take_player_loan(player, loan)
-          # Give the player the money.from the bank
           @bank.spend(loan, player)
 
           loan_amount = loan
@@ -1049,15 +1048,11 @@ module Engine
                     The loan amount is #{format_currency(loan_amount)}.\
                   Interest of 50% is applied, the total owed is #{format_currency(loan_amount + interest)}"
 
-          # Add interest to the loan, must atleast pay 150% of the loaned value
-
           @player_debts[player.id][:interest] += interest
           @player_debts[player.id][:debt] += loan_amount
         end
 
         def payoff_player_loan(player)
-          # Pay full or partial of the player loan. The money from loans is outside money, doesnt count towards
-          # the normal bank money.
           total_owed = @player_debts[player.id][:interest] + @player_debts[player.id][:debt]
           if player.cash >= total_owed
             player.spend(total_owed, @bank)

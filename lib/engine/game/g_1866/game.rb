@@ -1333,7 +1333,7 @@ module Engine
             @stock_turn_token_number[player] = 0
           end
 
-          # Initialize the player depts, if player have to take an emergency loan
+          # Initialize the player debts, if player have to take an emergency loan
           @player_debts = Hash.new { |h, k| h[k] = 0 }
 
           @london_reservation_entity = corporation_by_id('L')

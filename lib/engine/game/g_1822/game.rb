@@ -1141,7 +1141,7 @@ module Engine
           # Setup the bidding token per player
           @bidding_token_per_player = init_bidding_token
 
-          # Initialize the player depts, if player have to take an emergency loan
+          # Initialize the player debts, if player have to take an emergency loan
           @player_debts = Hash.new { |h, k| h[k] = 0 }
 
           # Initialize a dummy player for phase revenue companies
@@ -1805,8 +1805,6 @@ module Engine
           @optional_rules&.include?(:plus_expansion_single_stack)
         end
 
-        # Pay full or partial of the player loan. The money from loans is
-        # outside money, doesnt count towards the normal bank money.
         def payoff_player_loan(player, payoff_amount: nil)
           loan_balance = @player_debts[player]
           payoff_amount = player.cash if !payoff_amount || payoff_amount > player.cash
