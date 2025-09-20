@@ -22,6 +22,7 @@ require_relative '../game_error'
 require_relative '../option_error'
 require_relative '../graph'
 require_relative '../hex'
+require_relative '../lender'
 require_relative '../minor'
 require_relative '../phase'
 require_relative '../player'
@@ -98,7 +99,7 @@ module Engine
                   :tiles, :turn, :total_loans, :undo_possible, :redo_possible, :round_history, :all_tiles,
                   :optional_rules, :exception, :last_processed_action, :broken_action,
                   :turn_start_action_id, :last_turn_start_action_id, :programmed_actions, :round_counter,
-                  :manually_ended, :seed, :game_end_reason
+                  :manually_ended, :seed, :game_end_reason, :lender
 
       # Game end check is described as a dictionary
       # with reason => after
@@ -289,6 +290,20 @@ module Engine
 
       # loans taken during ebuy can lead to receviership
       EBUY_CORP_LOANS_RECEIVERSHIP = false
+
+      # true - no restrictions
+      # :after_sell - must sell shares before taking loan
+      # :no_sell - cannot take loan after selling shares
+      EBUY_CAN_TAKE_PLAYER_LOAN = false
+
+      # When a player takes a loan, this amount (as a percentage of the loan) is
+      # immediately added to the player's total debt. It can be repaid along
+      # with the loan.
+      PLAYER_LOAN_INTEREST_RATE = 50
+
+      # When a player takes a loan, this amount (as a percentage of the loan) is
+      # added to the player's total debt, but can never be repaid.
+      PLAYER_LOAN_PERMADEBT_RATE = 0
 
       # where should sold shares go to?
       # :bank - bank pool
@@ -619,6 +634,7 @@ module Engine
         @closing_queue = {}
         @corporations_are_closing = false
         @bank = init_bank
+        @lender = Lender.new
         @tiles = init_tiles
         @all_tiles = init_tiles
         optional_tiles
@@ -2381,10 +2397,6 @@ module Engine
         @companies
       end
 
-      def player_debt(_player)
-        0
-      end
-
       def render_hex_reservation?(_corporation)
         true
       end
@@ -2461,6 +2473,45 @@ module Engine
         description += "#{round_number} (of #{total})" if total
 
         description.strip
+      end
+
+      def take_player_loan(
+        player,
+        amount,
+        interest: self.class::PLAYER_LOAN_INTEREST_RATE,
+        permadebt_rate: self.class::PLAYER_LOAN_PERMADEBT_RATE
+      )
+        loan, debt, permadebt = player.take_cash_loan(amount, @bank, @lender, interest: interest, permadebt: permadebt_rate)
+        message = "#{player.name} takes a loan of #{format_currency(loan)} from #{@bank.name}."
+        message += " With #{interest}% interest, the total amount owed is #{format_currency(debt)}." if interest.positive?
+        if permadebt.positive?
+          message += " Additionally, #{format_currency(permadebt)} is subtracted from #{player.name}'s score."
+        end
+        @log << message
+      end
+
+      def add_player_loan_interest(player, interest: self.class::PLAYER_LOAN_INTEREST_RATE)
+        return unless player.debt.positive?
+
+        added_interest = player.take_interest(@lender, interest: interest)
+
+        @log << "#{player.name} increases their loan by #{interest}% (#{format_currency(added_interest)}) to "\
+                "#{format_currency(player.debt)}"
+      end
+
+      def payoff_player_loan(player, payoff_amount: nil)
+        paid = player.repay_cash_loan(@bank, @lender, payoff_amount: payoff_amount)
+
+        @log << if player.debt.zero?
+                  "#{player.name} pays off their loan of #{format_currency(paid)}."
+                else
+                  "#{player.name} pays #{format_currency(paid)} toward their loan. "\
+                    "#{format_currency(player.debt)} is still owed."
+                end
+      end
+
+      def add_interest_player_loans!
+        players.each { |p| add_player_loan_interest(p) }
       end
 
       private

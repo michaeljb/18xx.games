@@ -6,6 +6,14 @@ module Engine
   module Spender
     attr_accessor :cash
 
+    def debt
+      @debt || 0
+    end
+
+    def permadebt
+      @permadebt || 0
+    end
+
     def check_cash(amount, borrow_from: nil)
       available = @cash + (borrow_from ? borrow_from.cash : 0)
       raise GameError, "#{name} has #{@cash} and cannot spend #{amount}" if (available - amount).negative?
@@ -36,6 +44,59 @@ module Engine
       end
 
       receiver.cash += cash
+    end
+
+    def take_cash_loan(cash, bank, lender, interest: 0, permadebt: 0)
+      bank.spend(cash, self)
+
+      total_debt = cash + interest_amount(cash, interest)
+      self.debt += total_debt
+      lender.debt -= total_debt
+
+      total_permadebt = interest_amount(cash, permadebt)
+      self.permadebt += total_permadebt
+      lender.permadebt -= total_permadebt
+
+      [cash, total_debt, total_permadebt]
+    end
+
+    def take_interest(lender, interest: 0)
+      added_interest = interest_amount(self.debt, interest)
+      self.debt += added_interest
+      lender.debt -= added_interest
+      added_interest
+    end
+
+    def repay_cash_loan(bank, lender, payoff_amount: nil)
+      amount = [payoff_amount || cash, self.debt].min
+
+      spend(amount, bank)
+      self.debt -= amount
+      lender.debt += amount
+
+      amount
+    end
+
+    protected
+
+    def debt=(amount)
+      @debt = amount
+    end
+
+    def permadebt=(amount)
+      raise GameError, 'Permadebt cannot be repaid' if !lender? && amount < self.permadebt
+
+      @permadebt = amount
+    end
+
+    def lender?
+      false
+    end
+
+    private
+
+    def interest_amount(amount, rate)
+      (amount * rate / 100.0).ceil
     end
   end
 end
