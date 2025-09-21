@@ -69,6 +69,10 @@ module Engine
               )
             end
           end
+
+          it 'has a non-null game_end_reason' do
+            expect(@data['game_end_reason']).not_to eq(nil)
+          end
         end
 
         [false, true].each do |strict|
