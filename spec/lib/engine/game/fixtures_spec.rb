@@ -86,6 +86,12 @@ module Engine
                 expect(@game.finished).to eq(true)
               end
 
+              it 'game_end_reason matches' do
+                game_end_reason = @data['game_end_reason']&.to_sym
+
+                expect(@game.game_end_reason).to eq(game_end_reason)
+              end
+
               it "last N actions in game match fixture's test_last_actions" do
                 test_last_actions = @data['test_last_actions']
                 next unless test_last_actions

@@ -14,6 +14,7 @@ module UserStats
     on_or_after = Date.today - (365.25 * YEARS_INCLUDED)
 
     Game.eager(:players).where(status: %w[finished archived], manually_ended: false)
+                        .exclude(game_end_reason: :manually_ended)
                         .where { finished_at >= on_or_after }
                         .order(:finished_at)
                         .paged_each(rows_per_fetch: BATCH_SIZE) do |game|

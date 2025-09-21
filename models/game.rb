@@ -132,6 +132,7 @@ class Game < Base
     unless finished_at
       archive_data[:finished_at] = updated_at
       archive_data[:manually_ended] = true
+      archive_data[:game_end_reason] = :manually_ended
     end
     update(archive_data)
   end
@@ -162,6 +163,7 @@ class Game < Base
       round: round,
       acting: acting.to_a,
       result: result.to_h,
+      game_end_reason: game_end_reason&.to_sym,
       actions: actions_h,
       loaded: include_actions,
       created_at: created_at_ts,

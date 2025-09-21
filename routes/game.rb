@@ -99,6 +99,7 @@ class Api
                 game.result = meta['game_result']
                 game.status = meta['game_status']
                 game.finished_at = meta['finished_at']
+                game.game_end_reason = meta['game_end_reason']
                 game.manually_ended = meta['manually_ended']
 
                 game.save
@@ -233,11 +234,13 @@ class Api
     if engine.finished
       game.result = engine.result
       game.finished_at = Time.now
+      game.game_end_reason = engine.game_end_reason
       game.manually_ended = engine.manually_ended
       game.status = 'finished'
     else
       game.result = {}
       game.finished_at = nil
+      game.game_end_reason = nil
       game.manually_ended = nil
       game.status = 'active'
     end
