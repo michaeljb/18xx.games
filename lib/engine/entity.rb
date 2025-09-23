@@ -37,5 +37,9 @@ module Engine
     def closed?
       false
     end
+
+    def spender?
+      false
+    end
   end
 end
