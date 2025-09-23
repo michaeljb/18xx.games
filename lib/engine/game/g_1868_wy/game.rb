@@ -710,7 +710,7 @@ module Engine
           @lhp_train_pending
         end
 
-        def custom_end_game_reached?
+        def game_end_check_custom?
           @endgame_triggered
         end
 

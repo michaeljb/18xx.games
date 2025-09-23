@@ -315,7 +315,7 @@ module Engine
           super
         end
 
-        def custom_end_game_reached?
+        def game_end_check_custom?
           @turn == @last_or
         end
 

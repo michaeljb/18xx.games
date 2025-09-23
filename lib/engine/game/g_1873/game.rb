@@ -1222,7 +1222,7 @@ module Engine
             end
         end
 
-        def custom_end_game_reached?
+        def game_end_check_custom?
           @phase.name == '5a' || @phase.name == 'D'
         end
 

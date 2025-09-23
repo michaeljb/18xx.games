@@ -1192,7 +1192,7 @@ module Engine
           corporations
         end
 
-        def custom_end_game_reached?
+        def game_end_check_custom?
           @turn == 3
         end
 

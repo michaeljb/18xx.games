@@ -436,7 +436,7 @@ module Engine
           @log << 'Game will end on next turn'
         end
 
-        def custom_end_game_reached?
+        def game_end_check_custom?
           @stock_market.max_reached? && @round.is_a?(Round::Investment)
         end
 

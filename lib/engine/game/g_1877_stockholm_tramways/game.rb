@@ -304,7 +304,7 @@ module Engine
           @log << '-- Event: SL will form at end of current OR --'
         end
 
-        def custom_end_game_reached?
+        def game_end_check_custom?
           @sl
         end
 

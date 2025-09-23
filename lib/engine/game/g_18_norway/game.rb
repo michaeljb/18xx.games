@@ -93,7 +93,7 @@ module Engine
           'lm_brown' => ['brown_ferries', 'Mjøsa brown ferry lines opens up.'],
         }.freeze
 
-        def custom_end_game_reached?
+        def game_end_check_custom?
           @custom_end_game
         end
 
@@ -376,7 +376,7 @@ module Engine
         end
 
         def float_corporation(corporation)
-          nationalize_corporation(corporation, 1) if custom_end_game_reached?
+          nationalize_corporation(corporation, 1) if game_end_check_custom?
         end
 
         def next_round!

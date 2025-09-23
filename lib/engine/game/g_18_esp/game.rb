@@ -563,7 +563,7 @@ module Engine
           close_all_minors
         end
 
-        def custom_end_game_reached?
+        def game_end_check_custom?
           # game end on second 8 train purhcase
           return false unless @phase&.phases&.last == @phase&.current
 
@@ -996,7 +996,7 @@ module Engine
               new_operating_round
             when Round::Operating
               or_round_finished
-              skip_pre_final_or = custom_end_game_reached? && !final_ors?
+              skip_pre_final_or = game_end_check_custom? && !final_ors?
               if @round.round_num < @operating_rounds && !skip_pre_final_or
                 new_operating_round(@round.round_num + 1)
               else

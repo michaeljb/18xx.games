@@ -1081,30 +1081,11 @@ module Engine
           @log << 'LNER will form at end of current OR set'
         end
 
-        # overridden to change bank condition
-        def game_end_check
-          triggers = {
-            bankrupt: bankruptcy_limit_reached?,
-            bank: @bank.broken? && !@lner,
-            stock_market: @stock_market.max_reached?,
-            final_train: @depot.empty?,
-            final_phase: @phase.phases.last == @phase.current,
-            custom: custom_end_game_reached?,
-          }.select { |_, t| t }
-
-          %i[immediate current_round current_or full_or one_more_full_or_set].each do |after|
-            triggers.keys.each do |reason|
-              if game_end_check_values[reason] == after
-                @final_turn ||= @turn + 1 if after == :one_more_full_or_set
-                return [reason, after]
-              end
-            end
-          end
-
-          nil
+        def game_end_check_bank?
+          @bank.broken? && !@lner
         end
 
-        def custom_end_game_reached?
+        def game_end_check_custom?
           @lner
         end
 

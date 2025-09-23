@@ -166,7 +166,7 @@ module Engine
           @d_trigger = true
         end
 
-        def custom_end_game_reached?
+        def game_end_check_custom?
           @d_trigger
         end
       end
