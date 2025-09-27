@@ -609,7 +609,7 @@ module Engine
         end
 
         # Game will end directly after the end of OR 11
-        def end_now?(_after)
+        def game_end_check_custom?
           @or == LAST_OR
         end
 

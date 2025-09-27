@@ -582,7 +582,7 @@ module Engine
         end
 
         # game ends when all floated corps have nationalized
-        def custom_end_game_reached?
+        def game_end_check_custom?
           return false unless @nationalization
           return false unless @round.finished?
 

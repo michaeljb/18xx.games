@@ -344,7 +344,7 @@ module Engine
           super
         end
 
-        def custom_end_game_reached?
+        def game_end_check_custom?
           @end_game_triggered
         end
       end

@@ -179,7 +179,7 @@ module Engine
           @revolt_round = determine_revolt_round
         end
 
-        def end_now?(_after)
+        def game_end_check_custom?
           @or == LAST_OR
         end
 
