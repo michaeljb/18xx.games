@@ -25,7 +25,7 @@ module Engine
     end
 
     def value
-      @cash + shares.select { |s| s.corporation.ipoed }.sum(&:price) + @companies.sum(&:value)
+      @cash + shares.select { |s| s.corporation.ipoed }.sum(&:price) + @companies.sum(&:value) - debt - permadebt
     end
 
     def owner

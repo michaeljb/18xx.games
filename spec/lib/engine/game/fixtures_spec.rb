@@ -125,6 +125,14 @@ module Engine
                   expect(run_action).to eq(actions[actions.size - index])
                 end
               end
+
+              it 'all player debt came from the Lender' do
+                total_debt = [@game.lender, *@game.players].sum do |entity|
+                  entity.debt + entity.permadebt
+                end
+
+                expect(total_debt).to eq(0)
+              end
             end
           end
         end
