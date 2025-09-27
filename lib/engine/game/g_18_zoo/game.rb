@@ -997,7 +997,7 @@ module Engine
           @timeline << "NEARBY FAMILY: #{near_family_text}" if near_family_text
           @timeline << 'SR 3: at the start of SR 3 the reserved R shares are available to buy.'
           @timeline << 'END: if during a forced train purchase the player doesn\'t have enough money, the bank covers'\
-                       ' the expense; the player gets debt equal to twice what the bank paid'
+                       ' the expense; the player gets debt (loan) equal to twice what the bank paid'
         end
 
         def rust?(train, purchased_train)

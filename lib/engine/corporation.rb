@@ -303,6 +303,8 @@ module Engine
     end
 
     def close!
+      raise GameError, "#{name} cannot close while it has $#{@cash}." if @cash.positive?
+
       share_price&.corporations&.delete(self)
       @closed = true
       @ipoed = false
