@@ -27,7 +27,7 @@ class Validate
   end
 
   def inspect
-    "#<#{self.class.name} @filename=#{@filename.inspect}>"
+    "#<#{self.class.name} @filename=#{@filename.inspect} @strict=#{strict} #{errors.size}/#{size}>"
   end
 
   def initialize(filename)
@@ -51,8 +51,20 @@ class Validate
     @data ||= parsed.except('summary')
   end
 
+  def size
+    data.size
+  end
+
   def summary
-    @summary ||= parsed['summary']
+    @summary ||= parsed['summary'] || {}
+  end
+
+  def kwargs
+    summary.key?('kwargs') ? summary['kwargs'] : {}
+  end
+
+  def strict
+    kwargs.key?('strict') ? kwargs['strict'] : 'nil'
   end
 
   def clear_cache!
@@ -89,6 +101,10 @@ class Validate
 
   def titles
     @titles ||= data.map { |_id, g| g['title'] }.uniq.sort
+  end
+
+  def non_errors
+    @non_errors ||= data.reject { |_id, g| g['exception'] }
   end
 
   def errors
@@ -404,6 +420,7 @@ def process_slices(slices, page_size, description, strict, silent, trace, fork_r
         @attempts += 1
         puts "\n#{description}: Process #{index} encountered an error at #{Time.now.utc}:\n#{e.inspect}\n\n"
         if @attempts < fork_retries
+          # exponential backoff to retry
           sleep_time = 2**@attempts
           puts "\n#{description}: sleeping #{sleep_time} seconds then retrying "\
             "Process #{index}, attempt #{@attempts + 1}/#{fork_retries}...\n\n"
