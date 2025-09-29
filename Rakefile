@@ -64,7 +64,7 @@ end
 
 desc 'irb with -I lib/ -I assets/app/'
 task :irb do
-  sh 'irb -I lib/ -I assets/app/'
+  sh 'irb -I lib/ -I assets/app/ -r ./scripts/find_seed -r ./scripts/validate'
 end
 
 # Shell
