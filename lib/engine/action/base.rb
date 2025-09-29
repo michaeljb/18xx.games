@@ -11,9 +11,17 @@ module Engine
       attr_reader :entity
       attr_accessor :id, :user, :created_at, :auto_actions
 
+      REQUIRED_ARGS = [].freeze
+
       def self.from_h(h, game)
         entity = game.get(h['entity_type'], h['entity']) || Player.new(nil, h['entity'])
-        obj = new(entity, **h_to_args(h, game))
+
+        kwargs = h_to_args(h, game)
+        self::REQUIRED_ARGS.each do |arg|
+          raise ActionError, "Cannot create #{self.name}, h_to_args() returned nil :#{arg} from action #{h['id']}" if kwargs[arg].nil?
+        end
+
+        obj = new(entity, **kwargs)
         obj.user = h['user'] if entity.player && h['user'] != entity.player&.id
         obj.created_at = h['created_at'] || Time.now
         obj.auto_actions = (h['auto_actions'] || []).map { |auto_h| Base.action_from_h(auto_h, game) }
