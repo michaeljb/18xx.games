@@ -2908,7 +2908,9 @@ module Engine
       end
 
       def game_end_timing(reason)
-        self.class::GAME_END_CHECK[reason]
+        raise GameError, ":#{reason} not found in game_end_check_values" unless game_end_check_values.include?(reason)
+
+        game_end_check_values[reason]
       end
 
       def game_end_check
@@ -2919,7 +2921,11 @@ module Engine
         end
         return if triggers.empty?
 
-        trigger = triggers.min_by { |_, after| self.class::GAME_END_TIMING_PRIORITY.index(after) }
+        trigger = triggers.min_by do |_, after|
+          raise GameError, "Timing :#{after} not found in GAME_END_TIMING_PRIORITY" unless self.class::GAME_END_TIMING_PRIORITY.include?(after)
+
+          self.class::GAME_END_TIMING_PRIORITY.index(after)
+        end
         game_end_set_final_turn!(*trigger)
         @game_end_trigger = trigger
       end
