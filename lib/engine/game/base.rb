@@ -863,7 +863,11 @@ module Engine
       end
 
       def rescue_exception(e, action)
-        LOGGER.debug { %(Caught exception #{e.inspect}, backtrace: [#{e.backtrace.join("\n")}]) }
+        LOGGER.debug do
+          "Caught exception #{e.inspect}\n"\
+            "  action: #{action.to_json}\n"\
+            "  backtrace:\n[#{e.backtrace.join("\n")}]"
+        end
         @raw_actions.pop
         @actions.pop
         @exception = e
@@ -889,6 +893,9 @@ module Engine
         if @exception
           exception = @exception
           @exception = nil
+          LOGGER.error do
+            %(@broken_action=#{@broken_action.to_json}) if @broken_action
+          end
           @broken_action = nil
           raise exception
         end

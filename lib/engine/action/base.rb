@@ -89,6 +89,10 @@ module Engine
         # some actions are generated internally and don't have an id, fall back to timestamp.
         id && other.id ? (id <=> other.id) : (Time.at(created_at) <=> Time.at(other.created_at))
       end
+
+      def to_json
+        to_h.to_json
+      end
     end
   end
 end
