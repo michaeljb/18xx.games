@@ -11,7 +11,7 @@ require_relative '../cities_plus_towns_route_distance_str'
 module Engine
   module Game
     module G1866
-      class Game < Game::Base
+      class Game < Engine::Game::Base
         include_meta(G1866::Meta)
         include G1866::Entities
         include G1866::Map
