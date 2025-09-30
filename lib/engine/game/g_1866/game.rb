@@ -23,6 +23,7 @@ module Engine
           stock_market_st: :three_rounds,
           final_phase: :three_rounds,
         }.freeze
+        GAME_END_TIMING_PRIORITY = %i[three_rounds current_round]
         GAME_END_REASONS_TEXT = {
           stock_market: 'Corporation enters end game trigger on stock market',
           stock_market_st: 'Stock Turn Token enters end game trigger on stock market',
