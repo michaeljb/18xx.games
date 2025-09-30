@@ -126,8 +126,15 @@ class Validate
           obj[game['title']] << game['id']
         end
         _errors.transform_values!(&:sort)
-        _errors
+        _errors.sort_by { |t, _| t}.to_h
       end
+  end
+
+  def error_ids_by_title_pp
+    error_ids_by_title.each do |title, ids|
+      puts %("#{title}" => #{ids.to_s})
+    end
+    nil
   end
 
   def error_counts_by_title
