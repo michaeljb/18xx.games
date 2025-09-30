@@ -186,14 +186,14 @@ module View
           payoffdebt = lambda do
             process_action(Engine::Action::PayoffPlayerDebt.new(@current_entity))
           end
-          partial = @current_entity.cash < @game.player_debt(@current_entity)
-          amount = [@current_entity.cash, @game.player_debt(@current_entity)].min
+          partial = @current_entity.cash < @current_entity.debt
+          amount = [@current_entity.cash, @current_entity.debt].min
           [h(:button, { on: { click: payoffdebt } },
              "Pay off debt#{partial ? ' (Partial)' : ''} - #{@game.format_currency(amount)}")]
         end
 
         def render_payoff_player_debt_partial_button
-          max_payoff = [@current_entity.cash, @game.player_debt(@current_entity)].min
+          max_payoff = [@current_entity.cash, @current_entity.debt].min
 
           input = h(
             'input.no_margin',
