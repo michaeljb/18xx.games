@@ -278,21 +278,30 @@ end
 def validate(**kwargs)
   validate_kwargs = kwargs.dup
 
+  _k = lambda do |key, default|
+    if kwargs.include?(key)
+      kwargs.delete(key)
+    else
+      default
+    end
+  end
+
   # ask user for confirmation if more than this many games will be processed
-  prompt_threshold = kwargs.delete(:prompt_threshold) || 100
-  process_count = kwargs.delete(:process_count) || :max
-  fork_retries = kwargs.delete(:fork_retries) || 5
-  page_size = kwargs.delete(:page_size) || 10
-  strict = kwargs[:strict].nil? ? true : kwargs.delete(:strict)
-  silent = kwargs.delete(:silent) || false # suppress "running game <id>" output
-  # for given titles, also validate related titles
-  families = kwargs[:families].nil? ? true : kwargs.delete(:families)
-  description = kwargs.delete(:description) || ''
-  trace = kwargs.delete(:trace) || false # include stack trace in JSON when error found
-  show_slices = kwargs.delete(:show_slices) || false
-  only_slices = kwargs.delete(:only_slices) || []
+  prompt_threshold = _k.call(:prompt_threshold, 100)
+  process_count = _k.call(:process_count, :max)
+  fork_retries = _k.call(:fork_retries, 5)
+  page_size = _k.call(:page_size, 10)
+  strict = _k.call(:strict, true)
+  # suppress "running game <id>" output for given titles, also validate related titles
+  silent = _k.call(:silent, false)
+  families = _k.call(:families, true)
+  description = _k.call(:description, '')
+  # include stack trace in JSON when error found
+  trace = _k.call(:trace, true)
+  show_slices = _k.call(:show_slices, false)
+  only_slices = _k.call(:only_slices, [])
   # just return the game IDs sliced into subarrays, don't validate
-  return_slices = kwargs.delete(:return_slices) || false
+  return_slices = _k.call(:return_slices, false)
 
   # remaining kwargs are forwared to the DB#where()
 
