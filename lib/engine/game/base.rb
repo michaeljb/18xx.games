@@ -2511,6 +2511,14 @@ module Engine
       end
 
       def payoff_player_loan(player, payoff_amount: nil)
+        if payoff_amount && payoff_amount > player.cash
+          LOGGER.warn do
+            "payoff_player_loan(#{player.name},payoff_amount:#{payoff_amount}) - player only has "\
+              "#{format_currency(player.cash)}, proceeding with #{player.cash} instead of #{payoff_amount}"
+          end
+          payoff_amount = player.cash
+        end
+
         paid = player.repay_cash_loan(@bank, payoff_amount: payoff_amount)
 
         @log << if player.debt.zero?
