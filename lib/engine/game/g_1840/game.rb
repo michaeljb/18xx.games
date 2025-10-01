@@ -883,6 +883,13 @@ module Engine
           end
         end
 
+        def take_player_loan(player, amount)
+          loan_count = (amount / 100.to_f).ceil
+          loan_amount = loan_count * 100
+
+          super(player, loan_amount)
+        end
+
         def remove_open_tram_corporations
           @log << '-- All major corporations owns 3 line corporations --'
           @all_tram_corporations.each do |corp|
