@@ -213,6 +213,7 @@ module View
           payoff_debt_partial = lambda do
             amount = input.JS['elm'].JS['value'].to_i
             process_action(Engine::Action::PayoffPlayerDebtPartial.new(@current_entity, amount: amount))
+            Native(input)&.elm&.value = @current_entity.cash if amount > @current_entity.cash
           end
 
           [h(:div, [
