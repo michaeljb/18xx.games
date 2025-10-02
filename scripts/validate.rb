@@ -7,6 +7,9 @@ require 'pp'
 require_relative 'scripts_helper'
 require_relative 'migrate_game'
 
+class ValidationError < Engine::GameError
+end
+
 # class to facilitate interacting with the results of validate_all() in an irb
 # console
 class Validate
@@ -31,6 +34,8 @@ class Validate
   end
 
   def initialize(filename)
+    raise "#{filename} not found" unless File.exist?(filename)
+
     @filename = filename
   end
 
@@ -174,6 +179,23 @@ class Validate
     pin_games(pin_version, ids_to_pin)
     archive_games(ids_to_archive)
   end
+
+  # these games are now finished; should be rare, usually games that finish
+  # sooner due to a bug fix have subsequent actions and are thefore broken
+  def expected_unfinished_ids
+    data.filter_map do |_id, g|
+      non_exception = !g['exception'] && g['game_finished'] && (g['status'] != 'finished') && g['id']
+      exception = g['exception'] && g['exception'] =~ /game is over/ && g['id']
+      non_exception || exception
+    end
+  end
+
+  # these games will become unfinished, reappearing in players' active games
+  def expected_finished_ids
+    data.filter_map do |_id, g|
+      g['exception'] && !g['game_finished'] && (g['status'] == 'finished') && g['id']
+    end
+  end
 end
 
 $count = 0
@@ -197,7 +219,7 @@ def run_game(game, actions = nil, strict: false, silent: false, trace: false)
     engine = Engine::Game.load(game, strict: strict)
   rescue Exception => e # rubocop:disable Lint/RescueException
     $count += 1
-    data['finished']=false
+    data['finished_validation']=false
     data['exception']=e.inspect
     data['stack']=e.backtrace if trace
     return data
@@ -210,15 +232,16 @@ def run_game(game, actions = nil, strict: false, silent: false, trace: false)
     time = Time.now - time
     data['time'] = time
     $total_time += time
-    data['finished']=true
-
+    data['finished_validation']=true
+    data['game_finished'] = engine.finished
+    data['game_finished_matches_expected'] = (data['status'] == 'finished') == engine.finished
     data['actions']=engine.actions.size
     data['result']=engine.result
   rescue Exception => e # rubocop:disable Lint/RescueException
     $count += 1
     data['url']="https://18xx.games/game/#{game.id}?action=#{engine.last_processed_action}"
     data['last_action']=engine.last_processed_action
-    data['finished']=false
+    data['finished_validation']=false
     data['exception']=e.inspect
     data['stack']=e.backtrace if trace
     data['broken_action']=broken_action&.to_h
@@ -295,7 +318,7 @@ def validate(**kwargs)
   # suppress "running game <id>" output for given titles, also validate related titles
   silent = _k.call(:silent, false)
   families = _k.call(:families, true)
-  description = _k.call(:description, '')
+  desc = _k.call(:desc, '')
   # include stack trace in JSON when error found
   trace = _k.call(:trace, true)
   show_slices = _k.call(:show_slices, false)
@@ -305,10 +328,10 @@ def validate(**kwargs)
 
   # remaining kwargs are forwared to the DB#where()
 
-  lock_file = "validate/validate_#{description}.lock"
+  lock_file = "validate/validate_#{desc}.lock"
   if File.exist?(lock_file)
-    puts "#{description}: found #{lock_file}"
-    puts "#{description}: goodbye"
+    puts "#{desc}: found #{lock_file}"
+    puts "#{desc}: goodbye"
     return
   end
 
@@ -328,12 +351,12 @@ def validate(**kwargs)
     pin_key => false,
     status: %w[active finished]
   }.merge(kwargs)
-  puts "#{description}: Finding game IDS for:"
+  puts "#{desc}: Finding game IDS for:"
   pp where_kwargs.except(pin_key)
 
   selected_ids = DB[:games].order(:id).where(**where_kwargs).select(:id).all.map { |g| g[:id] }
   game_count = selected_ids.size
-  puts "#{description}: Found #{game_count} matching games in range: #{selected_ids.minmax.join(' to ')}"
+  puts "#{desc}: Found #{game_count} matching games in range: #{selected_ids.minmax.join(' to ')}"
 
   # disconnect before starting connections in the forked processes
   DB.disconnect
@@ -345,12 +368,12 @@ def validate(**kwargs)
     else
       [[[Etc.nprocessors - 1, process_count.to_i].min, 1].max, game_count].min
     end
-  puts "#{description}: Will fork into #{process_count} processes" if process_count > 1 && !return_slices
+  puts "#{desc}: Will fork into #{process_count} processes" if process_count > 1 && !return_slices
 
   if prompt_threshold && game_count > prompt_threshold && !return_slices
-    print "#{description}: Type #{game_count} to confirm you wish to proceed (with #{process_count} processes): "
+    print "#{desc}: Type #{game_count} to confirm you wish to proceed (with #{process_count} processes): "
     if gets.chomp.to_i != game_count
-      puts "#{description}: User input did not match game count. Exiting valdiation."
+      puts "#{desc}: User input did not match game count. Exiting valdiation."
       return FileUtils.rm(lock_file)
     end
   end
@@ -379,11 +402,11 @@ def validate(**kwargs)
 
   start_time = Time.now
 
-  process_slices(slices, page_size, description, strict, silent, trace, fork_retries)
+  process_slices(slices, page_size, desc, strict, silent, trace, fork_retries)
 
   end_time = Time.now
 
-  data = combine_forked_data(description)
+  data = combine_forked_data(desc)
 
   total_games = selected_ids.size
   failed = data.count { |_id, g| g['exception'] }
@@ -404,14 +427,14 @@ def validate(**kwargs)
   puts ''
   pp data['summary'].except('kwargs')
 
-  File.write("validate_#{description}.json", JSON.pretty_generate(data))
+  File.write("validate_#{desc}.json", JSON.pretty_generate(data))
 
   FileUtils.rm(lock_file)
 
-  Validate.new("validate_#{description}.json")
+  Validate.new("validate_#{desc}.json")
 end
 
-def process_slices(slices, page_size, description, strict, silent, trace, fork_retries)
+def process_slices(slices, page_size, desc, strict, silent, trace, fork_retries)
   pids = []
   slices.each.with_index do |slice_ids, index|
     next if slice_ids.nil?
@@ -422,23 +445,25 @@ def process_slices(slices, page_size, description, strict, silent, trace, fork_r
         # spread out the forks attacking the database
         sleep(index)
 
-        data = { 'processes' => { index => { 'finished' => false } } }
-        File.write("validate/validate_#{description}_#{index}.json", JSON.pretty_generate(data))
+        puts "\n#{desc}: Process #{index} (#{slice_ids.size} games) started at #{Time.now.utc}\n\n"
+
+        data = { 'processes' => { index => { 'finished_validation' => false } } }
+        File.write("validate/validate_#{desc}_#{index}.json", JSON.pretty_generate(data))
         slice_ids.each_slice(page_size) do |ids|
           Game.eager(:user, :players, :actions).where(id: ids).all.each do |game|
             data[game.id] = run_game(game, strict: strict, silent: silent, trace: trace)
           end
         end
-        data['processes'][index] = { 'finished': true }
-        puts "\n#{description}: Process #{index} finished at #{Time.now.utc}\n\n"
-        File.write("validate/validate_#{description}_#{index}.json", JSON.pretty_generate(data))
+        data['processes'][index] = { 'finished_validation': true }
+        puts "\n#{desc}: Process #{index} (#{slice_ids.size} games) finished at #{Time.now.utc}\n\n"
+        File.write("validate/validate_#{desc}_#{index}.json", JSON.pretty_generate(data))
       rescue Exception => e
         @attempts += 1
-        puts "\n#{description}: Process #{index} encountered an error at #{Time.now.utc}:\n#{e.inspect}\n\n"
+        puts "\n#{desc}: Process #{index} (#{slice_ids.size} games) encountered an error at #{Time.now.utc}:\n#{e.inspect}\n\n"
         if @attempts < fork_retries
           # exponential backoff to retry
           sleep_time = 2**@attempts
-          puts "\n#{description}: sleeping #{sleep_time} seconds then retrying "\
+          puts "\n#{desc}: sleeping #{sleep_time} seconds then retrying "\
             "Process #{index}, attempt #{@attempts + 1}/#{fork_retries}...\n\n"
           sleep(sleep_time)
           retry
@@ -448,9 +473,9 @@ def process_slices(slices, page_size, description, strict, silent, trace, fork_r
           [id, { 'exception': "see processes.#{index}.exception" }]
         end
         data['processes'] = {
-          index => {'finished': false, 'exception' => e.inspect, 'stack' => e.backtrace },
+          index => {'finished_validation': false, 'exception' => e.inspect, 'stack' => e.backtrace },
         }
-        File.write("validate/validate_#{description}_#{index}.json", JSON.pretty_generate(data))
+        File.write("validate/validate_#{desc}_#{index}.json", JSON.pretty_generate(data))
       end
     end
   end
@@ -493,7 +518,7 @@ def revalidate_broken(filename)
   $total_time = 0
   data = JSON.parse(File.read(filename))
   data = data.map do |game, val|
-    if game != 'summary' && !val['finished'] && !val['pin']
+    if game != 'summary' && !val['finished_validation'] && !val['pin']
       reload_game = Game[val['id']]
       d = run_game(reload_game, migrate_db_actions(reload_game))
       d['original']=val
