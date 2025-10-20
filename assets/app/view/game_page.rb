@@ -181,7 +181,7 @@ module View
         key: 'game_page',
         hook: {
           destroy: destroy,
-          insert: lambda {
+          insert: lambda { |_|
             scroll_to_game_menu
             `document.getElementById('game').focus()`
           },

@@ -130,7 +130,7 @@ module View
           Native(vnode)['elm'].scrollTop = @scroll_pos
         end
 
-        scroll_handler = lambda do |event|
+        scroll_handler = lambda do |event, _|
           elm = Native(event).target
           bottom = elm.scrollHeight - elm.scrollTop <= elm.clientHeight + 5
           store(:follow_scroll, bottom, skip: true) if @follow_scroll != bottom

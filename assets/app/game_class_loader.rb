@@ -38,7 +38,7 @@ module GameClassLoader
       return game_class
     end
 
-    onload = lambda do
+    onload = lambda do |_|
       require_tree "engine/game/#{game_meta.fs_name}"
 
       if Engine.game_by_title(title)

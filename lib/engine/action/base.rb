@@ -50,7 +50,7 @@ module Engine
         klass.name.split('::')
       end
 
-      def initialize(entity)
+      def initialize(entity, **_kwargs)
         @entity = entity
         @created_at = Time.now
         @auto_actions = []
