@@ -8,7 +8,7 @@ module Engine
     class ProgramHarzbahnDraftPass < ProgramEnable
       attr_reader :until_premium, :unconditional
 
-      def initialize(entity, until_premium:, unconditional:)
+      def initialize(entity, unconditional:, until_premium: nil)
         super(entity)
         @until_premium = until_premium
         @unconditional = unconditional
