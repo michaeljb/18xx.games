@@ -13,7 +13,19 @@ module Engine
 
       def self.from_h(h, game)
         entity = game.get(h['entity_type'], h['entity']) || Player.new(nil, h['entity'])
-        obj = new(entity, **h_to_args(h, game))
+
+        kwargs = h_to_args(h, game)
+        required_kwargs = self.instance_method(:initialize).parameters.filter_map do |kind, name|
+          kind == :keyreq && name
+        end
+        required_kwargs.each do |arg|
+          if kwargs[arg].nil?
+            raise ActionError,
+                  "Cannot create #{name}, h_to_args() returned nil :#{arg} from action #{h['id']}"
+          end
+        end
+
+        obj = new(entity, **kwargs)
         obj.user = h['user'] if entity.player && h['user'] != entity.player&.id
         obj.created_at = h['created_at'] || Time.now
         obj.auto_actions = (h['auto_actions'] || []).map { |auto_h| Base.action_from_h(auto_h, game) }
