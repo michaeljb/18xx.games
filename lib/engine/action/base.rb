@@ -41,7 +41,7 @@ module Engine
         required_args.each do |arg|
           if args[arg].nil?
             raise ActionError,
-              "Cannot create #{name}, h_to_args() returned nil :#{arg} from action #{h['id']}"
+                  "Cannot create #{name}, h_to_args() returned nil :#{arg} from action #{h['id']}"
           end
         end
       end
