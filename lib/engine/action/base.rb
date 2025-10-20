@@ -15,7 +15,7 @@ module Engine
         entity = game.get(h['entity_type'], h['entity']) || Player.new(nil, h['entity'])
 
         kwargs = h_to_args(h, game)
-        required_kwargs = self.instance_method(:initialize).parameters.filter_map do |kind, name|
+        required_kwargs = instance_method(:initialize).parameters.filter_map do |kind, name|
           kind == :keyreq && name
         end
         required_kwargs.each do |arg|
