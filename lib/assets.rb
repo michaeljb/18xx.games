@@ -249,7 +249,7 @@ class Assets
         next
       end
 
-      Opal::Compiler.new(File.read(opts[:path]), file: file, requirable: true)
+      Opal::Compiler.new(File.read(opts[:path]), file: file, requirable: true, arity_check: true)
     end.compact
 
     return output if compilers.empty?
