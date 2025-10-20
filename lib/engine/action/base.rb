@@ -35,8 +35,8 @@ module Engine
       end
 
       def self.validate_args!(args)
-        required_args = (instance_method(:initialize).parameters || []).filter_map do |kind, name|
-          kind == :keyreq && name
+        required_args = instance_method(:initialize).parameters.filter_map do |kind, name|
+          (kind == :keyreq) && name
         end
         required_args.each do |arg|
           if args[arg].nil?
