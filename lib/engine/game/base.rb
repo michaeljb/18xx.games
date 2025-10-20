@@ -916,6 +916,11 @@ module Engine
         if @exception
           exception = @exception
           @exception = nil
+
+          LOGGER.error do
+            "@broken_action = #{@broken_action.to_json}"
+          end
+
           @broken_action = nil
           raise exception
         end

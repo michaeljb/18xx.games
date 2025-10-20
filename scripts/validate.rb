@@ -124,6 +124,7 @@ def run_game(game, actions = nil, strict: false, silent: false, trace: false, va
     data['finished_validation']=false
     data['exception']=e.inspect
     data['stack']=e.backtrace if trace
+    data['engine'] = engine if return_engine
     return data
   end
 
