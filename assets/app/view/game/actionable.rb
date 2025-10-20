@@ -173,7 +173,7 @@ module View
       def history_link(text, title, action_id = nil, style_extra = {}, as_button = false, hotkey = nil)
         route = Lib::Params.add(@app_route, 'action', action_id)
 
-        click = lambda do
+        click = lambda do |_, _|
           store(:round_history, @game.round_history, skip: true) unless @round_history
           store(:round_history, nil, skip: true) unless action_id
           store(:app_route, route)

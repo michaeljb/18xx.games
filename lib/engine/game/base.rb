@@ -2072,7 +2072,7 @@ module Engine
         !corporation.minor?
       end
 
-      def corporation_show_individual_reserved_shares?(_corporation)
+      def corporation_show_individual_reserved_shares?
         true
       end
 

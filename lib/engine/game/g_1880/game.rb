@@ -538,7 +538,7 @@ module Engine
           status
         end
 
-        def corporation_show_individual_reserved_shares?(_corporation)
+        def corporation_show_individual_reserved_shares?
           false
         end
 
