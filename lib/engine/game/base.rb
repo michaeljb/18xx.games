@@ -3552,6 +3552,35 @@ module Engine
         player_s = "player#{player_count == 1 ? '' : 's'}"
         raise GameError, "#{self.class.title}#{rules} does not support #{player_count} #{player_s}"
       end
+
+      def self.deep_freeze_constants!
+        to_freeze = [
+          :COMPANIES,
+          :CORPORATIONS,
+          :HEXES,
+          :LOCATION_NAMES,
+          :MARKET,
+          :MINORS,
+          :OPTIONAL_RULES,
+          :PHASES,
+          :TILES,
+          :TRAINS,
+        ]
+
+        game_module = self.const_get(self.name.split('::')[0..-2].join('::'))
+
+        modules = [:Entities, :Game, :Map, :Meta, :Trains,].filter_map do |mod|
+          game_module.constants.include?(mod) && game_module.const_get(mod)
+        end
+        modules.unshift(game_module)
+
+        modules.each do |mod|
+          to_freeze.each do |const|
+            next unless mod.constants.include?(const)
+            mod.const_get(const).deep_freeze
+          end
+        end
+      end
     end
   end
 end
