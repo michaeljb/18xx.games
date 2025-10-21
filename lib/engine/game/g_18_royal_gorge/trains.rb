@@ -48,7 +48,7 @@ module Engine
             num: 5,
             events: [{ 'type' => 'trigger_endgame' }],
           },
-        ].deep_freeze
+        ].freeze
 
         PHASES = [
           {
@@ -82,7 +82,7 @@ module Engine
             status: %w[can_buy_companies],
             operating_rounds: 2,
           },
-        ].deep_freeze
+        ].freeze
       end
     end
   end
