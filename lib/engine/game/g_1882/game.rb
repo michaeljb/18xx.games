@@ -275,6 +275,7 @@ module Engine
           min_price = stock_market.par_prices.map(&:price).min
 
           corporations = self.class::CORPORATIONS.map do |corporation|
+            corporation = corporation.dup
             corporation[:needs_token_to_par] = true if corporation[:sym] == 'CN'
             Corporation.new(
               min_price: min_price,
