@@ -338,6 +338,8 @@ module Engine
                   "#{player.name} to #{target_name}."
           player.spend(player.cash, target)
         end
+
+        deep_freeze_constants!
       end
     end
   end

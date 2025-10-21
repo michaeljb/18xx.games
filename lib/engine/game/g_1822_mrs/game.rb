@@ -228,6 +228,8 @@ module Engine
         def optional_starter?
           @optional_rules&.include?(:starter)
         end
+
+        deep_freeze_constants!
       end
     end
   end

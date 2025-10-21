@@ -526,6 +526,8 @@ module Engine
           end
           close_private(minor)
         end
+
+        deep_freeze_constants!
       end
     end
   end

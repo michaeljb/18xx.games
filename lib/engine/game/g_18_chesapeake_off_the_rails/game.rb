@@ -83,6 +83,8 @@ module Engine
         def timeline
           []
         end
+
+        deep_freeze_constants!
       end
     end
   end

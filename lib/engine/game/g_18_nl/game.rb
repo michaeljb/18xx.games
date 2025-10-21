@@ -131,6 +131,8 @@ module Engine
         def nzo_has_placed_home?
           corporation_by_id('NZO').tokens.first&.used
         end
+
+        deep_freeze_constants!
       end
     end
   end

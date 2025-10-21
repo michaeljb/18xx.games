@@ -258,6 +258,8 @@ module Engine
           player.spend(price, @bank)
           @log << "#{player.name} buys #{company.name} for #{format_currency(price)}"
         end
+
+        deep_freeze_constants!
       end
     end
   end

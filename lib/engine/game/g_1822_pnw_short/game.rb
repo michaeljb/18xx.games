@@ -98,6 +98,8 @@ module Engine
             G1822PNW::Step::BuySellParShares,
           ])
         end
+
+        deep_freeze_constants!
       end
     end
   end

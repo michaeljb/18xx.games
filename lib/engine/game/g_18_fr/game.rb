@@ -347,6 +347,8 @@ module Engine
         def game_end_check_discounted_six?
           @end_game_triggered
         end
+
+        deep_freeze_constants!
       end
     end
   end

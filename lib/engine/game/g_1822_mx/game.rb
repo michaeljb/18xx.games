@@ -805,6 +805,8 @@ module Engine
         def multiple_tokens_allowed_on_home_hex?
           true
         end
+
+        deep_freeze_constants!
       end
     end
   end

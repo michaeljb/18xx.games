@@ -121,6 +121,8 @@ module Engine
         def home_token_locations(corporation)
           raise NotImplementedError
         end
+
+        deep_freeze_constants!
       end
     end
   end

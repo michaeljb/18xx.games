@@ -1243,6 +1243,8 @@ module Engine
             'stations from one of the trains operated. Doubled values (for E trains or destination tokens) '\
             'do not count. L-trains can use mail contracts, even if they visit one city and no towns.'
         end
+
+        deep_freeze_constants!
       end
     end
   end

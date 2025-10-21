@@ -497,6 +497,8 @@ module Engine
           log << "#{regional.name} will not build or run trains but shareholders will receive current stock value "\
                  'in revenue each OR.'
         end
+
+        deep_freeze_constants!
       end
     end
   end

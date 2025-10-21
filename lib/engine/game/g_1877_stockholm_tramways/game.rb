@@ -515,6 +515,8 @@ module Engine
           @starting_phase.delete(corporation)
           corporation.close!
         end
+
+        deep_freeze_constants!
       end
     end
   end

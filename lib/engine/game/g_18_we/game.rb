@@ -57,6 +57,8 @@ module Engine
           @deferred_rust = []
           @merging = nil
         end
+
+        deep_freeze_constants!
       end
     end
   end

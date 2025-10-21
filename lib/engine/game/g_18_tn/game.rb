@@ -338,6 +338,8 @@ module Engine
         def green_nashville_upgrade?(tile)
           @green_nashville_tile && STANDARD_YELLOW_CITY_TILES.include?(tile.name)
         end
+
+        deep_freeze_constants!
       end
     end
   end

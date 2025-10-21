@@ -964,6 +964,8 @@ module Engine
             ['Convert to 10-share in SR', '2 ←'],
           ]
         end
+
+        deep_freeze_constants!
       end
     end
   end

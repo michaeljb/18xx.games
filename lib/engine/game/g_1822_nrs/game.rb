@@ -234,6 +234,8 @@ module Engine
 
           self.class::STARTING_COMPANIES
         end
+
+        deep_freeze_constants!
       end
     end
   end

@@ -23,6 +23,8 @@ module Engine
           'NTR' => 3,
           'QMOO' => 3,
         }.freeze
+
+        deep_freeze_constants!
       end
     end
   end

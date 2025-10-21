@@ -3263,6 +3263,8 @@ module Engine
         def aag_variant?
           @aag_variant ||= @optional_rules&.include?(:aag_variant)
         end
+
+        deep_freeze_constants!
       end
     end
   end

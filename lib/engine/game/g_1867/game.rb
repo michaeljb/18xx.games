@@ -1070,6 +1070,8 @@ module Engine
             @national.companies << company
           end
         end
+
+        deep_freeze_constants!
       end
     end
   end

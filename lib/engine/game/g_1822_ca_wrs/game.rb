@@ -73,6 +73,8 @@ module Engine
           hex_by_id(gnwr.coordinates).tile.remove_reservation!(gnwr) if corporation == gnwr
           super
         end
+
+        deep_freeze_constants!
       end
     end
   end

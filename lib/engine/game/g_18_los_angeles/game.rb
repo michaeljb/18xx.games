@@ -460,6 +460,8 @@ module Engine
         def unowned_purchasable_companies
           []
         end
+
+        deep_freeze_constants!
       end
     end
   end

@@ -302,6 +302,8 @@ module Engine
             G1817WO::Step::BuySellParShares,
           ])
         end
+
+        deep_freeze_constants!
       end
     end
   end

@@ -1356,6 +1356,8 @@ module Engine
 
           ['Tenders', (@luxury_carriages['bank']).to_s]
         end
+
+        deep_freeze_constants!
       end
     end
   end

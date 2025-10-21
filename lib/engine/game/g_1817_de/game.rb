@@ -182,6 +182,8 @@ module Engine
 
         SEED_MONEY = 150
         LOANS_PER_INCREMENT = 5
+
+        deep_freeze_constants!
       end
     end
   end

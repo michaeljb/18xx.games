@@ -1259,6 +1259,8 @@ module Engine
             close_corporation(minor, quiet: true)
           end
         end
+
+        deep_freeze_constants!
       end
     end
   end

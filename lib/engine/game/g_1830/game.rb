@@ -219,6 +219,8 @@ module Engine
         def optional_6_train
           @optional_rules&.include?(:optional_6_train)
         end
+
+        deep_freeze_constants!
       end
     end
   end

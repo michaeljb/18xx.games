@@ -168,6 +168,8 @@ module Engine
           @corporations += available
           update_cache(:corporations)
         end
+
+        deep_freeze_constants!
       end
     end
   end

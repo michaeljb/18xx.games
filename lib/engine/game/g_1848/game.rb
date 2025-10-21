@@ -866,6 +866,8 @@ module Engine
             comp.discount = 0
           end
         end
+
+        deep_freeze_constants!
       end
     end
   end

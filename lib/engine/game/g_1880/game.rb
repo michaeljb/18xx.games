@@ -789,6 +789,8 @@ module Engine
         def can_cross_buy?
           @can_cross_buy
         end
+
+        deep_freeze_constants!
       end
     end
   end

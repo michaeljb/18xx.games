@@ -438,6 +438,8 @@ module Engine
           t.obsolete_on = nil
           t.variants.each { |_, v| v.merge!(rusts_on: t.rusts_on, obsolete_on: t.obsolete_on) }
         end
+
+        deep_freeze_constants!
       end
     end
   end

@@ -326,6 +326,8 @@ module Engine
 
           @skip_paths
         end
+
+        deep_freeze_constants!
       end
     end
   end

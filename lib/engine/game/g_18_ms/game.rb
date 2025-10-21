@@ -509,6 +509,8 @@ module Engine
 
           hex_bonus_amount
         end
+
+        deep_freeze_constants!
       end
     end
   end

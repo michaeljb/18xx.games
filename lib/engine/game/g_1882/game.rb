@@ -361,6 +361,8 @@ module Engine
         def fishing_exit
           @fishing_exit ||= hex_by_id('B6')
         end
+
+        deep_freeze_constants!
       end
     end
   end

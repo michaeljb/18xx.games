@@ -712,6 +712,8 @@ module Engine
             @round.steps.find { |s| s.is_a?(Engine::Step::WaterfallAuction) }.companies.delete(company)
           end
         end
+
+        deep_freeze_constants!
       end
     end
   end

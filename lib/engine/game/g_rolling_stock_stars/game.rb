@@ -207,6 +207,8 @@ module Engine
           chart << ['', ''] while chart.size < 5
           chart
         end
+
+        deep_freeze_constants!
       end
     end
   end

@@ -142,6 +142,8 @@ module Engine
 
           revenue
         end
+
+        deep_freeze_constants!
       end
     end
   end

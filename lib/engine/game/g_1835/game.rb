@@ -236,6 +236,8 @@ module Engine
             Engine::Step::BuyTrain,
           ], round_num: round_num)
         end
+
+        deep_freeze_constants!
       end
     end
   end

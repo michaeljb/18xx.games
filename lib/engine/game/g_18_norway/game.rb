@@ -768,6 +768,8 @@ module Engine
           @graph.clear
           @log << "#{corporation.name} places a token in #{l1_hex.name} due to P4B ownership"
         end
+
+        deep_freeze_constants!
       end
     end
   end

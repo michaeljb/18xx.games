@@ -1205,6 +1205,8 @@ module Engine
         end
 
         def action_processed(_action); end
+
+        deep_freeze_constants!
       end
     end
   end

@@ -496,6 +496,8 @@ module Engine
         def remove_some_minors?
           @remove_some_minors ||= @optional_rules&.include?(:remove_some_minors)
         end
+
+        deep_freeze_constants!
       end
     end
   end

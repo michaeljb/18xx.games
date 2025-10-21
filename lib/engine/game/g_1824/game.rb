@@ -844,6 +844,8 @@ module Engine
             @kk_token_choice_player = nil
           end
         end
+
+        deep_freeze_constants!
       end
     end
   end

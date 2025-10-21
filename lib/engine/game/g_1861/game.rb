@@ -305,6 +305,8 @@ module Engine
           # Hit the game end check now to set the correct turn
           game_end_check
         end
+
+        deep_freeze_constants!
       end
     end
   end

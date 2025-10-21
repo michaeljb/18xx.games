@@ -753,6 +753,8 @@ module Engine
         end
 
         def after_lay_tile(_hex, _tile, _entity); end
+
+        deep_freeze_constants!
       end
     end
   end

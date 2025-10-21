@@ -966,6 +966,8 @@ module Engine
             hex.tile.paths.map { |path| [path, true] }
           end.to_h
         end
+
+        deep_freeze_constants!
       end
     end
   end

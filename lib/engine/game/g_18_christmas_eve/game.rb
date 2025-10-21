@@ -169,6 +169,8 @@ module Engine
         def game_end_check_final_phase?
           @d_trigger
         end
+
+        deep_freeze_constants!
       end
     end
   end

@@ -1075,6 +1075,8 @@ module Engine
           end
           value
         end
+
+        deep_freeze_constants!
       end
     end
   end

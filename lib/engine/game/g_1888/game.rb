@@ -384,6 +384,8 @@ module Engine
 
           self.class::LOCATION_NAMES_NORTH[coord]
         end
+
+        deep_freeze_constants!
       end
     end
   end

@@ -745,6 +745,8 @@ module Engine
         def larger_bank?
           @larger_bank ||= @optional_rules&.include?(:larger_bank)
         end
+
+        deep_freeze_constants!
       end
     end
   end

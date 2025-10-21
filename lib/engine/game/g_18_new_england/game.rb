@@ -664,6 +664,8 @@ module Engine
         def available_programmed_actions
           [Action::ProgramMergerPass, Action::ProgramBuyShares, Action::ProgramSharePass]
         end
+
+        deep_freeze_constants!
       end
     end
   end

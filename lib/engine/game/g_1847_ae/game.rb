@@ -600,6 +600,8 @@ module Engine
 
           40
         end
+
+        deep_freeze_constants!
       end
     end
   end

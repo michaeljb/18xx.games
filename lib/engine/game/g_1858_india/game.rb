@@ -300,6 +300,8 @@ module Engine
             (oil * @oil_bonus.route_base_revenue(@phase, train)) +
             (ports * @port_bonus.route_base_revenue(@phase, train))
         end
+
+        deep_freeze_constants!
       end
     end
   end

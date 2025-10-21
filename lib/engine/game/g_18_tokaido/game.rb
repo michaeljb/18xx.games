@@ -467,6 +467,8 @@ module Engine
             @log << "#{owner.name} collects #{format_currency(revenue)} from #{company.name}"
           end
         end
+
+        deep_freeze_constants!
       end
     end
   end

@@ -14,6 +14,8 @@ module Engine
         include G18ZOOMapB::Map
 
         STARTING_CASH = { 2 => 40, 3 => 28, 4 => 23, 5 => 22 }.freeze
+
+        deep_freeze_constants!
       end
     end
   end

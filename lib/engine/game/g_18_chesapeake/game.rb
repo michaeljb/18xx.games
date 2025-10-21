@@ -251,6 +251,8 @@ module Engine
           bundle = ShareBundle.new(corporation.shares_of(corporation))
           @share_pool.transfer_shares(bundle, @share_pool)
         end
+
+        deep_freeze_constants!
       end
     end
   end

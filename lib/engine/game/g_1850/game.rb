@@ -387,6 +387,8 @@ module Engine
         def reduced_tokens?
           @reduced_tokens ||= @optional_rules&.include?(:reduced_tokens)
         end
+
+        deep_freeze_constants!
       end
     end
   end

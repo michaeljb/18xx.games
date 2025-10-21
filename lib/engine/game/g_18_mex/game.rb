@@ -857,6 +857,8 @@ module Engine
             "#{c.name} (#{controller_name})"
           end.join(', ')
         end
+
+        deep_freeze_constants!
       end
     end
   end

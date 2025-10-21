@@ -2294,6 +2294,8 @@ module Engine
           hexes = national_hexes(entity.id)
           visits.count { |v| hexes.include?(v.hex.name) } == visits.size
         end
+
+        deep_freeze_constants!
       end
     end
   end

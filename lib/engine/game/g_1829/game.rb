@@ -184,6 +184,8 @@ module Engine
             [Engine::Step::BuyCompany, { blocks: false }],
           ], round_num: round_num)
         end
+
+        deep_freeze_constants!
       end
     end
   end

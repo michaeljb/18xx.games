@@ -226,6 +226,8 @@ module Engine
           tile_icons = hex_by_id(SCRANTON_HEX).tile.icons
           tile_icons.delete_at(tile_icons.index { |icon| icon.name == SCRANTON_MARKER_ICON })
         end
+
+        deep_freeze_constants!
       end
     end
   end

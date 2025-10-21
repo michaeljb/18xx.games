@@ -80,6 +80,8 @@ module Engine
           corporation.tokens.first.status = nil
           @log << "#{corporation.name} token is flipped back"
         end
+
+        deep_freeze_constants!
       end
     end
   end

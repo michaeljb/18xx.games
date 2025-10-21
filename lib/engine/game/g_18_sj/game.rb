@@ -1178,6 +1178,8 @@ module Engine
           new_owner.shares_by_corporation[corp] << share
           share.owner = new_owner
         end
+
+        deep_freeze_constants!
       end
     end
   end

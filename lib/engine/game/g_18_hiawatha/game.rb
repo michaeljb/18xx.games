@@ -347,6 +347,8 @@ module Engine
           game_end_check
           @log << "First 4 train bought/exported, ending game at the end of #{@turn + 1}.2"
         end
+
+        deep_freeze_constants!
       end
     end
   end

@@ -517,6 +517,8 @@ module Engine
         def ipo_name(_entity = nil)
           'Treasury'
         end
+
+        deep_freeze_constants!
       end
     end
   end

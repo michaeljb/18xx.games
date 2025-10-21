@@ -2178,6 +2178,8 @@ module Engine
 
           super(route)
         end
+
+        deep_freeze_constants!
       end
     end
   end

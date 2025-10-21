@@ -1144,6 +1144,8 @@ module Engine
           stops.first && rge_terminus?(stops.first) &&
           stops.last && rge_terminus?(stops.last)
         end
+
+        deep_freeze_constants!
       end
     end
   end

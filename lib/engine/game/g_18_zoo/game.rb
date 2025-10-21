@@ -1401,6 +1401,8 @@ module Engine
 
           distance
         end
+
+        deep_freeze_constants!
       end
     end
   end

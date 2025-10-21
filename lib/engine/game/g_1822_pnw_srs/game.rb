@@ -87,6 +87,8 @@ module Engine
           hex_by_id('A8').tile.icons.clear
           hex_by_id('D23').tile.icons.clear
         end
+
+        deep_freeze_constants!
       end
     end
   end

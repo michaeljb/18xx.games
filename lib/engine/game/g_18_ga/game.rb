@@ -248,6 +248,8 @@ module Engine
         def cotton_port?
           @cotton_port ||= @optional_rules.include?(:cotton_port)
         end
+
+        deep_freeze_constants!
       end
     end
   end

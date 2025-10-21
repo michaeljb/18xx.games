@@ -928,6 +928,8 @@ module Engine
 
           G1849::Depot.new(trains, self)
         end
+
+        deep_freeze_constants!
       end
     end
   end

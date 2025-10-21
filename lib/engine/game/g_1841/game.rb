@@ -2854,6 +2854,8 @@ module Engine
         def render_revenue_history?(corporation)
           operated?(corporation) && super
         end
+
+        deep_freeze_constants!
       end
     end
   end

@@ -1027,6 +1027,8 @@ module Engine
 
           send("map_#{cmap_name}_can_issue_shares_for_train?", entity)
         end
+
+        deep_freeze_constants!
       end
     end
   end

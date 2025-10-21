@@ -940,6 +940,8 @@ module Engine
             ['One or more shares sold (if sold by non-director)', '1 ←'],
           ]
         end
+
+        deep_freeze_constants!
       end
     end
   end

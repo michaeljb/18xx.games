@@ -2343,6 +2343,8 @@ module Engine
                   end
           { color: color, shape: shape }
         end
+
+        deep_freeze_constants!
       end
     end
   end

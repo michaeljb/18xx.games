@@ -553,6 +553,8 @@ module Engine
 
           val
         end
+
+        deep_freeze_constants!
       end
     end
   end

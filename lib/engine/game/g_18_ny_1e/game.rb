@@ -84,6 +84,8 @@ module Engine
         def second_edition?
           false
         end
+
+        deep_freeze_constants!
       end
     end
   end

@@ -242,6 +242,8 @@ module Engine
         end
 
         def remove_corp; end
+
+        deep_freeze_constants!
       end
     end
   end

@@ -459,6 +459,8 @@ module Engine
         def mark_auctioning(minor)
           minor.reservation_color = self.class::BIDDING_BOX_MINOR_COLOR
         end
+
+        deep_freeze_constants!
       end
     end
   end

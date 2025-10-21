@@ -357,6 +357,8 @@ module Engine
         def diesel_variant?
           @diesel_variant ||= @optional_rules&.include?(:diesel_variant)
         end
+
+        deep_freeze_constants!
       end
     end
   end

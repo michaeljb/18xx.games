@@ -118,6 +118,8 @@ module Engine
         def stock_round; end
 
         def operating_round(round_num); end
+
+        deep_freeze_constants!
       end
     end
   end

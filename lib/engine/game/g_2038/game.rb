@@ -331,6 +331,8 @@ module Engine
         def optional_variant_start_pack
           @optional_rules&.include?(:optional_variant_start_pack)
         end
+
+        deep_freeze_constants!
       end
     end
   end

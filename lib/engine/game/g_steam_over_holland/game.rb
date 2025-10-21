@@ -454,6 +454,8 @@ module Engine
 
           terrain_cost - discounts
         end
+
+        deep_freeze_constants!
       end
     end
   end

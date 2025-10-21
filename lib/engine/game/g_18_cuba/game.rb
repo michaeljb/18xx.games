@@ -194,6 +194,8 @@ module Engine
         def init_tile_groups
           self.class::TILE_GROUPS
         end
+
+        deep_freeze_constants!
       end
     end
   end

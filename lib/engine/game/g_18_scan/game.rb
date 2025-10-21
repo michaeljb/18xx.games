@@ -470,6 +470,8 @@ module Engine
           minor.close!
           company.close!
         end
+
+        deep_freeze_constants!
       end
     end
   end

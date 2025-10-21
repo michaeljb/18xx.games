@@ -1263,6 +1263,8 @@ module Engine
           end
           super
         end
+
+        deep_freeze_constants!
       end
     end
   end

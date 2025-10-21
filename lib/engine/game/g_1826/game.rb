@@ -228,6 +228,8 @@ module Engine
           @can_buy_trains = true
           @log << 'Corporations can buy trains from other corporations'
         end
+
+        deep_freeze_constants!
       end
     end
   end

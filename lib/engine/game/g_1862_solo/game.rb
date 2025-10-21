@@ -210,6 +210,8 @@ module Engine
         def all_rows_indexes
           (0..8)
         end
+
+        deep_freeze_constants!
       end
     end
   end

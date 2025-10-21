@@ -1173,6 +1173,8 @@ module Engine
         def entity_crowded_corps
           @entity_crowded
         end
+
+        deep_freeze_constants!
       end
     end
   end

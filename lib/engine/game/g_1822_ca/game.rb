@@ -892,6 +892,8 @@ module Engine
 
           super
         end
+
+        deep_freeze_constants!
       end
     end
   end

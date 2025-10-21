@@ -149,6 +149,8 @@ module Engine
           super
           @pittsburgh_private = @companies.find { |c| c.id == 'DTC' }
         end
+
+        deep_freeze_constants!
       end
     end
   end

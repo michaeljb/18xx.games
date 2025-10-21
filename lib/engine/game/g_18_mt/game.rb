@@ -309,6 +309,8 @@ module Engine
         def available_programmed_actions
           super << Action::ProgramAuctionBid
         end
+
+        deep_freeze_constants!
       end
     end
   end

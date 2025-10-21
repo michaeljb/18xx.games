@@ -517,6 +517,8 @@ module Engine
           hex_by_id(corporation.coordinates).tile.add_reservation!(corporation, 0)
           @corporations << corporation
         end
+
+        deep_freeze_constants!
       end
     end
   end

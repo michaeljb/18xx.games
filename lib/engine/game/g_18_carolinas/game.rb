@@ -907,6 +907,8 @@ module Engine
         def company_sale_price(company)
           company.value - COMPANY_SALE_FEE
         end
+
+        deep_freeze_constants!
       end
     end
   end

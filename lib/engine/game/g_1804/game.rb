@@ -157,6 +157,8 @@ module Engine
         def market_share_limit(_corporation = nil)
           40
         end
+
+        deep_freeze_constants!
       end
     end
   end

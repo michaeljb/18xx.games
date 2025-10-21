@@ -821,6 +821,8 @@ module Engine
           b = entities.find_index(player_b)
           a < b ? b - a : b - (a - entities.size)
         end
+
+        deep_freeze_constants!
       end
     end
   end

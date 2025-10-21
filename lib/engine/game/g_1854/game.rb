@@ -418,6 +418,8 @@ module Engine
           owner.shares_by_corporation[corporation] << share
           @_shares[share.id] = share
         end
+
+        deep_freeze_constants!
       end
     end
   end

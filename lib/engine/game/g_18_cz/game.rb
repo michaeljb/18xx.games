@@ -784,6 +784,8 @@ module Engine
           hex = hex_by_id('B9')
           hex.tile.reservations.clear
         end
+
+        deep_freeze_constants!
       end
     end
   end

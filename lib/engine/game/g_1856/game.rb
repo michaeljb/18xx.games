@@ -1442,6 +1442,8 @@ module Engine
         def eight_train_variant?
           @eight_train_variant ||= @optional_rules&.include?(:eight_train_variant)
         end
+
+        deep_freeze_constants!
       end
     end
   end

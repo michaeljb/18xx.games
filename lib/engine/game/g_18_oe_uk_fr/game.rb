@@ -106,6 +106,8 @@ module Engine
             corp.par_via_exchange = companies.find { |c| c.sym == corp.id } if corp.type == :minor
           end
         end
+
+        deep_freeze_constants!
       end
     end
   end

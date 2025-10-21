@@ -586,6 +586,8 @@ module Engine
         def game_phases
           @optional_rules&.include?(:diesels) ? self.class::DIESEL_VARIANT_PHASES : self.class::STANDARD_PHASES
         end
+
+        deep_freeze_constants!
       end
     end
   end

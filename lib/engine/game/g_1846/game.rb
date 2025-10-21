@@ -998,6 +998,8 @@ module Engine
         def show_company_owners?
           !@round.is_a?(Engine::Round::Draft)
         end
+
+        deep_freeze_constants!
       end
     end
   end

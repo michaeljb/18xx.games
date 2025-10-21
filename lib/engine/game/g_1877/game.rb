@@ -189,6 +189,8 @@ module Engine
             G1877::Step::BuySellParShares,
           ])
         end
+
+        deep_freeze_constants!
       end
     end
   end

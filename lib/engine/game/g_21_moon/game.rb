@@ -1117,6 +1117,8 @@ module Engine
         def block_terminal_hex?
           !terminal_company.closed?
         end
+
+        deep_freeze_constants!
       end
     end
   end
