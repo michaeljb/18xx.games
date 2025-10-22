@@ -186,7 +186,13 @@ module View
               backgroundColor: color_for(:bg2),
               color: color_for(:font2),
             }
-            children << h(:div, { style: status_style }, @game.company_status_str(@company))
+            statuses = Array(@game.company_status_str(@company))
+
+            status_children = []
+            statuses.each do |status|
+              status_children << h(:div, status)
+            end
+            children << h(:div, { style: status_style }, status_children)
           end
 
           unless @interactive
