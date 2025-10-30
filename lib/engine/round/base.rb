@@ -39,6 +39,7 @@ module Engine
           step.setup
           step
         end
+        @steps_h = @steps.group_by(&:type)
       end
 
       def setup; end
@@ -80,19 +81,13 @@ module Engine
 
         before_process(action)
 
-        step = @steps.find do |s|
-          next unless s.active?
-
-          process = s.actions(action.entity).include?(type)
-          blocking = s.blocking?
-          raise GameError, "Blocking step #{s.description} cannot process action #{type} at #{action.id}" if blocking && !process
-
-          blocking || process
-        end
+        step = processing_step(action, strict: strict)
         raise GameError, "No step found for action #{type} at #{action.id}: #{action.to_h}" unless step
 
         step.acted = true
         step.send("process_#{action.type}", action)
+
+        action.step = step.type
 
         @at_start = false
 
@@ -216,6 +211,32 @@ module Engine
       end
 
       private
+
+      def processing_step(action, strict: false)
+        if @game.use_engine_v2 && action.step
+          step = @steps_h[action.step].first
+
+          if strict
+            process = step.actions(action.entity).include?(action.type)
+            raise GameError, "Step #{step.description} cannot process action #{action.type} at #{action.id}" unless process
+
+            # TODO: check for the round having a blocking step different than
+            # the specified step
+          end
+
+          step
+        else
+          @steps.find do |s|
+            next unless s.active?
+
+            process = s.actions(action.entity).include?(action.type)
+            blocking = s.blocking?
+            raise GameError, "Blocking step #{s.description} cannot process action #{action.type} at #{action.id}" if blocking && !process
+
+            blocking || process
+          end
+        end
+      end
 
       def before_process(_action); end
 
