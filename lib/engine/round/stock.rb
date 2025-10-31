@@ -17,6 +17,10 @@ module Engine
         'SR'
       end
 
+      def self.round_name
+        'Stock Round'
+      end
+
       def name
         'Stock Round'
       end

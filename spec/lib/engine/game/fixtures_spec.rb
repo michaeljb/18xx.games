@@ -98,7 +98,7 @@ module Engine
           describe "with strict: #{strict}" do
             describe 'running full game' do
               before(:all) do
-                @game = Engine::Game.load(@data, strict: strict).maybe_raise!
+                @game = Engine::Game.load(@data, strict: strict, use_engine_v2: false).maybe_raise!
               end
 
               it 'is finished and matches result exactly' do

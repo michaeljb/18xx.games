@@ -11,6 +11,10 @@ module Engine
         'OR'
       end
 
+      def self.round_name
+        'Operating Round'
+      end
+
       def name
         'Operating Round'
       end

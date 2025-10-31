@@ -39,7 +39,24 @@ module Engine
           step.setup
           step
         end
-        @steps_h = @steps.group_by(&:type)
+        @steps_h = @steps.group_by(&:type).each_with_object({}) do |(step_type, steps), steps_h|
+          if steps.one?
+            step = steps[0]
+            steps_h[step_type] = step
+            steps_h[step] = step_type
+          else
+            steps.each.with_index do |step, index|
+              key =
+                if index.zero?
+                  step_type
+                else
+                  "#{step_type}#{index + 1}"
+                end
+              steps_h[key] = step
+              steps_h[step] = key
+            end
+          end
+        end
       end
 
       def setup; end
@@ -87,7 +104,8 @@ module Engine
         step.acted = true
         step.send("process_#{action.type}", action)
 
-        action.step = step.type
+        action.step = @steps_h[step]
+        LOGGER.debug { "    action.step = #{action.step}" }
 
         @at_start = false
 
@@ -214,7 +232,7 @@ module Engine
 
       def processing_step(action, strict: false)
         if @game.use_engine_v2 && action.step
-          step = @steps_h[action.step].first
+          step = @steps_h[action.step]
 
           if strict
             process = step.actions(action.entity).include?(action.type)
