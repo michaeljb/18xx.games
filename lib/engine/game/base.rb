@@ -590,7 +590,10 @@ module Engine
         @log = Engine::GameLog.new(self)
         @queued_log = []
         @actions = []
+
+        # Array<Hash> of actions, built as they are processed
         @raw_actions = []
+
         @turn_start_action_id = 0
         @last_turn_start_action_id = 0
         @last_processed_action = 0
@@ -820,7 +823,8 @@ module Engine
         @loading = true unless @strict
         @filtered_actions, active_undos = self.class.filtered_actions(actions)
 
-        # Store all actions for history navigation
+        # Store all actions (including actions that will be skipped due to
+        # undo/redo) for history navigation
         @raw_all_actions = actions
 
         @undo_possible = false
