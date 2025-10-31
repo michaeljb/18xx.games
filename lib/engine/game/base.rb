@@ -828,7 +828,7 @@ module Engine
         @raw_all_actions = actions
 
         @undo_possible = false
-        process_to_action(at_action || actions.last['id']) unless actions.empty?
+        process_to_action(at_action || actions.last['id'], strict: @strict && @use_engine_v2) unless actions.empty?
         @redo_possible = active_undos.any?
         @loading = false
       end
@@ -839,7 +839,7 @@ module Engine
         true
       end
 
-      def process_action(action, add_auto_actions: false, validate_auto_actions: false)
+      def process_action(action, add_auto_actions: false, validate_auto_actions: false, strict: false)
         action = Engine::Action::Base.action_from_h(action, self) if action.is_a?(Hash)
 
         action.id = current_action_id + 1
@@ -850,7 +850,7 @@ module Engine
         @actions << action
 
         # Process the main action we came here to do first
-        process_single_action(action)
+        process_single_action(action, strict: strict)
 
         unless action.is_a?(Action::Message)
           @redo_possible = false
@@ -861,7 +861,7 @@ module Engine
         if add_auto_actions || validate_auto_actions
           auto_actions = []
           until (actions = round.auto_actions || []).empty?
-            actions.each { |a| process_single_action(a) }
+            actions.each { |a| process_single_action(a, strict: strict) }
             auto_actions.concat(actions)
           end
           if validate_auto_actions
@@ -873,7 +873,7 @@ module Engine
             @raw_actions[-1] = action.to_h
           end
         else
-          action.auto_actions.each { |a| process_single_action(a) }
+          action.auto_actions.each { |a| process_single_action(a, strict: strict) }
         end
         @last_processed_action = action.id
 
@@ -883,14 +883,14 @@ module Engine
         self
       end
 
-      def process_single_action(action)
+      def process_single_action(action, strict: false)
         if action.user && action.user != acting_for_player(action.entity&.player)&.id && action.type != 'message'
           @log << "• Action(#{action.type}) via Master Mode by: #{player_by_id(action.user)&.name || 'Owner'}"
         end
 
         preprocess_action(action)
 
-        @round.process_action(action)
+        @round.process_action(action, strict: strict)
 
         action_processed(action)
 
@@ -1003,7 +1003,7 @@ module Engine
         @filtered_actions.find { |a| a && a['id'] > action_id && a['type'] != 'message' }&.fetch('id')
       end
 
-      def process_to_action(id)
+      def process_to_action(id, strict: false)
         last_processed_action_id = @raw_actions.last&.fetch('id') || 0
         @raw_all_actions.each.with_index do |action, index|
           next if @exception
@@ -1011,7 +1011,7 @@ module Engine
           break if action['id'] > id
 
           if @filtered_actions[index]
-            process_action(action)
+            process_action(action, strict: strict)
             # maintain original action ids
             @raw_actions.last['id'] = action['id'] unless @raw_actions.empty?
             @last_processed_action = action['id']

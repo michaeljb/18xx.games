@@ -72,7 +72,7 @@ module Engine
         active_step.pass_description
       end
 
-      def process_action(action)
+      def process_action(action, strict: false)
         type = action.type
         clear_cache!
 
