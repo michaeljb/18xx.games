@@ -87,7 +87,8 @@ module View
           at_action: cursor,
           user: @user&.dig('id'),
           strict: strict,
-          use_engine_v2: use_engine_v2
+          use_engine_v2: use_engine_v2,
+          eager: strict && use_engine_v2
         )
         LOGGER.debug do
           "Done processing game actions: #{Time.now - @_logger[:process]} seconds"

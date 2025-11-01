@@ -104,12 +104,12 @@ class Api
 
                 game.save
               else
-                engine = Engine::Game.load(game, actions: actions_h(game))
+                engine = Engine::Game.load(game, actions: actions_h(game), eager: false)
                 prev = acting_users(engine, users)
 
                 r.params['user'] = user.id
 
-                engine = engine.process_action(r.params, validate_auto_actions: true)
+                engine = engine.process_action(r.params, validate_auto_actions: true, eager: engine.use_engine_v2)
                 halt(500, "Illegal action: #{engine.exception}") if engine.exception
                 action = engine.raw_actions.last.to_h
 

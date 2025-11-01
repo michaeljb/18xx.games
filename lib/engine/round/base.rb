@@ -97,7 +97,7 @@ module Engine
         active_step.pass_description
       end
 
-      def process_action(action)
+      def process_action(action, eager: false)
         type = action.type
         clear_cache!
 
@@ -105,7 +105,7 @@ module Engine
 
         before_process(action)
 
-        step = processing_step(action)
+        step = processing_step(action, eager: eager)
         raise GameError, "No step found for action #{type} at #{action.id}: #{action.to_h}" unless step
 
         step.acted = true
@@ -236,11 +236,19 @@ module Engine
 
       private
 
-      def processing_step(action)
+      def processing_step(action, eager: false)
         if @game.use_engine_v2 && action.step
-          # TODO(12193): with strict flag, verify `process` and `blocking` for
-          # the step as in the `else` block
-          @steps_h[action.step]
+          step = @steps_h[action.step]
+
+          if eager
+            process = step.actions(action.entity).include?(action.type)
+            raise GameError, "Step #{step.description} cannot process action #{action.type} at #{action.id}" unless process
+
+            # TODO(12193): check for the round having a blocking step different than
+            # the specified step
+          end
+
+          step
         else
           @steps.find do |s|
             next unless s.active?
